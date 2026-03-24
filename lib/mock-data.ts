@@ -7,12 +7,12 @@ import { Apartment, AvailabilityBlock, Booking, SiteSettings } from '@/types';
 export const MOCK_APARTMENTS: Apartment[] = [
   {
     id: '1',
-    slug: 'villa-azur',
-    title_fr: 'Villa Azur',
-    title_en: 'Villa Azur',
+    slug: 'villa-vanille',
+    title_fr: 'La Villa Vanille',
+    title_en: 'La Villa Vanille',
     short_description_fr: 'Villa de luxe avec piscine à débordement et vue mer panoramique',
     short_description_en: 'Luxury villa with infinity pool and panoramic sea view',
-    description_fr: `Nichée sur les hauteurs de Saint-Martin, la Villa Azur est une propriété d'exception offrant une vue imprenable sur la mer des Caraïbes. Avec sa piscine à débordement, ses grandes terrasses en bois et ses chambres lumineuses décorées avec soin, elle incarne le luxe tropical dans toute sa splendeur.
+    description_fr: `Nichée sur les hauteurs de Saint-Martin, La Villa Vanille est une propriété d'exception offrant une vue imprenable sur la mer des Caraïbes. Avec sa piscine à débordement, ses grandes terrasses en bois et ses chambres lumineuses décorées avec soin, elle incarne le luxe tropical dans toute sa splendeur.
 
 La villa dispose de 4 chambres spacieuses, chacune dotée d'une salle de bain privative. Les espaces de vie ouverts sur l'extérieur créent une connexion permanente avec la nature et la mer. Les lustres en raphia naturel et les tons sable apportent une touche bohème chic à l'ensemble.`,
     description_en: `Nestled in the hills of Saint-Martin, Villa Azur is an exceptional property offering breathtaking views over the Caribbean Sea. With its infinity pool, large wooden terraces and carefully decorated bright rooms, it embodies tropical luxury in all its splendor.
@@ -29,7 +29,7 @@ The villa has 4 spacious bedrooms, each with a private bathroom. The living spac
       {
         id: '1-1',
         apartment_id: '1',
-        url: '/images/villa-azur/chambre-vue-mer.jpg',
+        url: '/images/villa-vanille/chambre-vue-mer.jpg',
         alt_fr: 'Chambre principale avec vue sur la mer et la piscine',
         alt_en: 'Master bedroom with sea and pool view',
         is_cover: true,
@@ -38,7 +38,7 @@ The villa has 4 spacious bedrooms, each with a private bathroom. The living spac
       {
         id: '1-2',
         apartment_id: '1',
-        url: '/images/villa-azur/piscine-terrasse.jpg',
+        url: '/images/villa-vanille/piscine-terrasse.jpg',
         alt_fr: 'Terrasse et piscine à débordement vue aérienne',
         alt_en: 'Aerial view of terrace and infinity pool',
         is_cover: false,
@@ -47,7 +47,7 @@ The villa has 4 spacious bedrooms, each with a private bathroom. The living spac
       {
         id: '1-3',
         apartment_id: '1',
-        url: '/images/villa-azur/piscine-3.jpg',
+        url: '/images/villa-vanille/piscine-3.jpg',
         alt_fr: 'Piscine et terrasse en bois',
         alt_en: 'Pool and wooden terrace',
         is_cover: false,
@@ -56,7 +56,7 @@ The villa has 4 spacious bedrooms, each with a private bathroom. The living spac
       {
         id: '1-4',
         apartment_id: '1',
-        url: '/images/villa-azur/exterieur.jpg',
+        url: '/images/villa-vanille/exterieur.jpg',
         alt_fr: 'Vue aérienne de la piscine',
         alt_en: 'Aerial view of the pool',
         is_cover: false,
@@ -65,7 +65,7 @@ The villa has 4 spacious bedrooms, each with a private bathroom. The living spac
       {
         id: '1-5',
         apartment_id: '1',
-        url: '/images/villa-azur/chambre-2.jpg',
+        url: '/images/villa-vanille/chambre-2.jpg',
         alt_fr: 'Chambre avec salle de bain attenante',
         alt_en: 'Bedroom with en-suite bathroom',
         is_cover: false,
@@ -74,7 +74,7 @@ The villa has 4 spacious bedrooms, each with a private bathroom. The living spac
       {
         id: '1-6',
         apartment_id: '1',
-        url: '/images/villa-azur/chambre-3.jpg',
+        url: '/images/villa-vanille/chambre-3.jpg',
         alt_fr: 'Chambre spacieuse et lumineuse',
         alt_en: 'Spacious and bright bedroom',
         is_cover: false,
@@ -86,9 +86,9 @@ The villa has 4 spacious bedrooms, each with a private bathroom. The living spac
         id: 's1-1',
         apartment_id: '1',
         type: 'welcome',
-        title_fr: 'Bienvenue à la Villa Azur',
-        title_en: 'Welcome to Villa Azur',
-        content_fr: `Bienvenue dans votre havre de paix ! Nous sommes ravis de vous accueillir à la Villa Azur pour votre séjour à Saint-Martin.
+        title_fr: 'Bienvenue à La Villa Vanille',
+        title_en: 'Welcome to La Villa Vanille',
+        content_fr: `Bienvenue dans votre havre de paix ! Nous sommes ravis de vous accueillir à La Villa Vanille pour votre séjour à Saint-Martin.
 
 Check-in : à partir de 15h00
 Check-out : avant 11h00
@@ -306,14 +306,14 @@ Do not hesitate to contact us for any questions: +590 690 XX XX XX`,
   },
   {
     id: '2',
-    slug: 'villa-lagon',
-    title_fr: 'Villa Lagon',
-    title_en: 'Villa Lagon',
+    slug: 'villa-blanche',
+    title_fr: 'La Villa Blanche',
+    title_en: 'La Villa Blanche',
     short_description_fr: 'Charmante villa avec piscine privée et vue sur le lagon turquoise',
     short_description_en: 'Charming villa with private pool and turquoise lagoon view',
     description_fr: `La Villa Lagon est une propriété chaleureuse et élégante idéalement située en bord de lagon à Saint-Martin. Son salon lumineux ouvert sur une terrasse avec vue directe sur les eaux turquoises du lagon en fait un lieu de séjour inoubliable.
 
-Avec 2 chambres confortables, une piscine privée et une cuisine entièrement équipée, la Villa Lagon est parfaite pour les couples ou les petites familles souhaitant profiter d'un cadre authentique et reposant.`,
+Avec 2 chambres confortables, une piscine privée et une cuisine entièrement équipée, La Villa Blanche est parfaite pour les couples ou les petites familles souhaitant profiter d'un cadre authentique et reposant.`,
     description_en: `Villa Lagon is a warm and elegant property ideally located on the lagoon's edge in Saint-Martin. Its bright living room opening onto a terrace with a direct view of the turquoise lagoon waters makes it an unforgettable place to stay.
 
 With 2 comfortable bedrooms, a private pool and a fully equipped kitchen, Villa Lagon is perfect for couples or small families wishing to enjoy an authentic and relaxing setting.`,
@@ -328,7 +328,7 @@ With 2 comfortable bedrooms, a private pool and a fully equipped kitchen, Villa 
       {
         id: '2-1',
         apartment_id: '2',
-        url: '/images/villa-lagon/salon-vue-lagon.jpg',
+        url: '/images/villa-blanche/salon-vue-lagon.jpg',
         alt_fr: 'Salon avec vue panoramique sur le lagon',
         alt_en: 'Living room with panoramic lagoon view',
         is_cover: true,
@@ -337,7 +337,7 @@ With 2 comfortable bedrooms, a private pool and a fully equipped kitchen, Villa 
       {
         id: '2-2',
         apartment_id: '2',
-        url: '/images/villa-lagon/piscine.jpg',
+        url: '/images/villa-blanche/piscine.jpg',
         alt_fr: 'Piscine privée avec vue sur le lagon',
         alt_en: 'Private pool with lagoon view',
         is_cover: false,
@@ -346,7 +346,7 @@ With 2 comfortable bedrooms, a private pool and a fully equipped kitchen, Villa 
       {
         id: '2-3',
         apartment_id: '2',
-        url: '/images/villa-lagon/chambre.jpg',
+        url: '/images/villa-blanche/chambre.jpg',
         alt_fr: 'Chambre principale avec décoration florale',
         alt_en: 'Master bedroom with floral decoration',
         is_cover: false,
@@ -355,7 +355,7 @@ With 2 comfortable bedrooms, a private pool and a fully equipped kitchen, Villa 
       {
         id: '2-4',
         apartment_id: '2',
-        url: '/images/villa-lagon/salon-2.jpg',
+        url: '/images/villa-blanche/salon-2.jpg',
         alt_fr: 'Salon et salle à manger ouverts',
         alt_en: 'Open living and dining room',
         is_cover: false,
@@ -364,7 +364,7 @@ With 2 comfortable bedrooms, a private pool and a fully equipped kitchen, Villa 
       {
         id: '2-5',
         apartment_id: '2',
-        url: '/images/villa-lagon/salle-de-bain.jpg',
+        url: '/images/villa-blanche/salle-de-bain.jpg',
         alt_fr: 'Salle de bain élégante',
         alt_en: 'Elegant bathroom',
         is_cover: false,
@@ -373,7 +373,7 @@ With 2 comfortable bedrooms, a private pool and a fully equipped kitchen, Villa 
       {
         id: '2-6',
         apartment_id: '2',
-        url: '/images/villa-lagon/repas.jpg',
+        url: '/images/villa-blanche/repas.jpg',
         alt_fr: 'Plateau de bienvenue avec fruits tropicaux',
         alt_en: 'Welcome tray with tropical fruits',
         is_cover: false,
@@ -385,9 +385,9 @@ With 2 comfortable bedrooms, a private pool and a fully equipped kitchen, Villa 
         id: 's2-1',
         apartment_id: '2',
         type: 'welcome',
-        title_fr: 'Bienvenue à la Villa Lagon',
-        title_en: 'Welcome to Villa Lagon',
-        content_fr: `Bienvenue dans votre nid douillet face au lagon ! Nous sommes heureux de vous accueillir à la Villa Lagon.
+        title_fr: 'Bienvenue à La Villa Blanche',
+        title_en: 'Welcome to La Villa Blanche',
+        content_fr: `Bienvenue dans votre nid douillet face au lagon ! Nous sommes heureux de vous accueillir à La Villa Blanche.
 
 Check-in : à partir de 15h00
 Check-out : avant 11h00

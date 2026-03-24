@@ -15,7 +15,7 @@ export default async function ApartmentsPage() {
       <section className="relative h-64 flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="/images/villa-azur/piscine-terrasse.jpg"
+            src="/images/villa-vanille/piscine-terrasse.jpg"
             alt="Nos villas"
             fill
             className="object-cover"

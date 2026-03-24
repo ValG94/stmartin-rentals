@@ -283,7 +283,7 @@ VALUES (
 )
 ON CONFLICT DO NOTHING;
 
--- Villa Azur
+-- La Villa Vanille
 INSERT INTO apartments (
   id, slug, title_fr, title_en,
   short_description_fr, short_description_en,
@@ -291,20 +291,20 @@ INSERT INTO apartments (
   location, price_per_night, bedrooms, bathrooms, max_guests, amenities, is_active
 ) VALUES (
   'a1b2c3d4-0000-0000-0000-000000000001',
-  'villa-azur',
-  'Villa Azur',
-  'Villa Azur',
+  'villa-vanille',
+  'La Villa Vanille',
+  'La Villa Vanille',
   'Villa de luxe avec piscine à débordement et vue mer panoramique',
   'Luxury villa with infinity pool and panoramic sea view',
-  'La Villa Azur est une propriété d''exception nichée à Terres Basses, offrant une vue mer panoramique époustouflante. Avec sa piscine à débordement, ses 4 chambres spacieuses et ses finitions haut de gamme, elle représente le summum du luxe caribéen.',
-  'Villa Azur is an exceptional property nestled in Terres Basses, offering a breathtaking panoramic sea view. With its infinity pool, 4 spacious bedrooms and high-end finishes, it represents the pinnacle of Caribbean luxury.',
+  'La La Villa Vanille est une propriété d''exception nichée à Terres Basses, offrant une vue mer panoramique époustouflante. Avec sa piscine à débordement, ses 4 chambres spacieuses et ses finitions haut de gamme, elle représente le summum du luxe caribéen.',
+  'La Villa Vanille is an exceptional property nestled in Terres Basses, offering a breathtaking panoramic sea view. With its infinity pool, 4 spacious bedrooms and high-end finishes, it represents the pinnacle of Caribbean luxury.',
   'Terres Basses, Saint-Martin',
   650, 4, 4, 8,
   ARRAY['Piscine à débordement', 'Vue mer panoramique', 'Cuisine équipée', 'Climatisation', 'Wi-Fi haut débit', 'Parking privé', 'Terrasse', 'BBQ', 'Linge de maison', 'Ménage inclus'],
   true
 ) ON CONFLICT (slug) DO NOTHING;
 
--- Villa Lagon
+-- La Villa Blanche
 INSERT INTO apartments (
   id, slug, title_fr, title_en,
   short_description_fr, short_description_en,
@@ -312,13 +312,13 @@ INSERT INTO apartments (
   location, price_per_night, bedrooms, bathrooms, max_guests, amenities, is_active
 ) VALUES (
   'a1b2c3d4-0000-0000-0000-000000000002',
-  'villa-lagon',
-  'Villa Lagon',
-  'Villa Lagon',
+  'villa-blanche',
+  'La Villa Blanche',
+  'La Villa Blanche',
   'Charmante villa avec piscine privée et vue sur le lagon turquoise',
   'Charming villa with private pool and turquoise lagoon view',
-  'La Villa Lagon est un havre de paix à Sandy Ground, avec une vue imprenable sur le lagon turquoise de Saint-Martin. Idéale pour les couples ou les familles, elle dispose de 2 chambres confortables et d''une piscine privée.',
-  'Villa Lagon is a haven of peace in Sandy Ground, with a stunning view of the turquoise lagoon of Saint-Martin. Ideal for couples or families, it has 2 comfortable bedrooms and a private pool.',
+  'La La Villa Blanche est un havre de paix à Sandy Ground, avec une vue imprenable sur le lagon turquoise de Saint-Martin. Idéale pour les couples ou les familles, elle dispose de 2 chambres confortables et d''une piscine privée.',
+  'La Villa Blanche is a haven of peace in Sandy Ground, with a stunning view of the turquoise lagoon of Saint-Martin. Ideal for couples or families, it has 2 comfortable bedrooms and a private pool.',
   'Sandy Ground, Saint-Martin',
   320, 2, 2, 4,
   ARRAY['Piscine privée', 'Vue lagon', 'Cuisine équipée', 'Climatisation', 'Wi-Fi', 'Parking', 'Terrasse', 'Kayaks disponibles', 'Linge de maison'],

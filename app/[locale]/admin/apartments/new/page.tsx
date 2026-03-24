@@ -136,10 +136,10 @@ export default function NewApartmentPage() {
             value={form.slug}
             onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-            placeholder="villa-azur"
+            placeholder="villa-vanille"
           />
           <p className="text-xs text-gray-500 mt-1">
-            URL : /fr/apartments/{form.slug || 'villa-azur'}
+            URL : /fr/apartments/{form.slug || 'villa-vanille'}
           </p>
         </div>
 

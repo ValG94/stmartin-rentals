@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, X, Globe } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 export default function Header() {
   const t = useTranslations('nav');
@@ -12,11 +12,18 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   const otherLocale = locale === 'fr' ? 'en' : 'fr';
+  const isHome = pathname === `/${locale}` || pathname === `/${locale}/`;
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const switchLanguage = () => {
-    // Remplace le préfixe de locale dans le pathname
     const newPath = pathname.replace(`/${locale}`, `/${otherLocale}`);
     router.push(newPath);
   };
@@ -27,89 +34,91 @@ export default function Header() {
     { href: `/${locale}/contact`, label: t('contact') },
   ];
 
+  const transparent = isHome && !scrolled;
+  const headerBg = transparent ? 'bg-transparent' : 'bg-cream-50/98 backdrop-blur-md shadow-sm';
+  const textColor = transparent ? 'text-white' : 'text-night-600';
+  const hoverColor = transparent ? 'hover:text-sand-300' : 'hover:text-bronze-400';
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href={`/${locale}`} className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">SM</span>
-            </div>
-            <span className="font-bold text-primary-600 text-lg hidden sm:block">
-              StMartin Rentals
-            </span>
-          </Link>
+    <>
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${headerBg}`}>
+        <div className="max-w-7xl mx-auto px-6 lg:px-10">
+          <div className="flex items-center justify-between h-20">
 
-          {/* Navigation desktop */}
-          <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-700 hover:text-primary-600 font-medium transition-colors text-sm"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Actions */}
-          <div className="flex items-center gap-3">
-            {/* Switch langue */}
-            <button
-              onClick={switchLanguage}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-sm font-medium text-gray-600 hover:text-primary-600"
-              aria-label={`Switch to ${otherLocale.toUpperCase()}`}
-            >
-              <Globe size={14} />
-              <span>{otherLocale.toUpperCase()}</span>
-            </button>
-
-            {/* CTA réservation */}
-            <Link
-              href={`/${locale}/apartments`}
-              className="hidden sm:inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-full text-sm font-medium hover:bg-primary-700 transition-colors"
-            >
-              {t('apartments')}
+            {/* Logo */}
+            <Link href={`/${locale}`} className={`flex items-center gap-3 transition-colors duration-300 ${textColor}`}>
+              <div className={`w-9 h-9 flex items-center justify-center border transition-colors duration-300 ${transparent ? 'border-white/60' : 'border-night-600'}`}>
+                <span className="font-serif text-sm font-light" style={{letterSpacing:'0.15em'}}>SM</span>
+              </div>
+              <div className="hidden sm:block">
+                <div className="font-serif font-light text-lg leading-none" style={{letterSpacing:'0.08em'}}>StMartin Rentals</div>
+                <div className={`font-sans text-xs font-light mt-0.5 transition-colors duration-300 ${transparent ? 'text-white/60' : 'text-bronze-400'}`} style={{letterSpacing:'0.2em'}}>SAINT-MARTIN</div>
+              </div>
             </Link>
 
-            {/* Burger mobile */}
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden p-2 text-gray-600 hover:text-primary-600"
-              aria-label="Menu"
-            >
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
+            {/* Navigation desktop */}
+            <nav className="hidden md:flex items-center gap-10">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link key={link.href} href={link.href}
+                    className={`font-sans text-xs font-medium transition-colors duration-300 relative group uppercase ${textColor} ${hoverColor}`}
+                    style={{letterSpacing:'0.15em'}}>
+                    {link.label}
+                    <span className={`absolute -bottom-1 left-0 h-px bg-bronze-400 transition-all duration-500 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`} />
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Actions droite */}
+            <div className="flex items-center gap-5">
+              <button onClick={switchLanguage}
+                className={`font-sans text-xs font-medium transition-colors duration-300 ${textColor} ${hoverColor}`}
+                style={{letterSpacing:'0.2em'}} aria-label={`Switch to ${otherLocale.toUpperCase()}`}>
+                {otherLocale.toUpperCase()}
+              </button>
+              <div className={`hidden sm:block w-px h-5 transition-colors duration-300 ${transparent ? 'bg-white/30' : 'bg-night-200'}`} />
+              <Link href={`/${locale}/apartments`}
+                className={`hidden sm:inline-flex items-center px-5 py-2.5 text-xs font-medium uppercase border transition-all duration-500 ${
+                  transparent
+                    ? 'border-white/60 text-white hover:bg-white hover:text-night-600'
+                    : 'border-night-600 text-night-600 hover:bg-night-600 hover:text-cream-100'
+                }`}
+                style={{letterSpacing:'0.15em'}}>
+                {t('apartments')}
+              </Link>
+              <button onClick={() => setMenuOpen(!menuOpen)}
+                className={`md:hidden p-1 transition-colors duration-300 ${textColor}`} aria-label="Menu">
+                {menuOpen ? <X size={22} /> : <Menu size={22} />}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+        <div className={`absolute bottom-0 left-0 right-0 h-px transition-all duration-700 ${transparent ? 'opacity-30' : 'opacity-0'} bg-gradient-to-r from-transparent via-bronze-400 to-transparent`} />
+      </header>
 
-      {/* Menu mobile */}
-      {menuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMenuOpen(false)}
-              className="block py-2 text-gray-700 hover:text-primary-600 font-medium"
-            >
+      {/* Menu mobile overlay */}
+      <div className={`fixed inset-0 z-40 transition-all duration-500 md:hidden ${menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        <div className="absolute inset-0 bg-night-600/95 backdrop-blur-md" onClick={() => setMenuOpen(false)} />
+        <div className="relative h-full flex flex-col items-center justify-center gap-10">
+          {navLinks.map((link, i) => (
+            <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}
+              className="font-serif text-4xl font-light text-cream-100 hover:text-bronze-300 transition-colors duration-300"
+              style={{letterSpacing:'0.05em', animationDelay:`${i*100}ms`}}>
               {link.label}
             </Link>
           ))}
-          <div className="pt-2 border-t border-gray-100">
-            <Link
-              href={`/${locale}/apartments`}
-              onClick={() => setMenuOpen(false)}
-              className="block w-full text-center py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-700 transition-colors"
-            >
-              {t('apartments')}
-            </Link>
-          </div>
+          <div className="divider-bronze mx-auto mt-4" />
+          <Link href={`/${locale}/apartments`} onClick={() => setMenuOpen(false)} className="btn-bronze mt-2">
+            Réserver
+          </Link>
+          <button onClick={() => { switchLanguage(); setMenuOpen(false); }}
+            className="font-sans text-xs text-cream-100/60 uppercase mt-2" style={{letterSpacing:'0.2em'}}>
+            {otherLocale.toUpperCase()}
+          </button>
         </div>
-      )}
-    </header>
+      </div>
+    </>
   );
 }
