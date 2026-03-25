@@ -69,7 +69,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">{t('location')}</div>
-                    <div className="text-gray-600">Saint-Martin, Antilles françaises 97150</div>
+                    <div className="text-gray-600">Saint-Martin, Côté Hollandais97150</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm">

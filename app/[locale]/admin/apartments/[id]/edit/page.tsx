@@ -119,7 +119,7 @@ export default function EditApartmentPage() {
     id: '', slug: '', title_fr: '', title_en: '',
     short_description_fr: '', short_description_en: '',
     description_fr: '', description_en: '',
-    location: 'Saint-Martin, Antilles françaises',
+    location: 'Saint-Martin, Côté Hollandais',
     price_per_night: 0, currency: 'USD',
     bedrooms: 1, bathrooms: 1, max_guests: 2,
     amenities: [], is_active: true,

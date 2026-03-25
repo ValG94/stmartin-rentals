@@ -27,7 +27,7 @@ export default async function HomePage() {
         <div className="relative z-10 text-center text-white px-6 max-w-5xl mx-auto">
           <div className="inline-flex items-center gap-2 mb-8 text-white/80 font-sans text-xs uppercase" style={{letterSpacing:'0.25em'}}>
             <MapPin size={12} className="text-bronze-300" />
-            <span>Saint-Martin, Antilles françaises</span>
+            <span>Saint-Martin, Deutch Side</span>
           </div>
           <h1 className="font-serif font-light text-white mb-6 leading-none" style={{fontSize:'clamp(3.5rem, 9vw, 8rem)', letterSpacing:'-0.02em'}}>
             {isFr ? <>L&apos;art de vivre<br /><em className="font-light italic">caraïbe</em></> : <>The art of<br /><em className="font-light italic">Caribbean living</em></>}

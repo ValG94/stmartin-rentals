@@ -32,7 +32,7 @@ export default function Footer() {
             <p className="font-sans text-sm text-cream-100/50 leading-relaxed mb-6">{t('tagline')}</p>
             <div className="flex items-center gap-2 text-cream-100/40 text-xs font-sans">
               <MapPin size={12} className="text-bronze-400" />
-              <span style={{letterSpacing:'0.05em'}}>Saint-Martin, Antilles françaises</span>
+              <span style={{letterSpacing:'0.05em'}}>Saint-Martin, Deutch Side</span>
             </div>
           </div>
 
