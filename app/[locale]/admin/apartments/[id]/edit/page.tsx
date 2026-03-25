@@ -325,6 +325,14 @@ export default function EditApartmentPage() {
     }
   };
 
+  // Mise à jour de l'intitulé d'une photo (alt_fr / alt_en)
+  const updateImageAlt = async (imageId: string, field: 'alt_fr' | 'alt_en', value: string) => {
+    // Mise à jour locale immédiate
+    setImages(prev => prev.map(img => img.id === imageId ? { ...img, [field]: value } : img));
+    // Persistance en base (débouncée via timeout)
+    await supabase.from('apartment_images').update({ [field]: value }).eq('id', imageId);
+  };
+
   // ── Sauvegarde guide ──────────────────────────────────────────────────────
   const saveGuide = async () => {
     setSaving(true);
@@ -762,11 +770,28 @@ export default function EditApartmentPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-700">
+                        <p className="text-xs font-semibold text-gray-500 mb-1.5">
                           {video ? '🎬 Vidéo' : `📷 Photo ${i + 1}`}
-                          {img.is_cover && <span className="ml-2 text-[#B08B52] text-xs font-semibold">Couverture</span>}
+                          {img.is_cover && <span className="ml-2 text-[#B08B52]">Couverture</span>}
                         </p>
-                        <p className="text-xs text-gray-400 truncate">{img.alt_fr}</p>
+                        <div className="flex flex-col gap-1">
+                          <input
+                            type="text"
+                            value={img.alt_fr}
+                            onChange={(e) => setImages(prev => prev.map(im => im.id === img.id ? { ...im, alt_fr: e.target.value } : im))}
+                            onBlur={(e) => updateImageAlt(img.id, 'alt_fr', e.target.value)}
+                            placeholder="Intitulé FR (ex: Piscine avec vue mer)"
+                            className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#B08B52] focus:border-[#B08B52] bg-white placeholder-gray-300"
+                          />
+                          <input
+                            type="text"
+                            value={img.alt_en}
+                            onChange={(e) => setImages(prev => prev.map(im => im.id === img.id ? { ...im, alt_en: e.target.value } : im))}
+                            onBlur={(e) => updateImageAlt(img.id, 'alt_en', e.target.value)}
+                            placeholder="Caption EN (e.g. Pool with sea view)"
+                            className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#B08B52] focus:border-[#B08B52] bg-white placeholder-gray-300"
+                          />
+                        </div>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <button onClick={() => moveImage(i, 'up')} disabled={i === 0}
