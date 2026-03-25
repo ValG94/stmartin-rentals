@@ -134,6 +134,7 @@ export default async function ApartmentDetailPage({
           <div className="lg:col-span-1">
             <BookingForm
               apartmentName={name}
+              apartmentId={apartment.id}
               pricePerNight={activePriceUsd}
               basePrice={apartment.price_per_night}
               minPrice={minPriceUsd}
