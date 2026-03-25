@@ -7,10 +7,11 @@ import { Calendar, Users, MessageCircle } from 'lucide-react';
 interface BookingFormProps {
   apartmentName: string;
   pricePerNight: number;
+  basePrice?: number; // Prix de base (affiché barré si différent du prix saisonnier)
   slug: string;
 }
 
-export default function BookingForm({ apartmentName, pricePerNight, slug }: BookingFormProps) {
+export default function BookingForm({ apartmentName, pricePerNight, basePrice, slug }: BookingFormProps) {
   const t = useTranslations('booking');
   const locale = useLocale();
 
@@ -37,6 +38,7 @@ export default function BookingForm({ apartmentName, pricePerNight, slug }: Book
       : 0;
 
   const total = nights * pricePerNight;
+  const isSeasonalPrice = basePrice !== undefined && basePrice !== pricePerNight;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,10 +65,18 @@ export default function BookingForm({ apartmentName, pricePerNight, slug }: Book
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sticky top-24">
-      <div className="flex items-baseline gap-1 mb-6">
+      <div className="flex items-baseline gap-2 mb-6">
         <span className="text-3xl font-bold text-primary-600">{pricePerNight}€</span>
         <span className="text-gray-400 text-sm">/ {t('night')}</span>
+        {isSeasonalPrice && basePrice && (
+          <span className="text-sm text-gray-400 line-through">{basePrice}€</span>
+        )}
       </div>
+      {isSeasonalPrice && (
+        <div className="mb-4 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 font-medium">
+          {locale === 'fr' ? '✨ Tarif saisonnier en vigueur' : '✨ Seasonal rate in effect'}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Dates */}

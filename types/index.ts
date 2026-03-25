@@ -5,6 +5,20 @@
 
 export type Locale = 'fr' | 'en';
 
+// --- Prix saisonnier ---
+export interface SeasonalPrice {
+  id: string;
+  apartment_id: string;
+  name_fr: string;
+  name_en: string;
+  price_per_night: number;
+  date_from: string;
+  date_to: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // --- Appartement ---
 export interface Apartment {
   id: string;
@@ -17,6 +31,7 @@ export interface Apartment {
   description_en: string;
   location: string;
   price_per_night: number;
+  current_price?: number; // Prix saisonnier actif (calculé à partir de seasonal_prices)
   currency: string;
   bedrooms: number;
   bathrooms: number;
@@ -24,6 +39,7 @@ export interface Apartment {
   amenities: string[];
   images: ApartmentImage[];
   sections: GuideSection[];
+  seasonal_prices?: SeasonalPrice[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -34,6 +50,7 @@ export interface ApartmentImage {
   id: string;
   apartment_id: string;
   url: string;
+  storage_path?: string;
   alt_fr: string;
   alt_en: string;
   is_cover: boolean;

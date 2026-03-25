@@ -106,6 +106,8 @@ export default async function HomePage() {
               const coverImage = apt.images?.find((img: {is_cover: boolean}) => img.is_cover)?.url || apt.images?.[0]?.url || (apt.slug === 'villa-vanille' ? '/images/villa-vanille/piscine-terrasse.jpg' : '/images/villa-blanche/piscine.jpg');
               const title = locale === 'fr' ? apt.title_fr : apt.title_en;
               const shortDesc = locale === 'fr' ? apt.short_description_fr : apt.short_description_en;
+              const displayPrice = apt.current_price ?? apt.price_per_night;
+              const isSeasonalPrice = apt.current_price !== undefined && apt.current_price !== apt.price_per_night;
               return (
                 <Link key={apt.id} href={`/${locale}/apartments/${apt.slug}`} className="group relative overflow-hidden block" style={{height:'600px'}}>
                   <Image src={coverImage} alt={title} fill className="object-cover transition-transform duration-1000 group-hover:scale-105" />
@@ -120,7 +122,11 @@ export default async function HomePage() {
                     <h3 className="font-serif font-light text-cream-100 mb-3 leading-tight" style={{fontSize:'clamp(1.8rem, 3vw, 2.8rem)', letterSpacing:'-0.01em'}}>{title}</h3>
                     <p className="font-sans text-sm text-white/60 mb-6 line-clamp-2 max-w-sm">{shortDesc}</p>
                     <div className="flex items-center justify-between">
-                      <div><span className="font-serif text-2xl text-cream-100">{apt.price_per_night}€</span><span className="font-sans text-xs text-white/50 ml-2">/ {isFr ? 'nuit' : 'night'}</span></div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-serif text-2xl text-cream-100">{displayPrice}€</span>
+                        <span className="font-sans text-xs text-white/50">/ {isFr ? 'nuit' : 'night'}</span>
+                        {isSeasonalPrice && <span className="font-sans text-xs text-white/40 line-through">{apt.price_per_night}€</span>}
+                      </div>
                       <div className="flex items-center gap-2 font-sans text-xs text-bronze-300 uppercase group-hover:gap-4 transition-all duration-500" style={{letterSpacing:'0.15em'}}>{isFr ? 'Découvrir' : 'Discover'}<ArrowRight size={14} /></div>
                     </div>
                   </div>

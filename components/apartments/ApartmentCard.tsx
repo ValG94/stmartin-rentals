@@ -16,6 +16,10 @@ export default function ApartmentCard({ apartment }: ApartmentCardProps) {
   const description = locale === 'fr' ? apartment.short_description_fr : apartment.short_description_en;
   const coverImage = apartment.images.find((img) => img.is_cover) || apartment.images[0];
 
+  // Utiliser le prix saisonnier actif s'il est disponible, sinon le prix de base
+  const displayPrice = apartment.current_price ?? apartment.price_per_night;
+  const isSeasonalPrice = apartment.current_price !== undefined && apartment.current_price !== apartment.price_per_night;
+
   return (
     <Link href={`/${locale}/apartments/${apartment.slug}`} className="group block">
       <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1">
@@ -36,8 +40,13 @@ export default function ApartmentCard({ apartment }: ApartmentCardProps) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
           <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-primary-700">
-            {apartment.price_per_night}€ / {t('night')}
+            {displayPrice}€ / {t('night')}
           </div>
+          {isSeasonalPrice && (
+            <div className="absolute top-3 right-3 bg-amber-600/90 backdrop-blur-sm rounded-full px-2.5 py-1 text-xs font-semibold text-white">
+              {locale === 'fr' ? 'Prix saison' : 'Season price'}
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -69,9 +78,12 @@ export default function ApartmentCard({ apartment }: ApartmentCardProps) {
 
           {/* CTA */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <div>
-              <span className="text-xl font-bold text-primary-600">{apartment.price_per_night}€</span>
-              <span className="text-gray-400 text-sm"> / {t('night')}</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl font-bold text-primary-600">{displayPrice}€</span>
+              <span className="text-gray-400 text-sm">/ {t('night')}</span>
+              {isSeasonalPrice && (
+                <span className="text-xs text-gray-400 line-through">{apartment.price_per_night}€</span>
+              )}
             </div>
             <span className="text-sm font-medium text-primary-600 group-hover:underline">
               {t('view_details')} →

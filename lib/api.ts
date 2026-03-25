@@ -7,6 +7,7 @@ import {
   Apartment,
   ApartmentImage,
   GuideSection,
+  SeasonalPrice,
   AvailabilityBlock,
   Booking,
   BookingFormData,
@@ -17,7 +18,27 @@ import {
 // HELPERS
 // ============================================================
 
+/**
+ * Calcule le prix actif pour une villa à la date d'aujourd'hui.
+ * Retourne le prix saisonnier actif s'il en existe un, sinon le prix de base.
+ */
+export function getActivePrice(
+  basePricePerNight: number,
+  seasonalPrices: SeasonalPrice[] = []
+): number {
+  const today = new Date().toISOString().split('T')[0];
+  const activeSeason = seasonalPrices.find(
+    (sp) =>
+      sp.is_active &&
+      sp.date_from <= today &&
+      sp.date_to >= today
+  );
+  return activeSeason ? activeSeason.price_per_night : basePricePerNight;
+}
+
 function mapApartment(row: Record<string, unknown>): Apartment {
+  const seasonalPrices = (row.seasonal_prices as SeasonalPrice[]) || [];
+  const basePricePerNight = Number(row.price_per_night);
   return {
     id: row.id as string,
     slug: row.slug as string,
@@ -28,7 +49,8 @@ function mapApartment(row: Record<string, unknown>): Apartment {
     description_fr: row.description_fr as string,
     description_en: row.description_en as string,
     location: row.location as string,
-    price_per_night: Number(row.price_per_night),
+    price_per_night: basePricePerNight,
+    current_price: getActivePrice(basePricePerNight, seasonalPrices),
     currency: (row.currency as string) || 'EUR',
     bedrooms: Number(row.bedrooms),
     bathrooms: Number(row.bathrooms),
@@ -36,6 +58,7 @@ function mapApartment(row: Record<string, unknown>): Apartment {
     amenities: (row.amenities as string[]) || [],
     images: (row.apartment_images as ApartmentImage[]) || [],
     sections: (row.apartment_sections as GuideSection[]) || [],
+    seasonal_prices: seasonalPrices,
     is_active: row.is_active as boolean,
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
@@ -52,7 +75,8 @@ export async function getApartments(): Promise<ApiResponse<Apartment[]>> {
     .select(`
       *,
       apartment_images(id, url, alt_fr, alt_en, is_cover, position, storage_path),
-      apartment_sections(id, type, title_fr, title_en, content_fr, content_en, icon, position)
+      apartment_sections(id, type, title_fr, title_en, content_fr, content_en, icon, position),
+      seasonal_prices(id, name_fr, name_en, price_per_night, date_from, date_to, is_active)
     `)
     .eq('is_active', true)
     .order('created_at', { ascending: true });
@@ -71,7 +95,8 @@ export async function getApartmentBySlug(slug: string): Promise<ApiResponse<Apar
     .select(`
       *,
       apartment_images(id, url, alt_fr, alt_en, is_cover, position, storage_path),
-      apartment_sections(id, type, title_fr, title_en, content_fr, content_en, icon, position)
+      apartment_sections(id, type, title_fr, title_en, content_fr, content_en, icon, position),
+      seasonal_prices(id, name_fr, name_en, price_per_night, date_from, date_to, is_active)
     `)
     .eq('slug', slug)
     .eq('is_active', true)
@@ -87,13 +112,31 @@ export async function getApartmentById(id: string): Promise<ApiResponse<Apartmen
     .select(`
       *,
       apartment_images(id, url, alt_fr, alt_en, is_cover, position, storage_path),
-      apartment_sections(id, type, title_fr, title_en, content_fr, content_en, icon, position)
+      apartment_sections(id, type, title_fr, title_en, content_fr, content_en, icon, position),
+      seasonal_prices(id, name_fr, name_en, price_per_night, date_from, date_to, is_active)
     `)
     .eq('id', id)
     .single();
 
   if (error || !data) return { data: null, error: 'Appartement introuvable', success: false };
   return { data: mapApartment(data as Record<string, unknown>), error: null, success: true };
+}
+
+// ============================================================
+// PRIX SAISONNIERS
+// ============================================================
+
+export async function getSeasonalPrices(
+  apartmentId: string
+): Promise<ApiResponse<SeasonalPrice[]>> {
+  const { data, error } = await supabase
+    .from('seasonal_prices')
+    .select('*')
+    .eq('apartment_id', apartmentId)
+    .order('date_from', { ascending: true });
+
+  if (error) return { data: null, error: error.message, success: false };
+  return { data: data || [], error: null, success: true };
 }
 
 // ============================================================
@@ -150,6 +193,7 @@ export async function createBooking(
   const checkOut = new Date(formData.check_out);
   const nights = Math.round((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
 
+  // Récupérer le prix actif (saisonnier ou de base)
   const { data: apt } = await supabase
     .from('apartments')
     .select('price_per_night')
@@ -158,7 +202,22 @@ export async function createBooking(
 
   if (!apt) return { data: null, error: 'Appartement introuvable', success: false };
 
-  const pricePerNight = Number(apt.price_per_night);
+  // Vérifier s'il y a un prix saisonnier actif
+  const today = new Date().toISOString().split('T')[0];
+  const { data: seasonalData } = await supabase
+    .from('seasonal_prices')
+    .select('price_per_night')
+    .eq('apartment_id', formData.apartment_id)
+    .eq('is_active', true)
+    .lte('date_from', today)
+    .gte('date_to', today)
+    .limit(1)
+    .single();
+
+  const pricePerNight = seasonalData
+    ? Number(seasonalData.price_per_night)
+    : Number(apt.price_per_night);
+
   const totalAmount = pricePerNight * nights;
   const depositAmount = formData.payment_mode === 'deposit'
     ? Math.round(totalAmount * 0.3)
