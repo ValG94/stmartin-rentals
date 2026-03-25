@@ -8,7 +8,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { createClient } from '@supabase/supabase-js';
 import {
   Plus, Edit, Eye, EyeOff, Home, Image as ImageIcon,
-  BedDouble, Bath, Users, MapPin, Euro
+  BedDouble, Bath, Users, MapPin, DollarSign
 } from 'lucide-react';
 
 const supabase = createClient(
@@ -180,8 +180,8 @@ export default function AdminApartmentsPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                       <span className="flex items-center gap-1 font-semibold text-[#B08B52]">
-                        <Euro size={14} />
-                        {apt.price_per_night}/nuit
+                        <DollarSign size={14} />
+                        {apt.price_per_night.toLocaleString('en-US')}/nuit
                       </span>
                       <span className="flex items-center gap-1">
                         <BedDouble size={14} />

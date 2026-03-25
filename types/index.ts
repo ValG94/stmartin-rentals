@@ -32,6 +32,7 @@ export interface Apartment {
   location: string;
   price_per_night: number;
   current_price?: number; // Prix saisonnier actif (calculé à partir de seasonal_prices)
+  min_price?: number; // Prix minimum parmi toutes les saisons (pour affichage "à partir de $X")
   currency: string;
   bedrooms: number;
   bathrooms: number;

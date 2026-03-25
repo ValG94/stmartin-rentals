@@ -36,6 +36,21 @@ export function getActivePrice(
   return activeSeason ? activeSeason.price_per_night : basePricePerNight;
 }
 
+/**
+ * Retourne le prix minimum parmi toutes les saisons actives (pour affichage "à partir de $X").
+ * Si aucune saison, retourne le prix de base.
+ */
+export function getMinPrice(
+  basePricePerNight: number,
+  seasonalPrices: SeasonalPrice[] = []
+): number {
+  const activePrices = seasonalPrices
+    .filter((sp) => sp.is_active)
+    .map((sp) => sp.price_per_night);
+  if (activePrices.length === 0) return basePricePerNight;
+  return Math.min(...activePrices, basePricePerNight);
+}
+
 function mapApartment(row: Record<string, unknown>): Apartment {
   const seasonalPrices = (row.seasonal_prices as SeasonalPrice[]) || [];
   const basePricePerNight = Number(row.price_per_night);
@@ -51,7 +66,8 @@ function mapApartment(row: Record<string, unknown>): Apartment {
     location: row.location as string,
     price_per_night: basePricePerNight,
     current_price: getActivePrice(basePricePerNight, seasonalPrices),
-    currency: (row.currency as string) || 'EUR',
+    min_price: getMinPrice(basePricePerNight, seasonalPrices),
+    currency: (row.currency as string) || 'USD',
     bedrooms: Number(row.bedrooms),
     bathrooms: Number(row.bathrooms),
     max_guests: Number(row.max_guests),

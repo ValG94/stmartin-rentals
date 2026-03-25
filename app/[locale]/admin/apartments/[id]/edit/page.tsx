@@ -9,7 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   Save, ArrowLeft, Plus, Trash2, Star, Upload, X,
   ChevronUp, ChevronDown, Play, AlertCircle, Check,
-  Euro, Calendar, Tag, Image as ImageIcon, BookOpen, Info
+  DollarSign, Calendar, Image as ImageIcon, BookOpen, Info
 } from 'lucide-react';
 
 const supabase = createClient(
@@ -75,17 +75,29 @@ interface GuideSection {
 
 const TABS = [
   { id: 'info', label: 'Informations', icon: Info },
-  { id: 'prices', label: 'Tarifs & Saisons', icon: Euro },
+  { id: 'prices', label: 'Tarifs & Saisons', icon: DollarSign },
   { id: 'photos', label: 'Photos & Vidéos', icon: ImageIcon },
   { id: 'guide', label: 'Guide digital', icon: BookOpen },
 ];
 
-const AMENITY_SUGGESTIONS = [
-  'Piscine à débordement', 'Piscine privée', 'Vue mer panoramique', 'Vue lagon',
-  'Cuisine équipée', 'Climatisation', 'Wi-Fi haut débit', 'Parking privé',
-  'Terrasse', 'Barbecue', 'Jacuzzi', 'Salle de sport', 'Accès plage privée',
-  'Service de ménage', 'Linge de maison', 'Coffre-fort', 'TV satellite',
-  'Machine à laver', 'Lave-vaisselle', 'Vélos disponibles',
+// Commodités standardisées (clés internes)
+const AMENITIES_CATALOG = [
+  { key: 'pool',            label: 'Piscine' },
+  { key: 'jacuzzi',         label: 'Jacuzzi' },
+  { key: 'wifi',            label: 'Wi-Fi' },
+  { key: 'tv',              label: 'Télévision' },
+  { key: 'ac',              label: 'Climatisation' },
+  { key: 'kitchen',         label: 'Cuisine équipée' },
+  { key: 'bbq',             label: 'Barbecue' },
+  { key: 'terrace',         label: 'Terrasse' },
+  { key: 'sea_view',        label: 'Vue mer' },
+  { key: 'lagoon_view',     label: 'Vue lagon' },
+  { key: 'parking',         label: 'Parking' },
+  { key: 'washing_machine', label: 'Lave-linge' },
+  { key: 'hair_dryer',      label: 'Sèche-cheveux' },
+  { key: 'bed_linen',       label: 'Linge de maison' },
+  { key: 'beach_towels',    label: 'Serviettes de plage' },
+  { key: 'massage_room',    label: 'Salle de massage' },
 ];
 
 const GUIDE_ICONS = ['🏠', '🔑', '📶', '🚗', '🏖️', '🍽️', '🛒', '🚑', '📞', '🌊', '⚠️', '✨', '👋', '📋', '🛎️'];
@@ -108,7 +120,7 @@ export default function EditApartmentPage() {
     short_description_fr: '', short_description_en: '',
     description_fr: '', description_en: '',
     location: 'Saint-Martin, Antilles françaises',
-    price_per_night: 0, currency: 'EUR',
+    price_per_night: 0, currency: 'USD',
     bedrooms: 1, bathrooms: 1, max_guests: 2,
     amenities: [], is_active: true,
   });
@@ -116,9 +128,9 @@ export default function EditApartmentPage() {
   const [images, setImages] = useState<ApartmentImage[]>([]);
   const [seasonalPrices, setSeasonalPrices] = useState<SeasonalPrice[]>([]);
   const [guideSections, setGuideSections] = useState<GuideSection[]>([]);
-  const [newAmenity, setNewAmenity] = useState('');
+  // newAmenity supprimé — commodités gérées via checkboxes
   const [uploadingImages, setUploadingImages] = useState(false);
-  const [videoUrl, setVideoUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -506,7 +518,7 @@ export default function EditApartmentPage() {
                 { field: 'bedrooms' as const, label: 'Chambres' },
                 { field: 'bathrooms' as const, label: 'Salles de bain' },
                 { field: 'max_guests' as const, label: 'Capacité max' },
-                { field: 'price_per_night' as const, label: 'Prix de base / nuit (€)' },
+                { field: 'price_per_night' as const, label: 'Prix de base / nuit ($)' },
               ].map(({ field, label }) => (
                 <div key={field}>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{label}</label>
@@ -518,56 +530,48 @@ export default function EditApartmentPage() {
             </div>
           </div>
 
-          {/* Commodités */}
+          {/* Commodités — Checkboxes */}
           <div className="bg-white border border-gray-200 rounded-xl p-5">
-            <h3 className="font-semibold text-gray-900 mb-4">Commodités & Équipements</h3>
-            <div className="flex flex-wrap gap-2 mb-4 min-h-[2rem]">
-              {apt.amenities.map((a, i) => (
-                <span key={i} className="flex items-center gap-1.5 bg-[#0D1B2A]/5 text-[#0D1B2A] text-sm px-3 py-1.5 rounded-full">
-                  {a}
-                  <button onClick={() => setApt(p => ({ ...p, amenities: p.amenities.filter((_, j) => j !== i) }))}
-                    className="text-gray-400 hover:text-red-500 transition-colors">
-                    <X size={12} />
-                  </button>
-                </span>
-              ))}
-              {apt.amenities.length === 0 && (
-                <span className="text-sm text-gray-400 italic">Aucune commodité ajoutée</span>
-              )}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Commodités & Équipements</h3>
+              <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">
+                {apt.amenities.length} sélectionné{apt.amenities.length > 1 ? 'es' : 'e'}
+              </span>
             </div>
-            <div className="flex gap-2 mb-3">
-              <input type="text" value={newAmenity}
-                onChange={e => setNewAmenity(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && newAmenity.trim()) {
-                    setApt(p => ({ ...p, amenities: [...p.amenities, newAmenity.trim()] }));
-                    setNewAmenity('');
-                  }
-                }}
-                placeholder="Ajouter une commodité..."
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52]" />
-              <button
-                onClick={() => {
-                  if (newAmenity.trim()) {
-                    setApt(p => ({ ...p, amenities: [...p.amenities, newAmenity.trim()] }));
-                    setNewAmenity('');
-                  }
-                }}
-                className="bg-[#0D1B2A] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#1a2f45] transition-colors">
-                <Plus size={16} />
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400 mb-2">Suggestions rapides :</p>
-              <div className="flex flex-wrap gap-1.5">
-                {AMENITY_SUGGESTIONS.filter(s => !apt.amenities.includes(s)).map(s => (
-                  <button key={s}
-                    onClick={() => setApt(p => ({ ...p, amenities: [...p.amenities, s] }))}
-                    className="text-xs bg-gray-100 hover:bg-[#B08B52]/10 hover:text-[#B08B52] text-gray-600 px-2.5 py-1 rounded-full transition-colors flex items-center gap-1">
-                    <Tag size={10} />{s}
-                  </button>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {AMENITIES_CATALOG.map(({ key, label }) => {
+                const checked = apt.amenities.includes(key);
+                return (
+                  <label
+                    key={key}
+                    className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                      checked
+                        ? 'border-[#B08B52] bg-[#B08B52]/5 text-[#0D1B2A]'
+                        : 'border-gray-100 hover:border-gray-200 text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                      checked ? 'bg-[#B08B52] border-[#B08B52]' : 'border-gray-300'
+                    }`}>
+                      {checked && <Check size={12} className="text-white" strokeWidth={3} />}
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={checked}
+                      onChange={() => {
+                        setApt(p => ({
+                          ...p,
+                          amenities: checked
+                            ? p.amenities.filter(a => a !== key)
+                            : [...p.amenities, key],
+                        }));
+                      }}
+                    />
+                    <span className="text-sm font-medium">{label}</span>
+                  </label>
+                );
+              })}
             </div>
           </div>
 
@@ -585,7 +589,7 @@ export default function EditApartmentPage() {
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700 flex items-start gap-2">
             <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
             <div>
-              <strong>Prix de base :</strong> {apt.price_per_night}€/nuit.
+              <strong>Prix de base :</strong> ${apt.price_per_night.toLocaleString('en-US')}/nuit.
               Les tarifs saisonniers s&apos;appliquent en priorité sur les périodes définies.
             </div>
           </div>
@@ -619,7 +623,7 @@ export default function EditApartmentPage() {
                     placeholder="Ex: High season" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Prix / nuit (€)</label>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Prix / nuit ($)</label>
                   <input type="number" min="0" value={sp.price_per_night}
                     onChange={e => updateSP(sp, 'price_per_night', parseFloat(e.target.value) || 0)}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52]" />

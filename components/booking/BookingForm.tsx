@@ -1,19 +1,31 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Calendar, Users, MessageCircle } from 'lucide-react';
 
 interface BookingFormProps {
   apartmentName: string;
-  pricePerNight: number;
-  basePrice?: number; // Prix de base (affiché barré si différent du prix saisonnier)
+  pricePerNight: number;   // Prix actif en USD
+  basePrice?: number;      // Prix de base en USD (barré si différent)
+  minPrice?: number;       // Prix minimum toutes saisons (pour affichage)
   slug: string;
+  locale: string;
+  eurRate: number;         // Taux USD→EUR en temps réel
+  formatPrice: (usd: number) => string; // Formateur selon locale
 }
 
-export default function BookingForm({ apartmentName, pricePerNight, basePrice, slug }: BookingFormProps) {
+export default function BookingForm({
+  apartmentName,
+  pricePerNight,
+  basePrice,
+  slug,
+  locale,
+  eurRate,
+  formatPrice,
+}: BookingFormProps) {
   const t = useTranslations('booking');
-  const locale = useLocale();
+  const isFr = locale === 'fr';
 
   const [form, setForm] = useState({
     checkIn: '',
@@ -37,12 +49,11 @@ export default function BookingForm({ apartmentName, pricePerNight, basePrice, s
         )
       : 0;
 
-  const total = nights * pricePerNight;
+  const totalUsd = nights * pricePerNight;
   const isSeasonalPrice = basePrice !== undefined && basePrice !== pricePerNight;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Construction du message WhatsApp
     const msg = encodeURIComponent(
       `Bonjour, je souhaite réserver ${apartmentName}.\n` +
         `Arrivée: ${form.checkIn}\nDépart: ${form.checkOut}\n` +
@@ -65,16 +76,29 @@ export default function BookingForm({ apartmentName, pricePerNight, basePrice, s
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sticky top-24">
-      <div className="flex items-baseline gap-2 mb-6">
-        <span className="text-3xl font-bold text-primary-600">{pricePerNight}€</span>
+      {/* Prix affiché */}
+      <div className="flex items-baseline gap-2 mb-2">
+        <span className="text-3xl font-bold text-primary-600">
+          {formatPrice(pricePerNight)}
+        </span>
         <span className="text-gray-400 text-sm">/ {t('night')}</span>
         {isSeasonalPrice && basePrice && (
-          <span className="text-sm text-gray-400 line-through">{basePrice}€</span>
+          <span className="text-sm text-gray-400 line-through">
+            {formatPrice(basePrice)}
+          </span>
         )}
       </div>
+
+      {/* Indication de conversion si locale FR */}
+      {isFr && (
+        <p className="text-xs text-gray-400 mb-3">
+          {isFr ? `Taux appliqué : 1 $ = ${eurRate.toFixed(4)} €` : `Rate: 1 $ = ${eurRate.toFixed(4)} €`}
+        </p>
+      )}
+
       {isSeasonalPrice && (
         <div className="mb-4 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 font-medium">
-          {locale === 'fr' ? '✨ Tarif saisonnier en vigueur' : '✨ Seasonal rate in effect'}
+          {isFr ? '✨ Tarif saisonnier en vigueur' : '✨ Seasonal rate in effect'}
         </div>
       )}
 
@@ -119,7 +143,7 @@ export default function BookingForm({ apartmentName, pricePerNight, basePrice, s
             <input
               type="number"
               min={1}
-              max={12}
+              max={20}
               value={form.guests}
               onChange={(e) => setForm({ ...form, guests: parseInt(e.target.value) })}
               className="flex-1 text-sm focus:outline-none"
@@ -175,12 +199,18 @@ export default function BookingForm({ apartmentName, pricePerNight, basePrice, s
         {nights > 0 && (
           <div className="bg-primary-50 rounded-xl p-4 space-y-2 text-sm">
             <div className="flex justify-between text-gray-600">
-              <span>{pricePerNight}€ × {nights} {t('nights')}</span>
-              <span>{pricePerNight * nights}€</span>
+              <span>{formatPrice(pricePerNight)} × {nights} {t('nights')}</span>
+              <span>{formatPrice(totalUsd)}</span>
             </div>
+            {isFr && (
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>${pricePerNight.toLocaleString('en-US')} × {nights} nuits</span>
+                <span>${totalUsd.toLocaleString('en-US')}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-primary-100">
               <span>{t('total')}</span>
-              <span>{total}€</span>
+              <span>{formatPrice(totalUsd)}</span>
             </div>
           </div>
         )}

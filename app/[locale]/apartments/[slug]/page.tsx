@@ -2,9 +2,11 @@ import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Bed, Bath, Users, MapPin, BookOpen } from 'lucide-react';
-import { getApartmentBySlug, getApartments } from '@/lib/api';
+import { getApartmentBySlug, getApartments, getMinPrice } from '@/lib/api';
+import { getUsdToEurRate } from '@/lib/currency';
 import ImageGallery from '@/components/apartments/ImageGallery';
 import BookingForm from '@/components/booking/BookingForm';
+import { AMENITIES_MAP } from '@/components/apartments/AmenityIcon';
 
 export async function generateStaticParams() {
   const res = await getApartments();
@@ -15,22 +17,7 @@ export async function generateStaticParams() {
   ]);
 }
 
-const AMENITY_LABELS: Record<string, { fr: string; en: string }> = {
-  pool: { fr: 'Piscine', en: 'Pool' },
-  wifi: { fr: 'Wi-Fi', en: 'Wi-Fi' },
-  ac: { fr: 'Climatisation', en: 'Air conditioning' },
-  parking: { fr: 'Parking', en: 'Parking' },
-  sea_view: { fr: 'Vue mer', en: 'Sea view' },
-  lagoon_view: { fr: 'Vue lagon', en: 'Lagoon view' },
-  terrace: { fr: 'Terrasse', en: 'Terrace' },
-  bbq: { fr: 'Barbecue', en: 'BBQ' },
-  kitchen: { fr: 'Cuisine équipée', en: 'Equipped kitchen' },
-};
 
-const AMENITY_ICONS: Record<string, string> = {
-  pool: '🏊', wifi: '📶', ac: '❄️', parking: '🅿️',
-  sea_view: '🌊', lagoon_view: '🏝️', terrace: '🌿', bbq: '🔥', kitchen: '🍳',
-};
 
 export default async function ApartmentDetailPage({
   params,
@@ -44,6 +31,18 @@ export default async function ApartmentDetailPage({
   const res = await getApartmentBySlug(slug);
   if (!res.data) notFound();
   const apartment = res.data;
+
+  // Taux de change USD→EUR en temps réel
+  const eurRate = await getUsdToEurRate();
+  const isFr = locale === 'fr';
+
+  // Prix actif et prix minimum
+  const activePriceUsd = apartment.current_price ?? apartment.price_per_night;
+  const minPriceUsd = getMinPrice(apartment.price_per_night, apartment.seasonal_prices ?? []);
+
+  // Formatage des prix selon la locale
+  const formatPrice = (usd: number) =>
+    isFr ? `${Math.round(usd * eurRate).toLocaleString('fr-FR')} €` : `$${usd.toLocaleString('en-US')}`;
 
   const name = locale === 'fr' ? apartment.title_fr : apartment.title_en;
   const description = locale === 'fr' ? apartment.description_fr : apartment.description_en;
@@ -115,14 +114,18 @@ export default async function ApartmentDetailPage({
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('amenities')}</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {apartment.amenities.map((amenity, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-primary-50 rounded-xl">
-                    <span className="text-lg">{AMENITY_ICONS[amenity] ?? '✓'}</span>
-                    <span className="text-sm font-medium text-gray-700">
-                      {AMENITY_LABELS[amenity]?.[locale as 'fr' | 'en'] ?? amenity}
-                    </span>
-                  </div>
-                ))}
+                {apartment.amenities.map((amenityKey, i) => {
+                  const def = AMENITIES_MAP[amenityKey];
+                  const label = def
+                    ? (isFr ? def.label_fr : def.label_en)
+                    : amenityKey;
+                  return (
+                    <div key={i} className="flex items-center gap-3 p-3 bg-primary-50 rounded-xl">
+                      <span className="text-night-400 flex-shrink-0">{def?.icon ?? '✓'}</span>
+                      <span className="text-sm font-medium text-gray-700">{label}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -131,9 +134,13 @@ export default async function ApartmentDetailPage({
           <div className="lg:col-span-1">
             <BookingForm
               apartmentName={name}
-              pricePerNight={apartment.current_price ?? apartment.price_per_night}
+              pricePerNight={activePriceUsd}
               basePrice={apartment.price_per_night}
+              minPrice={minPriceUsd}
               slug={slug}
+              locale={locale}
+              eurRate={eurRate}
+              formatPrice={formatPrice}
             />
           </div>
         </div>

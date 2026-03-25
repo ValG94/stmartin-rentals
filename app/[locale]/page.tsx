@@ -1,4 +1,6 @@
 import { getTranslations, getLocale } from 'next-intl/server';
+import VillaCard from '@/components/apartments/VillaCard';
+import VillaCardFallback from '@/components/apartments/VillaCardFallback';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getApartments } from '@/lib/api';
@@ -102,58 +104,13 @@ export default async function HomePage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-            {apartments.length > 0 ? apartments.map((apt, index) => {
-              const coverImage = apt.images?.find((img: {is_cover: boolean}) => img.is_cover)?.url || apt.images?.[0]?.url || (apt.slug === 'villa-vanille' ? '/images/villa-vanille/piscine-terrasse.jpg' : '/images/villa-blanche/piscine.jpg');
-              const title = locale === 'fr' ? apt.title_fr : apt.title_en;
-              const shortDesc = locale === 'fr' ? apt.short_description_fr : apt.short_description_en;
-              const displayPrice = apt.current_price ?? apt.price_per_night;
-              const isSeasonalPrice = apt.current_price !== undefined && apt.current_price !== apt.price_per_night;
-              return (
-                <Link key={apt.id} href={`/${locale}/apartments/${apt.slug}`} className="group relative overflow-hidden block" style={{height:'600px'}}>
-                  <Image src={coverImage} alt={title} fill className="object-cover transition-transform duration-1000 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-night-600/90 via-night-600/20 to-transparent transition-all duration-700 group-hover:from-night-600/95 group-hover:via-night-600/30" />
-                  <div className="absolute top-8 right-8 font-serif text-6xl font-light text-white/10" style={{letterSpacing:'-0.02em'}}>0{index+1}</div>
-                  <div className="absolute bottom-0 left-0 right-0 p-10">
-                    <div className="flex items-center gap-4 mb-3">
-                      <span className="font-sans text-xs text-bronze-300 uppercase" style={{letterSpacing:'0.2em'}}><MapPin size={10} className="inline mr-1" />{apt.location}</span>
-                      <span className="w-px h-3 bg-white/20" />
-                      <span className="font-sans text-xs text-white/60 uppercase" style={{letterSpacing:'0.15em'}}>{apt.bedrooms} {isFr ? 'chambres' : 'bedrooms'} · {apt.max_guests} {isFr ? 'pers.' : 'guests'}</span>
-                    </div>
-                    <h3 className="font-serif font-light text-cream-100 mb-3 leading-tight" style={{fontSize:'clamp(1.8rem, 3vw, 2.8rem)', letterSpacing:'-0.01em'}}>{title}</h3>
-                    <p className="font-sans text-sm text-white/60 mb-6 line-clamp-2 max-w-sm">{shortDesc}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-serif text-2xl text-cream-100">{displayPrice}€</span>
-                        <span className="font-sans text-xs text-white/50">/ {isFr ? 'nuit' : 'night'}</span>
-                        {isSeasonalPrice && <span className="font-sans text-xs text-white/40 line-through">{apt.price_per_night}€</span>}
-                      </div>
-                      <div className="flex items-center gap-2 font-sans text-xs text-bronze-300 uppercase group-hover:gap-4 transition-all duration-500" style={{letterSpacing:'0.15em'}}>{isFr ? 'Découvrir' : 'Discover'}<ArrowRight size={14} /></div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            }) : [
-              {slug:'villa-vanille', title:'La Villa Vanille', desc: isFr ? 'Villa de prestige avec piscine à débordement et vue mer panoramique' : 'Prestige villa with infinity pool and panoramic sea view', img:'/images/villa-vanille/piscine-terrasse.jpg', price:650, bedrooms:4, guests:8, location:'Terres Basses, Saint-Martin'},
-              {slug:'villa-blanche', title:'La Villa Blanche', desc: isFr ? 'Villa intimiste avec piscine privée et vue sur le lagon' : 'Intimate villa with private pool and lagoon view', img:'/images/villa-blanche/piscine.jpg', price:350, bedrooms:2, guests:4, location:'Orient Bay, Saint-Martin'},
+            {apartments.length > 0 ? apartments.map((apt, index) => (
+              <VillaCard key={apt.id} apartment={apt} index={index} />
+            )) : [
+              {slug:'villa-vanille', title:'La Villa Vanille', desc: isFr ? 'Villa de prestige avec piscine à débordement et vue mer panoramique' : 'Prestige villa with infinity pool and panoramic sea view', img:'/images/villa-vanille/piscine-terrasse.jpg', price:1500, bedrooms:3, bathrooms:3, guests:6, location:'Terres Basses, Saint-Martin'},
+              {slug:'villa-blanche', title:'La Villa Blanche', desc: isFr ? 'Villa intimiste avec piscine privée et vue sur le lagon turquoise' : 'Intimate villa with private pool and turquoise lagoon view', img:'/images/villa-blanche/piscine.jpg', price:480, bedrooms:2, bathrooms:2, guests:4, location:'Sandy Ground, Saint-Martin'},
             ].map((villa, index) => (
-              <Link key={villa.slug} href={`/${locale}/apartments/${villa.slug}`} className="group relative overflow-hidden block" style={{height:'600px'}}>
-                <Image src={villa.img} alt={villa.title} fill className="object-cover transition-transform duration-1000 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-night-600/90 via-night-600/20 to-transparent transition-all duration-700 group-hover:from-night-600/95 group-hover:via-night-600/30" />
-                <div className="absolute top-8 right-8 font-serif text-6xl font-light text-white/10" style={{letterSpacing:'-0.02em'}}>0{index+1}</div>
-                <div className="absolute bottom-0 left-0 right-0 p-10">
-                  <div className="flex items-center gap-4 mb-3">
-                    <span className="font-sans text-xs text-bronze-300 uppercase" style={{letterSpacing:'0.2em'}}><MapPin size={10} className="inline mr-1" />{villa.location}</span>
-                    <span className="w-px h-3 bg-white/20" />
-                    <span className="font-sans text-xs text-white/60 uppercase" style={{letterSpacing:'0.15em'}}>{villa.bedrooms} {isFr ? 'chambres' : 'bedrooms'} · {villa.guests} {isFr ? 'pers.' : 'guests'}</span>
-                  </div>
-                  <h3 className="font-serif font-light text-cream-100 mb-3 leading-tight" style={{fontSize:'clamp(1.8rem, 3vw, 2.8rem)', letterSpacing:'-0.01em'}}>{villa.title}</h3>
-                  <p className="font-sans text-sm text-white/60 mb-6 line-clamp-2 max-w-sm">{villa.desc}</p>
-                  <div className="flex items-center justify-between">
-                    <div><span className="font-serif text-2xl text-cream-100">{villa.price}€</span><span className="font-sans text-xs text-white/50 ml-2">/ {isFr ? 'nuit' : 'night'}</span></div>
-                    <div className="flex items-center gap-2 font-sans text-xs text-bronze-300 uppercase group-hover:gap-4 transition-all duration-500" style={{letterSpacing:'0.15em'}}>{isFr ? 'Découvrir' : 'Discover'}<ArrowRight size={14} /></div>
-                  </div>
-                </div>
-              </Link>
+              <VillaCardFallback key={villa.slug} villa={villa} index={index} />
             ))}
           </div>
         </div>
