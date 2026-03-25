@@ -10,7 +10,7 @@ export default async function ApartmentsPage() {
   const apartments = res.data ?? [];
 
   return (
-    <div>
+    <div className="pt-20">
       {/* Hero */}
       <section className="relative h-64 flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">

@@ -21,7 +21,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen pt-20">
       {/* Hero */}
       <div className="bg-primary-700 text-white py-16 px-4 text-center">
         <h1 className="text-4xl font-bold mb-3">{t('title')}</h1>

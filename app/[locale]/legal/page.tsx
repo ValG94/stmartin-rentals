@@ -5,7 +5,7 @@ export default async function LegalPage() {
   const t = await getTranslations('legal');
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen pt-20">
       <div className="bg-primary-700 text-white py-12 px-4 text-center">
         <h1 className="text-3xl font-bold">{t('title')}</h1>
       </div>

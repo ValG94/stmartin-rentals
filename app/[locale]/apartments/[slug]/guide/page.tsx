@@ -20,7 +20,7 @@ export default async function GuidePage({
   const sections: GuideSection[] = apartment.sections ?? [];
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen pt-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back */}
         <Link
