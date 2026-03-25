@@ -83,7 +83,7 @@ export default async function ApartmentDetailPage({
 
         {/* Gallery */}
         <div className="mb-10">
-          <ImageGallery images={apartment.images.map(img => img.url)} alt={name} />
+          <ImageGallery mediaItems={apartment.images} alt={name} locale={locale} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
