@@ -4,7 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { createClient } from '@supabase/supabase-js';
+
+// Client Supabase côté client — utilise les variables NEXT_PUBLIC_ disponibles dans le bundle
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -14,18 +20,29 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const locale = useLocale();
-  const { login } = useAdminAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const success = await login(email, password);
-    if (success) {
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError || !data.session) {
+        setError(locale === 'fr' ? 'Identifiants incorrects' : 'Invalid credentials');
+        setLoading(false);
+        return;
+      }
+
+      // Stocker le token en localStorage pour l'état UI
+      localStorage.setItem('sb-admin-token', data.user.id);
       router.push(`/${locale}/admin/dashboard`);
-    } else {
-      setError(locale === 'fr' ? 'Identifiants incorrects' : 'Invalid credentials');
+    } catch {
+      setError(locale === 'fr' ? 'Erreur de connexion' : 'Connection error');
       setLoading(false);
     }
   };

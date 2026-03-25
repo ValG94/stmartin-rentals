@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Lock } from 'lucide-react';
 
 export default function Header() {
   const t = useTranslations('nav');
@@ -72,7 +72,7 @@ export default function Header() {
             </nav>
 
             {/* Actions droite */}
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-4">
               <button onClick={switchLanguage}
                 className={`font-sans text-xs font-medium transition-colors duration-300 ${textColor} ${hoverColor}`}
                 style={{letterSpacing:'0.2em'}} aria-label={`Switch to ${otherLocale.toUpperCase()}`}>
@@ -88,6 +88,18 @@ export default function Header() {
                 style={{letterSpacing:'0.15em'}}>
                 {t('apartments')}
               </Link>
+
+              {/* Bouton Admin — discret, icône cadenas */}
+              <Link
+                href={`/${locale}/admin-login`}
+                title={locale === 'fr' ? 'Espace administration' : 'Admin area'}
+                className={`hidden sm:flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 opacity-30 hover:opacity-100 ${
+                  transparent ? 'text-white hover:bg-white/10' : 'text-night-400 hover:bg-night-100'
+                }`}
+              >
+                <Lock size={14} />
+              </Link>
+
               <button onClick={() => setMenuOpen(!menuOpen)}
                 className={`md:hidden p-1 transition-colors duration-300 ${textColor}`} aria-label="Menu">
                 {menuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -111,12 +123,19 @@ export default function Header() {
           ))}
           <div className="divider-bronze mx-auto mt-4" />
           <Link href={`/${locale}/apartments`} onClick={() => setMenuOpen(false)} className="btn-bronze mt-2">
-            Réserver
+            {locale === 'fr' ? 'Réserver' : 'Book now'}
           </Link>
           <button onClick={() => { switchLanguage(); setMenuOpen(false); }}
             className="font-sans text-xs text-cream-100/60 uppercase mt-2" style={{letterSpacing:'0.2em'}}>
             {otherLocale.toUpperCase()}
           </button>
+          {/* Lien admin mobile */}
+          <Link href={`/${locale}/admin-login`} onClick={() => setMenuOpen(false)}
+            className="flex items-center gap-2 font-sans text-xs text-cream-100/30 hover:text-cream-100/60 uppercase mt-4 transition-colors"
+            style={{letterSpacing:'0.15em'}}>
+            <Lock size={12} />
+            Admin
+          </Link>
         </div>
       </div>
     </>
