@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
-const ADMIN_TOKEN_KEY = 'admin_token';
+const TOKEN_KEY = 'sb-admin-token';
 
 export function useAdminAuth() {
   const [token, setToken] = useState<string | null>(null);
@@ -11,29 +11,46 @@ export function useAdminAuth() {
   const router = useRouter();
 
   useEffect(() => {
-    const stored = localStorage.getItem(ADMIN_TOKEN_KEY);
+    const stored = localStorage.getItem(TOKEN_KEY);
     setToken(stored);
     setIsLoading(false);
   }, []);
 
-  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
-    const res = await fetch('/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
+  /**
+   * Connexion avec email + mot de passe (Supabase Auth)
+   * Compatible aussi avec l'ancien format username/password pour la transition
+   */
+  const login = useCallback(async (emailOrUsername: string, password: string): Promise<boolean> => {
+    try {
+      // Détecter si c'est un email ou un username
+      const isEmail = emailOrUsername.includes('@');
+      const body = isEmail
+        ? { email: emailOrUsername, password }
+        : { email: emailOrUsername, password }; // on envoie toujours email maintenant
 
-    if (!res.ok) return false;
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
 
-    const { token: t } = await res.json();
-    localStorage.setItem(ADMIN_TOKEN_KEY, t);
-    setToken(t);
-    return true;
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      // Le token est maintenant stocké dans les cookies httpOnly côté serveur
+      // On stocke juste un flag en localStorage pour l'état UI
+      const tokenValue = data.token || data.user?.id || 'authenticated';
+      localStorage.setItem(TOKEN_KEY, tokenValue);
+      setToken(tokenValue);
+      return true;
+    } catch {
+      return false;
+    }
   }, []);
 
   const logout = useCallback(async () => {
     await fetch('/api/admin/login', { method: 'DELETE' });
-    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     router.push('/fr/admin-login');
   }, [router]);

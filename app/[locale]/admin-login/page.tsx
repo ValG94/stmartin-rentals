@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 export default function AdminLoginPage() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError('');
 
-    const success = await login(username, password);
+    const success = await login(email, password);
     if (success) {
       router.push(`/${locale}/admin/dashboard`);
     } else {
@@ -31,76 +31,91 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-900 to-primary-700 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock size={28} className="text-primary-600" />
+    <div className="min-h-screen bg-night-600 flex items-center justify-center px-4">
+      {/* Fond décoratif */}
+      <div className="absolute inset-0 opacity-5 bg-gradient-to-br from-bronze-400 to-transparent pointer-events-none" />
+
+      <div className="relative bg-cream-100 p-10 w-full max-w-md shadow-2xl">
+        {/* Ligne bronze décorative */}
+        <div className="h-0.5 bg-bronze-400 w-12 mb-8" />
+
+        <div className="mb-8">
+          <div className="font-serif font-light text-night-600 text-2xl mb-1" style={{letterSpacing:'-0.01em'}}>
+            StMartin Rentals
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">StMartin Rentals</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="font-sans text-xs text-night-400 uppercase" style={{letterSpacing:'0.2em'}}>
             {locale === 'fr' ? 'Espace Administration' : 'Admin Area'}
           </p>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {locale === 'fr' ? 'Identifiant' : 'Username'}
+            <label className="block font-sans text-xs font-medium text-night-400 uppercase mb-2" style={{letterSpacing:'0.15em'}}>
+              {locale === 'fr' ? 'Adresse e-mail' : 'Email address'}
             </label>
             <div className="relative">
-              <User
-                size={18}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              />
+              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-night-300" />
               <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-300"
-                placeholder="admin"
+                autoComplete="email"
+                className="w-full pl-11 pr-4 py-3.5 border border-night-200/30 bg-white font-sans text-sm text-night-600 focus:outline-none focus:border-bronze-400 transition-colors"
+                placeholder="votre@email.com"
               />
             </div>
           </div>
+
+          {/* Mot de passe */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block font-sans text-xs font-medium text-night-400 uppercase mb-2" style={{letterSpacing:'0.15em'}}>
               {locale === 'fr' ? 'Mot de passe' : 'Password'}
             </label>
             <div className="relative">
-              <Lock
-                size={18}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              />
+              <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-night-300" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-300"
+                autoComplete="current-password"
+                className="w-full pl-11 pr-12 py-3.5 border border-night-200/30 bg-white font-sans text-sm text-night-600 focus:outline-none focus:border-bronze-400 transition-colors"
                 placeholder="••••••••"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-night-300 hover:text-night-600 transition-colors"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
+
+          {/* Erreur */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
+            <div className="border border-red-200 bg-red-50 text-red-700 font-sans text-sm px-4 py-3">
               {error}
             </div>
           )}
+
+          {/* Bouton */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3.5 rounded-xl transition-colors disabled:opacity-50"
+            className="w-full bg-night-600 hover:bg-night-500 text-cream-100 font-sans text-xs uppercase py-4 transition-colors duration-300 disabled:opacity-50 mt-2"
+            style={{letterSpacing:'0.2em'}}
           >
-            {loading ? '...' : locale === 'fr' ? 'Se connecter' : 'Sign in'}
+            {loading
+              ? (locale === 'fr' ? 'Connexion...' : 'Signing in...')
+              : (locale === 'fr' ? 'Se connecter' : 'Sign in')}
           </button>
         </form>
+
+        {/* Ligne bronze décorative bas */}
+        <div className="h-0.5 bg-bronze-400/30 w-full mt-10" />
       </div>
     </div>
   );
