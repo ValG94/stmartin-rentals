@@ -5,6 +5,14 @@ import { useRouter } from 'next/navigation';
 
 const TOKEN_KEY = 'sb-admin-token';
 
+// URL absolue pour éviter que le préfixe de locale (/fr/, /en/) s'ajoute à l'URL de l'API
+function apiUrl(path: string): string {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}${path}`;
+  }
+  return path;
+}
+
 export function useAdminAuth() {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,30 +24,20 @@ export function useAdminAuth() {
     setIsLoading(false);
   }, []);
 
-  /**
-   * Connexion avec email + mot de passe (Supabase Auth)
-   * Compatible aussi avec l'ancien format username/password pour la transition
-   */
-  const login = useCallback(async (emailOrUsername: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     try {
-      // Détecter si c'est un email ou un username
-      const isEmail = emailOrUsername.includes('@');
-      const body = isEmail
-        ? { email: emailOrUsername, password }
-        : { email: emailOrUsername, password }; // on envoie toujours email maintenant
-
-      const res = await fetch('/api/admin/login', {
+      const res = await fetch(apiUrl('/api/admin/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!res.ok) return false;
 
       const data = await res.json();
-      // Le token est maintenant stocké dans les cookies httpOnly côté serveur
-      // On stocke juste un flag en localStorage pour l'état UI
-      const tokenValue = data.token || data.user?.id || 'authenticated';
+      // Le token Supabase est stocké dans les cookies httpOnly côté serveur
+      // On stocke l'ID utilisateur en localStorage pour l'état UI
+      const tokenValue = data.user?.id || 'authenticated';
       localStorage.setItem(TOKEN_KEY, tokenValue);
       setToken(tokenValue);
       return true;
@@ -49,7 +47,7 @@ export function useAdminAuth() {
   }, []);
 
   const logout = useCallback(async () => {
-    await fetch('/api/admin/login', { method: 'DELETE' });
+    await fetch(apiUrl('/api/admin/login'), { method: 'DELETE' });
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     router.push('/fr/admin-login');
