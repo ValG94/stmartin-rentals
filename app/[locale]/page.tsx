@@ -17,7 +17,7 @@ export default async function HomePage() {
       {/* HERO */}
       <section className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <Image src="/images/villa-vanille/vue aerienne.jpeg" alt="Villa luxe Saint-Martin" fill className="object-cover" priority quality={90} />
+          <Image src="/images/villa-vanille/vue piscine drone.jpeg" alt="Villa luxe Saint-Martin" fill className="object-cover" priority quality={90} />
           <div className="absolute inset-0 bg-gradient-to-b from-night-600/50 via-night-600/20 to-night-600/70" />
           <div className="absolute inset-0 bg-gradient-to-r from-night-600/30 via-transparent to-transparent" />
         </div>
