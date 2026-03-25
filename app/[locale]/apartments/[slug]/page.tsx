@@ -17,8 +17,6 @@ export async function generateStaticParams() {
   ]);
 }
 
-
-
 export default async function ApartmentDetailPage({
   params,
 }: {
@@ -32,17 +30,19 @@ export default async function ApartmentDetailPage({
   if (!res.data) notFound();
   const apartment = res.data;
 
-  // Taux de change USD→EUR en temps réel
-  const eurRate = await getUsdToEurRate();
+  // Taux de change USD→EUR en temps réel (avec fallback 0.92)
+  let eurRate = 0.92;
+  try {
+    eurRate = await getUsdToEurRate();
+  } catch {
+    // fallback silencieux
+  }
+
   const isFr = locale === 'fr';
 
   // Prix actif et prix minimum
   const activePriceUsd = apartment.current_price ?? apartment.price_per_night;
   const minPriceUsd = getMinPrice(apartment.price_per_night, apartment.seasonal_prices ?? []);
-
-  // Formatage des prix selon la locale
-  const formatPrice = (usd: number) =>
-    isFr ? `${Math.round(usd * eurRate).toLocaleString('fr-FR')} €` : `$${usd.toLocaleString('en-US')}`;
 
   const name = locale === 'fr' ? apartment.title_fr : apartment.title_en;
   const description = locale === 'fr' ? apartment.description_fr : apartment.description_en;
@@ -121,7 +121,7 @@ export default async function ApartmentDetailPage({
                     : amenityKey;
                   return (
                     <div key={i} className="flex items-center gap-3 p-3 bg-primary-50 rounded-xl">
-                      <span className="text-night-400 flex-shrink-0">{def?.icon ?? '✓'}</span>
+                      <span className="text-primary-600 flex-shrink-0">{def?.icon ?? '✓'}</span>
                       <span className="text-sm font-medium text-gray-700">{label}</span>
                     </div>
                   );
@@ -140,7 +140,6 @@ export default async function ApartmentDetailPage({
               slug={slug}
               locale={locale}
               eurRate={eurRate}
-              formatPrice={formatPrice}
             />
           </div>
         </div>

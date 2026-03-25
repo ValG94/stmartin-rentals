@@ -2,17 +2,16 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Calendar, Users, MessageCircle } from 'lucide-react';
+import { Users, MessageCircle } from 'lucide-react';
 
 interface BookingFormProps {
   apartmentName: string;
   pricePerNight: number;   // Prix actif en USD
   basePrice?: number;      // Prix de base en USD (barré si différent)
-  minPrice?: number;       // Prix minimum toutes saisons (pour affichage)
+  minPrice?: number;       // Prix minimum toutes saisons
   slug: string;
   locale: string;
-  eurRate: number;         // Taux USD→EUR en temps réel
-  formatPrice: (usd: number) => string; // Formateur selon locale
+  eurRate: number;         // Taux USD→EUR (passé depuis le serveur)
 }
 
 export default function BookingForm({
@@ -22,10 +21,15 @@ export default function BookingForm({
   slug,
   locale,
   eurRate,
-  formatPrice,
 }: BookingFormProps) {
   const t = useTranslations('booking');
   const isFr = locale === 'fr';
+
+  // Formatage des prix selon la locale (calculé côté client)
+  const fmt = (usd: number) =>
+    isFr
+      ? `${Math.round(usd * eurRate).toLocaleString('fr-FR')} €`
+      : `$${usd.toLocaleString('en-US')}`;
 
   const [form, setForm] = useState({
     checkIn: '',
@@ -79,12 +83,12 @@ export default function BookingForm({
       {/* Prix affiché */}
       <div className="flex items-baseline gap-2 mb-2">
         <span className="text-3xl font-bold text-primary-600">
-          {formatPrice(pricePerNight)}
+          {fmt(pricePerNight)}
         </span>
         <span className="text-gray-400 text-sm">/ {t('night')}</span>
         {isSeasonalPrice && basePrice && (
           <span className="text-sm text-gray-400 line-through">
-            {formatPrice(basePrice)}
+            {fmt(basePrice)}
           </span>
         )}
       </div>
@@ -92,7 +96,7 @@ export default function BookingForm({
       {/* Indication de conversion si locale FR */}
       {isFr && (
         <p className="text-xs text-gray-400 mb-3">
-          {isFr ? `Taux appliqué : 1 $ = ${eurRate.toFixed(4)} €` : `Rate: 1 $ = ${eurRate.toFixed(4)} €`}
+          Taux appliqué : 1 $ = {eurRate.toFixed(4)} €
         </p>
       )}
 
@@ -199,8 +203,8 @@ export default function BookingForm({
         {nights > 0 && (
           <div className="bg-primary-50 rounded-xl p-4 space-y-2 text-sm">
             <div className="flex justify-between text-gray-600">
-              <span>{formatPrice(pricePerNight)} × {nights} {t('nights')}</span>
-              <span>{formatPrice(totalUsd)}</span>
+              <span>{fmt(pricePerNight)} × {nights} {t('nights')}</span>
+              <span>{fmt(totalUsd)}</span>
             </div>
             {isFr && (
               <div className="flex justify-between text-xs text-gray-400">
@@ -210,7 +214,7 @@ export default function BookingForm({
             )}
             <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-primary-100">
               <span>{t('total')}</span>
-              <span>{formatPrice(totalUsd)}</span>
+              <span>{fmt(totalUsd)}</span>
             </div>
           </div>
         )}
