@@ -53,10 +53,10 @@ function StatusSelect({
     if (newStatus === current) return;
     setLoading(true);
     try {
-      const token = localStorage.getItem('admin_token');
       await fetch('/api/admin/bookings', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: bookingId, status: newStatus }),
       });
       onUpdate(bookingId, newStatus);
@@ -100,9 +100,9 @@ export default function AdminDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('admin_token');
+      // Le cookie admin_token (httpOnly) est envoyé automatiquement par le navigateur
       const res = await fetch('/api/admin/stats', {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Erreur de chargement');
       const json = await res.json();
