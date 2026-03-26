@@ -1,32 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { verifyAdminToken } from '@/lib/auth-admin';
+import { verifyAdminTokenAsync } from '@/lib/auth-admin';
 
 /**
  * GET /api/admin/stats
- * Retourne les KPIs du dashboard admin :
- * - Nombre total d'appartements
- * - Nombre total de réservations
- * - Nombre de réservations confirmées
- * - Revenu total (bookings confirmées, en USD)
- * - 10 dernières réservations avec nom de villa
+ * Retourne les KPIs du dashboard admin.
+ * Authentification : JWT Supabase dans le cookie httpOnly 'admin_token'.
  */
 export async function GET(req: NextRequest) {
-  const auth = verifyAdminToken(req);
-  if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  // Log de débogage — à retirer une fois stable
+  const cookieNames = Array.from(req.cookies.getAll()).map(c => c.name);
+  const authHeader = req.headers.get('authorization');
+  console.log('[/api/admin/stats] cookies présents:', cookieNames);
+  console.log('[/api/admin/stats] Authorization header:', authHeader ? authHeader.slice(0, 30) + '...' : 'absent');
+
+  const isAuth = await verifyAdminTokenAsync(req);
+  console.log('[/api/admin/stats] isAuth:', isAuth);
+
+  if (!isAuth) {
+    return NextResponse.json(
+      { error: 'Non autorisé', debug: { cookies: cookieNames, hasAuthHeader: !!authHeader } },
+      { status: 401 }
+    );
+  }
 
   // 1. Nombre d'appartements
   const { count: apartmentsCount } = await supabaseAdmin
     .from('apartments')
     .select('id', { count: 'exact', head: true });
 
-  // 2. Toutes les réservations
+  // 2. Toutes les réservations avec nom de villa
   const { data: allBookings, error: bookingsError } = await supabaseAdmin
     .from('bookings')
     .select('id, booking_status, total_amount, guest_name, guest_email, check_in, check_out, created_at, apartment_id, apartments(title_fr, title_en, slug)')
     .order('created_at', { ascending: false });
 
   if (bookingsError) {
+    console.error('[/api/admin/stats] Erreur Supabase:', bookingsError.message);
     return NextResponse.json({ error: bookingsError.message }, { status: 500 });
   }
 
@@ -37,12 +47,10 @@ export async function GET(req: NextRequest) {
   const pendingBookings = bookings.filter((b) => b.booking_status === 'pending').length;
   const cancelledBookings = bookings.filter((b) => b.booking_status === 'cancelled').length;
 
-  // Revenu = somme des réservations confirmées (en USD)
   const totalRevenue = bookings
     .filter((b) => b.booking_status === 'confirmed')
     .reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
 
-  // 10 dernières réservations
   const recentBookings = bookings.slice(0, 10);
 
   return NextResponse.json({

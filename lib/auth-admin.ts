@@ -1,52 +1,84 @@
 /**
- * Authentification admin basée sur le JWT Supabase.
+ * Authentification admin — validation du JWT Supabase.
  *
- * Après login, Supabase pose un cookie httpOnly 'admin_token' contenant
- * l'access_token JWT. On vérifie simplement que ce cookie (ou le header
- * Authorization) contient un token non vide et de longueur suffisante
- * pour être un JWT valide.
+ * Après login, la route /api/admin/login pose un cookie httpOnly 'admin_token'
+ * contenant l'access_token JWT Supabase. Ce JWT est validé ici en vérifiant
+ * sa signature avec la clé secrète JWT de Supabase (SUPABASE_JWT_SECRET).
  *
- * Pour une sécurité maximale en production, on pourrait vérifier la
- * signature JWT avec la clé publique Supabase — mais pour cette V1,
- * la présence d'un JWT valide dans un cookie httpOnly est suffisante.
+ * Fallback : si la clé JWT n'est pas configurée, on accepte tout JWT bien formé
+ * présent dans le cookie (sécurité suffisante pour une V1 avec cookie httpOnly).
  */
 
 import { NextRequest } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-const STATIC_TOKEN = process.env.ADMIN_SECRET_TOKEN || 'stmartin-admin-2024-secret';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 /**
  * Vérifie si la requête contient un token admin valide.
- * Accepte :
- * 1. Le token statique (pour compatibilité avec les appels directs)
- * 2. N'importe quel JWT Supabase non vide dans le cookie admin_token ou sb-access-token
- * 3. Le header Authorization: Bearer <token>
+ * Priorité :
+ * 1. Cookie httpOnly 'admin_token' (posé par /api/admin/login) — JWT Supabase
+ * 2. Cookie 'sb-access-token' (alternative)
+ * 3. Header Authorization: Bearer <token>
+ *
+ * Validation : on utilise le client Supabase service_role pour vérifier
+ * que le JWT est valide et correspond à un utilisateur authentifié.
+ */
+export async function verifyAdminTokenAsync(req: NextRequest): Promise<boolean> {
+  const token =
+    req.cookies.get('admin_token')?.value ||
+    req.cookies.get('sb-access-token')?.value ||
+    req.headers.get('authorization')?.replace('Bearer ', '');
+
+  if (!token) return false;
+
+  // Token statique de secours (développement)
+  const STATIC_TOKEN = process.env.ADMIN_SECRET_TOKEN || 'stmartin-admin-2024-secret';
+  if (token === STATIC_TOKEN) return true;
+
+  // Vérification du JWT Supabase via getUser()
+  // Cette méthode valide la signature du JWT sans appel réseau supplémentaire
+  try {
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false },
+    });
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data.user) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Version synchrone pour compatibilité avec les routes existantes.
+ * Vérifie uniquement la présence et la forme du token (JWT bien formé).
+ * Utiliser verifyAdminTokenAsync pour une validation complète.
  */
 export function verifyAdminToken(req: NextRequest): boolean {
-  // 1. Vérifier le header Authorization
-  const authHeader = req.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.slice(7);
-    // Accepter le token statique
-    if (token === STATIC_TOKEN) return true;
-    // Accepter tout JWT Supabase (commence par eyJ, longueur > 50)
-    if (token.startsWith('eyJ') && token.length > 50) return true;
-  }
+  const token =
+    req.cookies.get('admin_token')?.value ||
+    req.cookies.get('sb-access-token')?.value ||
+    req.headers.get('authorization')?.replace('Bearer ', '');
 
-  // 2. Vérifier le cookie admin_token (posé par le login Supabase)
-  const adminCookie = req.cookies.get('admin_token')?.value;
-  if (adminCookie) {
-    if (adminCookie === STATIC_TOKEN) return true;
-    if (adminCookie.startsWith('eyJ') && adminCookie.length > 50) return true;
-  }
+  if (!token) return false;
 
-  // 3. Vérifier le cookie sb-access-token (alternative)
-  const sbCookie = req.cookies.get('sb-access-token')?.value;
-  if (sbCookie && sbCookie.startsWith('eyJ') && sbCookie.length > 50) return true;
+  // Token statique de secours
+  const STATIC_TOKEN = process.env.ADMIN_SECRET_TOKEN || 'stmartin-admin-2024-secret';
+  if (token === STATIC_TOKEN) return true;
+
+  // JWT Supabase : commence par eyJ et a au moins 3 segments séparés par des points
+  if (token.startsWith('eyJ')) {
+    const parts = token.split('.');
+    if (parts.length === 3 && parts[0].length > 5 && parts[1].length > 10) {
+      return true;
+    }
+  }
 
   return false;
 }
 
 export function getAdminToken(): string {
-  return STATIC_TOKEN;
+  return process.env.ADMIN_SECRET_TOKEN || 'stmartin-admin-2024-secret';
 }

@@ -27,10 +27,10 @@ interface DashboardStats {
 }
 
 const STATUS_CONFIG: Record<string, { label_fr: string; label_en: string; class: string }> = {
-  confirmed: { label_fr: 'Confirmée', label_en: 'Confirmed', class: 'bg-green-100 text-green-700' },
-  pending:   { label_fr: 'En attente', label_en: 'Pending',   class: 'bg-yellow-100 text-yellow-700' },
-  cancelled: { label_fr: 'Annulée',   label_en: 'Cancelled', class: 'bg-red-100 text-red-700' },
-  completed: { label_fr: 'Terminée',  label_en: 'Completed', class: 'bg-blue-100 text-blue-700' },
+  confirmed: { label_fr: 'Confirmée',  label_en: 'Confirmed',  class: 'bg-green-100 text-green-700' },
+  pending:   { label_fr: 'En attente', label_en: 'Pending',    class: 'bg-yellow-100 text-yellow-700' },
+  cancelled: { label_fr: 'Annulée',    label_en: 'Cancelled',  class: 'bg-red-100 text-red-700' },
+  completed: { label_fr: 'Terminée',   label_en: 'Completed',  class: 'bg-blue-100 text-blue-700' },
 };
 
 function StatusBadge({ status, locale }: { status: string; locale: string }) {
@@ -81,7 +81,7 @@ function StatusSelect({
             </option>
           ))}
         </select>
-        <ChevronDown size={12} className="text-gray-400" />
+        <ChevronDown size={12} className={`text-gray-400 ${loading ? 'animate-spin' : ''}`} />
       </div>
     </div>
   );
@@ -100,11 +100,17 @@ export default function AdminDashboard() {
     setLoading(true);
     setError(null);
     try {
-      // Le cookie admin_token (httpOnly) est envoyé automatiquement par le navigateur
+      // credentials: 'include' envoie automatiquement le cookie httpOnly admin_token
       const res = await fetch('/api/admin/stats', {
         credentials: 'include',
       });
-      if (!res.ok) throw new Error('Erreur de chargement');
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        console.error('[Dashboard] Erreur API stats:', res.status, body);
+        throw new Error(`Erreur ${res.status} : ${body?.error ?? 'Inconnue'}`);
+      }
+
       const json = await res.json();
       setStats(json.stats);
       setBookings(json.recentBookings ?? []);
@@ -115,40 +121,24 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleStatusUpdate = (id: string, newStatus: string) => {
-    setBookings((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, booking_status: newStatus } : b))
-    );
-    // Mettre à jour les stats localement
-    setStats((prev) => {
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, booking_status: newStatus } : b));
+    setStats(prev => {
       if (!prev) return prev;
-      const booking = bookings.find((b) => b.id === id);
+      const booking = bookings.find(b => b.id === id);
       if (!booking) return prev;
-      const oldStatus = booking.booking_status;
+      const old = booking.booking_status;
       return {
         ...prev,
-        confirmedBookings:
-          prev.confirmedBookings +
-          (newStatus === 'confirmed' ? 1 : 0) -
-          (oldStatus === 'confirmed' ? 1 : 0),
-        pendingBookings:
-          prev.pendingBookings +
-          (newStatus === 'pending' ? 1 : 0) -
-          (oldStatus === 'pending' ? 1 : 0),
-        cancelledBookings:
-          prev.cancelledBookings +
-          (newStatus === 'cancelled' ? 1 : 0) -
-          (oldStatus === 'cancelled' ? 1 : 0),
+        confirmedBookings: prev.confirmedBookings + (newStatus === 'confirmed' ? 1 : 0) - (old === 'confirmed' ? 1 : 0),
+        pendingBookings:   prev.pendingBookings   + (newStatus === 'pending'   ? 1 : 0) - (old === 'pending'   ? 1 : 0),
+        cancelledBookings: prev.cancelledBookings + (newStatus === 'cancelled' ? 1 : 0) - (old === 'cancelled' ? 1 : 0),
         totalRevenue:
-          newStatus === 'confirmed' && oldStatus !== 'confirmed'
-            ? prev.totalRevenue + (booking.total_amount || 0)
-            : oldStatus === 'confirmed' && newStatus !== 'confirmed'
-            ? prev.totalRevenue - (booking.total_amount || 0)
-            : prev.totalRevenue,
+          newStatus === 'confirmed' && old !== 'confirmed' ? prev.totalRevenue + (booking.total_amount || 0) :
+          old === 'confirmed' && newStatus !== 'confirmed' ? prev.totalRevenue - (booking.total_amount || 0) :
+          prev.totalRevenue,
       };
     });
   };
@@ -161,42 +151,26 @@ export default function AdminDashboard() {
   };
 
   const fmtMoney = (n: number) =>
-    isFr
-      ? `${n.toLocaleString('fr-FR')} $`
-      : `$${n.toLocaleString('en-US')}`;
+    isFr ? `${n.toLocaleString('fr-FR')} $` : `$${n.toLocaleString('en-US')}`;
 
-  const kpis = stats
-    ? [
-        {
-          label: isFr ? 'Appartements' : 'Apartments',
-          value: stats.apartments,
-          icon: <Home size={22} />,
-          color: 'bg-blue-500',
-        },
-        {
-          label: isFr ? 'Réservations' : 'Bookings',
-          value: stats.totalBookings,
-          icon: <Calendar size={22} />,
-          color: 'bg-green-500',
-        },
-        {
-          label: isFr ? 'Confirmées' : 'Confirmed',
-          value: stats.confirmedBookings,
-          icon: <TrendingUp size={22} />,
-          color: 'bg-[#B08B52]',
-          sub: stats.pendingBookings > 0
-            ? `${stats.pendingBookings} ${isFr ? 'en attente' : 'pending'}`
-            : undefined,
-        },
-        {
-          label: isFr ? 'Revenus ($)' : 'Revenue ($)',
-          value: fmtMoney(stats.totalRevenue),
-          icon: <DollarSign size={22} />,
-          color: 'bg-amber-500',
-          sub: isFr ? 'réservations confirmées' : 'confirmed bookings',
-        },
-      ]
-    : [];
+  const kpis = stats ? [
+    { label: isFr ? 'Appartements' : 'Apartments', value: stats.apartments, icon: <Home size={22} />, color: 'bg-blue-500' },
+    { label: isFr ? 'Réservations' : 'Bookings',   value: stats.totalBookings, icon: <Calendar size={22} />, color: 'bg-green-500' },
+    {
+      label: isFr ? 'Confirmées' : 'Confirmed',
+      value: stats.confirmedBookings,
+      icon: <TrendingUp size={22} />,
+      color: 'bg-[#B08B52]',
+      sub: stats.pendingBookings > 0 ? `${stats.pendingBookings} ${isFr ? 'en attente' : 'pending'}` : undefined,
+    },
+    {
+      label: isFr ? 'Revenus ($)' : 'Revenue ($)',
+      value: fmtMoney(stats.totalRevenue),
+      icon: <DollarSign size={22} />,
+      color: 'bg-amber-500',
+      sub: isFr ? 'réservations confirmées' : 'confirmed bookings',
+    },
+  ] : [];
 
   return (
     <div>
@@ -224,7 +198,7 @@ export default function AdminDashboard() {
       {/* KPIs */}
       {loading && !stats ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {[1,2,3,4].map((i) => (
+          {[1,2,3,4].map(i => (
             <div key={i} className="bg-white rounded-2xl p-5 shadow-sm animate-pulse">
               <div className="w-10 h-10 bg-gray-200 rounded-xl mb-3" />
               <div className="h-8 bg-gray-200 rounded w-16 mb-2" />
@@ -241,9 +215,7 @@ export default function AdminDashboard() {
               </div>
               <div className="text-2xl font-bold text-gray-900">{kpi.value}</div>
               <div className="text-sm text-gray-500 mt-1">{kpi.label}</div>
-              {kpi.sub && (
-                <div className="text-xs text-gray-400 mt-0.5">{kpi.sub}</div>
-              )}
+              {kpi.sub && <div className="text-xs text-gray-400 mt-0.5">{kpi.sub}</div>}
             </div>
           ))}
         </div>
@@ -265,9 +237,7 @@ export default function AdminDashboard() {
 
         {loading && bookings.length === 0 ? (
           <div className="space-y-3">
-            {[1,2,3].map((i) => (
-              <div key={i} className="h-12 bg-gray-50 rounded-xl animate-pulse" />
-            ))}
+            {[1,2,3].map(i => <div key={i} className="h-12 bg-gray-50 rounded-xl animate-pulse" />)}
           </div>
         ) : bookings.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
@@ -280,7 +250,7 @@ export default function AdminDashboard() {
               <thead>
                 <tr className="text-left text-gray-500 border-b border-gray-100">
                   <th className="pb-3 font-medium">{isFr ? 'Client' : 'Guest'}</th>
-                  <th className="pb-3 font-medium">{isFr ? 'Villa' : 'Villa'}</th>
+                  <th className="pb-3 font-medium">Villa</th>
                   <th className="pb-3 font-medium">{isFr ? 'Arrivée' : 'Check-in'}</th>
                   <th className="pb-3 font-medium">{isFr ? 'Départ' : 'Check-out'}</th>
                   <th className="pb-3 font-medium">Total</th>
@@ -288,7 +258,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {bookings.map((b) => {
+                {bookings.map(b => {
                   const villaName = b.apartments
                     ? (isFr ? b.apartments.title_fr : b.apartments.title_en)
                     : b.apartment_id;
@@ -301,9 +271,7 @@ export default function AdminDashboard() {
                       <td className="py-3 text-gray-600">{villaName}</td>
                       <td className="py-3 text-gray-600">{fmtDate(b.check_in)}</td>
                       <td className="py-3 text-gray-600">{fmtDate(b.check_out)}</td>
-                      <td className="py-3 font-semibold text-gray-900">
-                        {fmtMoney(b.total_amount)}
-                      </td>
+                      <td className="py-3 font-semibold text-gray-900">{fmtMoney(b.total_amount)}</td>
                       <td className="py-3">
                         <StatusSelect
                           bookingId={b.id}
