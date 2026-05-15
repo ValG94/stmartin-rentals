@@ -22,17 +22,17 @@ export default function Footer() {
           <div className="md:col-span-4">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-9 h-9 flex items-center justify-center border border-cream-100/20">
-                <span className="font-serif text-sm font-light text-cream-100" style={{letterSpacing:'0.15em'}}>SM</span>
+                <span className="font-serif text-sm font-light text-cream-100" style={{letterSpacing:'0.15em'}}>IL</span>
               </div>
               <div>
-                <div className="font-serif font-light text-lg text-cream-100 leading-none" style={{letterSpacing:'0.08em'}}>StMartin Rentals</div>
-                <div className="font-sans text-xs text-bronze-300 mt-0.5" style={{letterSpacing:'0.2em'}}>SAINT-MARTIN</div>
+                <div className="font-serif font-light text-lg text-cream-100 leading-none" style={{letterSpacing:'0.08em'}}>Island Living SXM</div>
+                <div className="font-sans text-xs text-bronze-300 mt-0.5" style={{letterSpacing:'0.2em'}}>LUXURY VACATION RENTALS</div>
               </div>
             </div>
             <p className="font-sans text-sm text-cream-100/50 leading-relaxed mb-6">{t('tagline')}</p>
             <div className="flex items-center gap-2 text-cream-100/40 text-xs font-sans">
               <MapPin size={12} className="text-bronze-400" />
-              <span style={{letterSpacing:'0.05em'}}>Saint-Martin, Deutch Side</span>
+              <span style={{letterSpacing:'0.05em'}}>Sint Maarten / Saint-Martin</span>
             </div>
           </div>
 
@@ -77,15 +77,15 @@ export default function Footer() {
             <ul className="space-y-4">
               <li className="flex items-center gap-3">
                 <Phone size={14} className="text-bronze-400 flex-shrink-0" />
-                <span className="font-sans text-sm text-cream-100/60">+590 690 XX XX XX</span>
+                <span className="font-sans text-sm text-cream-100/60">+1 (514) 947-6100</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={14} className="text-bronze-400 flex-shrink-0" />
-                <span className="font-sans text-sm text-cream-100/60">contact@stmartin-rentals.com</span>
+                <span className="font-sans text-sm text-cream-100/60">petrillis@bell.net</span>
               </li>
               <li className="flex items-center gap-3">
                 <MessageCircle size={14} className="text-bronze-400 flex-shrink-0" />
-                <a href="https://wa.me/590690XXXXXX" target="_blank" rel="noopener noreferrer"
+                <a href="https://wa.me/15149476100" target="_blank" rel="noopener noreferrer"
                   className="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300">
                   WhatsApp
                 </a>
@@ -97,11 +97,11 @@ export default function Footer() {
         {/* Bas de footer */}
         <div className="border-t border-cream-100/10 mt-16 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="font-sans text-xs text-cream-100/30" style={{letterSpacing:'0.05em'}}>
-            &copy; {year} StMartin Rentals. {t('rights')}.
+            &copy; {year} Island Living SXM. {t('rights')}.
           </p>
           <div className="divider-bronze" />
           <p className="font-sans text-xs text-cream-100/20" style={{letterSpacing:'0.1em'}}>
-            SAINT-MARTIN · ANTILLES FRANÇAISES
+            SINT MAARTEN · CARIBBEAN
           </p>
         </div>
       </div>

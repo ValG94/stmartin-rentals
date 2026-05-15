@@ -11,8 +11,8 @@ export function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
-  title: 'StMartin Rentals',
-  description: 'Locations de villas de luxe à Saint-Martin',
+  title: 'Island Living SXM — Luxury Vacation Rentals in Sint Maarten',
+  description: 'Luxury vacation rentals in Sint Maarten. Discover our exceptional villas with private pool and sea view.',
 };
 
 export default async function LocaleLayout({

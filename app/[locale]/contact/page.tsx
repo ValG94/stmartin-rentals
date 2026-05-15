@@ -16,7 +16,7 @@ export default function ContactPage() {
     const msg = encodeURIComponent(
       `Nouveau message de ${form.name}\nEmail: ${form.email}\nSujet: ${form.subject}\n\n${form.message}`
     );
-    window.open(`https://wa.me/590690XXXXXX?text=${msg}`, '_blank');
+    window.open(`https://wa.me/15149476100?text=${msg}`, '_blank');
     setSubmitted(true);
   };
 
@@ -41,7 +41,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">{t('phone')}</div>
-                    <div className="text-gray-600">+590 690 XX XX XX</div>
+                    <div className="text-gray-600">+1 (514) 947-6100</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm">
@@ -50,7 +50,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">{t('email')}</div>
-                    <div className="text-gray-600">contact@stmartin-rentals.com</div>
+                    <div className="text-gray-600">petrillis@bell.net</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm">
@@ -59,8 +59,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">WhatsApp</div>
-                    <a href="https://wa.me/590690XXXXXX" target="_blank" rel="noopener noreferrer"
-                      className="text-green-600 hover:underline">+590 690 XX XX XX</a>
+                    <a href="https://wa.me/15149476100" target="_blank" rel="noopener noreferrer"
+                      className="text-green-600 hover:underline">+1 (514) 947-6100</a>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm">

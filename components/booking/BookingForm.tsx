@@ -59,7 +59,7 @@ export default function BookingForm({
       `Voyageurs: ${guests}\nNom: ${name}\nEmail: ${email}\n` +
       (message ? `Message: ${message}` : '')
     );
-    window.open(`https://wa.me/590690XXXXXX?text=${msg}`, '_blank');
+    window.open(`https://wa.me/15149476100?text=${msg}`, '_blank');
     setSubmitted(true);
   };
 

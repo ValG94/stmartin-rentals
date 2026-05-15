@@ -17,15 +17,15 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: 'StMartin Rentals — Villas de Luxe à Saint-Martin',
+  title: 'Island Living SXM — Luxury Vacation Rentals in Sint Maarten',
   description:
-    'Découvrez La Villa Vanille et La Villa Blanche, deux villas d\'exception à Saint-Martin. Piscine privée, vue mer, expérience caraïbes haut de gamme.',
-  keywords: 'villa luxe saint-martin, location villa caraïbes, villa piscine saint-martin, villa vanille, villa blanche',
+    'Discover Villa Vanille and Villa Blanche, two exceptional luxury villas in Sint Maarten. Private pool, sea view, premium Caribbean experience.',
+  keywords: 'luxury villa sint maarten, vacation rental caribbean, villa pool sint maarten, villa vanille, villa blanche, island living sxm',
   openGraph: {
-    title: 'StMartin Rentals — Villas de Luxe à Saint-Martin',
-    description: 'Deux villas d\'exception à Saint-Martin. Piscine privée, vue mer, expérience caraïbes haut de gamme.',
+    title: 'Island Living SXM — Luxury Vacation Rentals in Sint Maarten',
+    description: 'Two exceptional luxury villas in Sint Maarten. Private pool, sea view, premium Caribbean experience.',
     type: 'website',
-    locale: 'fr_FR',
+    locale: 'en_US',
   },
 };
 

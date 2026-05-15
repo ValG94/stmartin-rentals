@@ -73,7 +73,7 @@ export default async function GuidePage({
           </div>
           <div className="flex items-center gap-2 text-accent-700">
             <Phone size={16} />
-            <span className="font-semibold">+590 690 XX XX XX</span>
+            <span className="font-semibold">+1 (514) 947-6100</span>
           </div>
         </div>
       </div>

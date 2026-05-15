@@ -74,7 +74,7 @@ export default async function HomePage() {
                 {isFr ? <>Une expérience<br /><em className="italic">au-delà du séjour</em></> : <>An experience<br /><em className="italic">beyond the stay</em></>}
               </h2>
               <p className="font-sans text-night-400 leading-relaxed mb-6" style={{fontSize:'1.05rem'}}>
-                {isFr ? "StMartin Rentals est né d'une passion pour Saint-Martin et d'une conviction : chaque séjour mérite d'être une expérience inoubliable. Nos villas ne sont pas de simples locations — elles sont des écrins de vie, pensés dans les moindres détails pour vous offrir le meilleur des Caraïbes." : "StMartin Rentals was born from a passion for Saint-Martin and a conviction: every stay deserves to be an unforgettable experience. Our villas are not just rentals — they are living gems, designed in every detail to offer you the best of the Caribbean."}
+                {isFr ? "Island Living SXM est né d'une passion pour Saint-Martin et d'une conviction : chaque séjour mérite d'être une expérience inoubliable. Nos villas ne sont pas de simples locations — elles sont des écrins de vie, pensés dans les moindres détails pour vous offrir le meilleur des Caraïbes." : "Island Living SXM was born from a passion for Sint Maarten and a conviction: every stay deserves to be an unforgettable experience. Our villas are not just rentals — they are living gems, designed in every detail to offer you the best of the Caribbean."}
               </p>
               <p className="font-sans text-night-400 leading-relaxed" style={{fontSize:'1.05rem'}}>
                 {isFr ? "Piscine privée, vue mer, architecture soignée, accueil personnalisé — nous créons les conditions d'une évasion totale." : "Private pool, sea view, refined architecture, personalized welcome — we create the conditions for total escape."}
@@ -120,7 +120,7 @@ export default async function HomePage() {
       <section className="py-32 px-6 bg-sand-200">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <p className="section-label mb-4">{isFr ? "L'expérience StMartin" : 'The StMartin experience'}</p>
+            <p className="section-label mb-4">{isFr ? "L'expérience Island Living" : 'The Island Living experience'}</p>
             <div className="divider-bronze mx-auto mb-6" />
             <h2 className="font-serif font-light text-night-600 leading-tight" style={{fontSize:'clamp(2rem, 4vw, 3.2rem)', letterSpacing:'-0.01em'}}>
               {isFr ? 'Tout est pensé pour vous' : 'Everything is designed for you'}
