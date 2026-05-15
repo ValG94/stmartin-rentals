@@ -1,11 +1,11 @@
 import Link from 'next/link';
 
-export default function PayPalSuccessPage({
-  searchParams,
-}: {
-  searchParams: { bookingId?: string };
-}) {
-  const bookingId = searchParams.bookingId || '';
+interface Props {
+  searchParams: Promise<{ bookingId?: string }>;
+}
+
+export default async function PayPalSuccessPage({ searchParams }: Props) {
+  const { bookingId = '' } = await searchParams;
 
   return (
     <div className="min-h-screen bg-[#f8f8f6] flex items-center justify-center px-4">
@@ -17,9 +17,7 @@ export default function PayPalSuccessPage({
           </svg>
         </div>
 
-        {/* Logo */}
         <p className="text-xs font-semibold tracking-widest text-amber-600 uppercase mb-1">Island Living SXM</p>
-
         <h1 className="text-2xl font-serif text-gray-900 mb-3">Booking Confirmed</h1>
         <p className="text-gray-600 text-sm mb-6 leading-relaxed">
           Your payment has been processed successfully. A confirmation email has been sent to your inbox with all the details of your stay.
