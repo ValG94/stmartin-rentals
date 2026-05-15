@@ -181,7 +181,7 @@ export default function BookingForm({
 
   return (
     <PayPalScriptProvider options={{ clientId: PAYPAL_CLIENT_ID || 'test', currency: 'USD', intent: 'capture' }}>
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
 
         {/* Prix en-tête */}
         <div className="px-6 pt-6 pb-4 border-b border-gray-100">

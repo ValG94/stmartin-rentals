@@ -303,7 +303,7 @@ export default function DateRangePicker({
 
       {/* Calendrier déroulant */}
       {open && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 w-[680px] max-w-[95vw]">
+        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 w-full">
           {loading && (
             <div className="text-center text-xs text-gray-400 mb-2">
               {isFr ? 'Chargement des disponibilités…' : 'Loading availability…'}
@@ -328,45 +328,32 @@ export default function DateRangePicker({
           {/* Navigation */}
           <div className="flex items-center justify-between mb-3">
             <button
-              onClick={() => setCurrentMonth((m) => addMonths(m, -1))}
+              onClick={(e) => { e.stopPropagation(); setCurrentMonth((m) => addMonths(m, -1)); }}
               className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
             >
               <ChevronLeft size={18} className="text-gray-600" />
             </button>
             <div className="flex-1" />
             <button
-              onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
+              onClick={(e) => { e.stopPropagation(); setCurrentMonth((m) => addMonths(m, 1)); }}
               className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
             >
               <ChevronRight size={18} className="text-gray-600" />
             </button>
           </div>
 
-          {/* Deux mois côte à côte */}
-          <div className="grid grid-cols-2 gap-6">
-            <MonthCalendar
-              year={currentMonth.getFullYear()}
-              month={currentMonth.getMonth()}
-              checkIn={checkIn}
-              checkOut={checkOut}
-              hoveredDate={hoveredDate}
-              blockedRanges={blockedRanges}
-              onDayClick={handleDayClick}
-              onDayHover={setHoveredDate}
-              locale={locale}
-            />
-            <MonthCalendar
-              year={nextMonth.getFullYear()}
-              month={nextMonth.getMonth()}
-              checkIn={checkIn}
-              checkOut={checkOut}
-              hoveredDate={hoveredDate}
-              blockedRanges={blockedRanges}
-              onDayClick={handleDayClick}
-              onDayHover={setHoveredDate}
-              locale={locale}
-            />
-          </div>
+          {/* Un mois visible avec navigation */}
+          <MonthCalendar
+            year={currentMonth.getFullYear()}
+            month={currentMonth.getMonth()}
+            checkIn={checkIn}
+            checkOut={checkOut}
+            hoveredDate={hoveredDate}
+            blockedRanges={blockedRanges}
+            onDayClick={handleDayClick}
+            onDayHover={setHoveredDate}
+            locale={locale}
+          />
 
           {/* Bouton reset */}
           {(checkIn || checkOut) && (
