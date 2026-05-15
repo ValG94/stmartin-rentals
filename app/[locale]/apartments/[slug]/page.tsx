@@ -135,10 +135,9 @@ export default async function ApartmentDetailPage({
             <BookingForm
               apartmentName={name}
               apartmentId={apartment.id}
-              pricePerNight={activePriceUsd}
-              basePrice={apartment.price_per_night}
-              minPrice={minPriceUsd}
-              slug={slug}
+              apartmentSlug={slug}
+              nightlyRate={activePriceUsd}
+              maxGuests={apartment.max_guests || 8}
               locale={locale}
               eurRate={eurRate}
             />
