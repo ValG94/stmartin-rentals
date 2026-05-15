@@ -10,7 +10,7 @@ export const CLEANING_FEES: Record<string, number> = {
 };
 
 export const SECURITY_DEPOSITS: Record<string, number> = {
-  'villa-vanille': 500,
+  'villa-vanille': 530,
   'villa-blanche': 300,
   'maison-blanche': 300,
 };
