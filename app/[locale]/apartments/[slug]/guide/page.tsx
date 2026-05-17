@@ -1,10 +1,10 @@
-import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getApartmentBySlug } from '@/lib/api';
-import { BookOpen, Phone, AlertCircle, ChevronLeft } from 'lucide-react';
-import type { GuideSection } from '@/types';
-import ExploreSection from '@/components/guide/ExploreSection';
+import { getFullGuide, getApartmentKeyInfo } from '@/lib/api-guide';
+import { ChevronLeft, BookOpen } from 'lucide-react';
+import QuickAccessCards from '@/components/guide/QuickAccessCards';
+import GuideSectionBlock from '@/components/guide/GuideSectionBlock';
 
 export default async function GuidePage({
   params,
@@ -12,83 +12,106 @@ export default async function GuidePage({
   params: Promise<{ locale: string; slug: string }>;
 }) {
   const { locale, slug } = await params;
-  const t = await getTranslations('guide');
+
   const res = await getApartmentBySlug(slug);
   if (!res.data) notFound();
   const apartment = res.data;
 
   const name = locale === 'fr' ? apartment.title_fr : apartment.title_en;
-  const sections: GuideSection[] = apartment.sections ?? [];
+
+  // Charger les données depuis les nouvelles tables
+  const [sections, keyInfo] = await Promise.all([
+    getFullGuide(apartment.id),
+    getApartmentKeyInfo(apartment.id),
+  ]);
+
+  const isFr = locale === 'fr';
 
   return (
-    <div className="bg-night-600 min-h-screen pt-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50">
+      {/* ── Hero header ─────────────────────────────────────── */}
+      <div className="bg-[#0D1B2A] pt-20 pb-8">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6">
+          <Link
+            href={`/${locale}/apartments/${slug}`}
+            className="inline-flex items-center gap-2 text-[#B08B52] hover:text-[#D4AA6E] font-medium mb-6 transition-colors text-sm"
+          >
+            <ChevronLeft size={16} />
+            {isFr ? 'Retour à la villa' : 'Back to villa'}
+          </Link>
 
-        {/* Back */}
-        <Link
-          href={`/${locale}/apartments/${slug}`}
-          className="inline-flex items-center gap-2 text-bronze-400 hover:text-bronze-300 font-medium mb-8 transition-colors duration-200"
-        >
-          <ChevronLeft size={18} />
-          {t('back')}
-        </Link>
-
-        {/* Header */}
-        <div className="relative rounded-3xl overflow-hidden mb-10">
-          <div className="absolute inset-0 bg-gradient-to-br from-night-700 to-night-800" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(176,139,82,0.12),_transparent_60%)]" />
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-bronze-400/50 to-transparent" />
-          <div className="relative px-8 py-10 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-bronze-400/15 border border-bronze-400/25 flex items-center justify-center flex-shrink-0">
-              <BookOpen size={22} className="text-bronze-400" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#B08B52]/15 border border-[#B08B52]/25 flex items-center justify-center flex-shrink-0">
+              <BookOpen size={22} className="text-[#B08B52]" />
             </div>
             <div>
-              <p className="text-bronze-400 text-xs font-medium tracking-[0.25em] uppercase mb-1">
-                {locale === 'fr' ? 'Guide de la villa' : 'Villa Guide'}
+              <p className="text-[#B08B52] text-[10px] font-semibold tracking-[0.3em] uppercase mb-1">
+                {isFr ? 'Guide de la villa' : 'Villa Guide'}
               </p>
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white">{name}</h1>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Villa guide sections */}
-        {sections.length > 0 && (
-          <div className="space-y-4 mb-10">
-            {sections
-              .sort((a, b) => a.position - b.position)
-              .map((section) => (
-                <div
-                  key={section.id}
-                  className="bg-night-700/60 border border-white/8 rounded-2xl p-6
-                             hover:border-white/15 transition-colors duration-300"
-                >
-                  <h2 className="font-serif text-lg font-bold text-white mb-3 flex items-center gap-2">
-                    <span className="text-xl">{section.icon}</span>
-                    {locale === 'fr' ? section.title_fr : section.title_en}
-                  </h2>
-                  <div className="text-white/55 leading-relaxed whitespace-pre-line text-sm">
-                    {locale === 'fr' ? section.content_fr : section.content_en}
-                  </div>
-                </div>
-              ))}
+      {/* ── Contenu principal ────────────────────────────────── */}
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+
+        {/* Quick access cards (infos clés) */}
+        {keyInfo && (
+          <QuickAccessCards keyInfo={keyInfo} locale={locale} />
+        )}
+
+        {/* Sections dynamiques depuis BDD */}
+        {sections.length > 0 ? (
+          sections.map(section => (
+            <GuideSectionBlock
+              key={section.id}
+              section={section}
+              locale={locale}
+            />
+          ))
+        ) : (
+          /* Fallback si aucune section en BDD */
+          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center shadow-sm">
+            <BookOpen size={32} className="text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 text-sm">
+              {isFr
+                ? 'Le guide de cette villa est en cours de préparation.'
+                : 'The guide for this villa is being prepared.'}
+            </p>
           </div>
         )}
 
-        {/* ─── EXPLORE SAINT MARTIN ─── */}
-        <ExploreSection locale={locale} />
-
-        {/* Emergency contact */}
-        <div className="mt-12 bg-night-700/60 border border-bronze-400/20 rounded-2xl p-6">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertCircle size={18} className="text-bronze-400" />
-            <h3 className="font-semibold text-white text-base">
-              {locale === 'fr' ? "Contact d'urgence" : 'Emergency contact'}
-            </h3>
-          </div>
-          <div className="flex items-center gap-2 text-white/60">
-            <Phone size={15} className="text-bronze-400/70" />
-            <span className="font-medium text-white/80">+1 (514) 947-6100</span>
-          </div>
+        {/* Footer contact */}
+        <div className="mt-6 bg-[#0D1B2A] rounded-2xl p-6 text-center">
+          <p className="text-[#B08B52] text-[10px] font-semibold tracking-[0.25em] uppercase mb-2">
+            {isFr ? 'Une question ?' : 'Need help?'}
+          </p>
+          <p className="text-white/60 text-sm mb-4">
+            {isFr
+              ? 'Nous sommes disponibles pour vous aider à tout moment.'
+              : 'We are available to help you at any time.'}
+          </p>
+          {keyInfo?.whatsapp ? (
+            <a
+              href={`https://wa.me/${keyInfo.whatsapp.replace(/\D/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#B08B52] text-white rounded-xl text-sm font-medium hover:bg-[#8C6A38] transition-colors"
+            >
+              {isFr ? 'Nous contacter' : 'Contact us'}
+            </a>
+          ) : keyInfo?.host_phone ? (
+            <a
+              href={`tel:${keyInfo.host_phone}`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#B08B52] text-white rounded-xl text-sm font-medium hover:bg-[#8C6A38] transition-colors"
+            >
+              {keyInfo.host_phone}
+            </a>
+          ) : (
+            <p className="text-white/40 text-sm">+1 (514) 947-6100</p>
+          )}
         </div>
 
       </div>
