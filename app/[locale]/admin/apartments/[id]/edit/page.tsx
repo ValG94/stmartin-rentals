@@ -826,74 +826,32 @@ export default function EditApartmentPage() {
       {/* ── ONGLET GUIDE DIGITAL ─────────────────────────────────────────────── */}
       {activeTab === 'guide' && (
         <div className="space-y-4">
-          <p className="text-sm text-gray-500">
-            Le guide digital est accessible aux voyageurs depuis la page de la villa.
-          </p>
-
-          {activeSections.map((section, i) => (
-            <div key={section.id || i} className="bg-white border border-gray-200 rounded-xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <select value={section.icon}
-                    onChange={e => updateGS(section, 'icon', e.target.value)}
-                    className="text-xl border border-gray-200 rounded-lg px-2 py-1 focus:outline-none bg-white">
-                    {GUIDE_ICONS.map(icon => <option key={icon} value={icon}>{icon}</option>)}
-                  </select>
-                  <h4 className="font-semibold text-gray-900">Section {i + 1}</h4>
-                </div>
-                <button onClick={() => updateGS(section, '_toDelete', true)}
-                  className="text-red-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-lg transition-colors">
-                  <Trash2 size={15} />
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Titre (FR)</label>
-                  <input type="text" value={section.title_fr}
-                    onChange={e => updateGS(section, 'title_fr', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52]"
-                    placeholder="Ex: Bienvenue" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Title (EN)</label>
-                  <input type="text" value={section.title_en}
-                    onChange={e => updateGS(section, 'title_en', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52]"
-                    placeholder="Ex: Welcome" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Contenu (FR)</label>
-                  <textarea value={section.content_fr} rows={3}
-                    onChange={e => updateGS(section, 'content_fr', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52] resize-none"
-                    placeholder="Contenu en français..." />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Content (EN)</label>
-                  <textarea value={section.content_en} rows={3}
-                    onChange={e => updateGS(section, 'content_en', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52] resize-none"
-                    placeholder="Content in English..." />
-                </div>
-              </div>
+          {/* Redirection vers le nouveau CMS Guide */}
+          <div className="bg-[#0D1B2A] rounded-2xl p-8 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-[#B08B52]/15 border border-[#B08B52]/25 flex items-center justify-center mx-auto mb-5">
+              <BookOpen size={24} className="text-[#B08B52]" />
             </div>
-          ))}
+            <h3 className="font-serif text-xl font-semibold text-white mb-2">
+              Guide digital — CMS
+            </h3>
+            <p className="text-white/50 text-sm mb-6 max-w-sm mx-auto leading-relaxed">
+              Le guide est géré depuis une interface dédiée : sections, items, infos clés (Wi-Fi, codes, horaires) et aperçu mobile.
+            </p>
+            <Link
+              href={`/${locale}/admin/guide`}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#B08B52] text-white rounded-xl text-sm font-semibold hover:bg-[#8C6A38] transition-colors"
+            >
+              <BookOpen size={16} />
+              Ouvrir le Guide digital
+            </Link>
+          </div>
 
-          <button
-            onClick={() => setGuideSections(prev => [...prev, {
-              title_fr: '', title_en: '', content_fr: '', content_en: '',
-              icon: '🏠', position: prev.filter(s => !s._toDelete).length + 1, _isNew: true,
-            }])}
-            disabled={isNew}
-            className="w-full border-2 border-dashed border-gray-200 text-gray-400 hover:border-[#B08B52] hover:text-[#B08B52] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-50">
-            <Plus size={16} />Ajouter une section
-          </button>
-
-          <button onClick={saveGuide} disabled={saving || isNew}
-            className="w-full bg-[#0D1B2A] text-white py-3 rounded-xl font-semibold hover:bg-[#1a2f45] transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
-            {saving ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save size={18} />}
-            Sauvegarder le guide
-          </button>
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <Info size={15} className="text-amber-600 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-700 leading-relaxed">
+              L&apos;ancien système de sections simples reste actif comme fallback si le nouveau guide CMS n&apos;est pas encore configuré pour cette villa.
+            </p>
+          </div>
         </div>
       )}
     </div>
