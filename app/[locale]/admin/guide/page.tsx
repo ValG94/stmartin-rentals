@@ -224,7 +224,7 @@ export default function AdminGuidePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ── Header ── */}
-      <div className="bg-[#0D1B2A] text-white px-6 py-5 flex items-center justify-between">
+      <div className="bg-[#0D1B2A] text-white px-6 py-5">
         <div className="flex items-center gap-3">
           <Link href={`/${locale}/admin/apartments`} className="text-white/50 hover:text-white transition-colors">
             <ArrowLeft size={18} />
@@ -235,16 +235,6 @@ export default function AdminGuidePage() {
             <p className="text-xs text-white/40">Administration du contenu</p>
           </div>
         </div>
-        {/* Villa selector */}
-        <select
-          value={selectedApartmentId}
-          onChange={e => setSelectedApartmentId(e.target.value)}
-          className="bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#B08B52]"
-        >
-          {apartments.map(a => (
-            <option key={a.id} value={a.id} className="bg-[#0D1B2A]">{a.title_fr}</option>
-          ))}
-        </select>
       </div>
 
       {/* ── Toast ── */}
@@ -256,8 +246,23 @@ export default function AdminGuidePage() {
         </div>
       )}
 
-      {/* ── Tabs ── */}
-      <div className="bg-white border-b border-gray-200 px-6">
+      {/* ── Tabs + Sélecteur villa ── */}
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-6">
+        {/* Sélecteur de villa — toujours visible */}
+        <div className="flex items-center gap-3 py-3 border-b border-gray-100">
+          <Home size={15} className="text-gray-400 flex-shrink-0" />
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex-shrink-0">Villa</span>
+          <select
+            value={selectedApartmentId}
+            onChange={e => setSelectedApartmentId(e.target.value)}
+            className="flex-1 border border-gray-200 text-gray-800 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#B08B52] bg-white font-medium"
+          >
+            {apartments.map(a => (
+              <option key={a.id} value={a.id}>{a.title_fr}</option>
+            ))}
+          </select>
+        </div>
+        {/* Onglets */}
         <div className="flex gap-1">
           {([
             { id: 'sections', label: 'Sections & Contenus', icon: BookOpen },
