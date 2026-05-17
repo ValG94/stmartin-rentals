@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS apartment_key_info (
   map_link           TEXT,
   host_phone         TEXT,
   emergency_phone    TEXT,
+  fire_phone         TEXT,
   whatsapp           TEXT,
   checkin_time       TEXT,
   checkout_time      TEXT,

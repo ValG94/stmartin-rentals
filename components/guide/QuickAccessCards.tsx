@@ -174,6 +174,28 @@ export default function QuickAccessCards({ keyInfo, locale }: QuickAccessCardsPr
           />
         )}
 
+        {/* SAMU / Ambulance */}
+        {keyInfo.emergency_phone && (
+          <SimpleCard
+            icon="phone"
+            label={isFr ? 'SAMU / Ambulance' : 'SAMU / Ambulance'}
+            value={keyInfo.emergency_phone}
+            accentColor="bg-red-600"
+            href={`tel:${keyInfo.emergency_phone}`}
+          />
+        )}
+
+        {/* Pompiers */}
+        {keyInfo.fire_phone && (
+          <SimpleCard
+            icon="phone"
+            label={isFr ? 'Pompiers' : 'Fire dept.'}
+            value={keyInfo.fire_phone}
+            accentColor="bg-orange-600"
+            href={`tel:${keyInfo.fire_phone}`}
+          />
+        )}
+
         {/* WhatsApp */}
         {keyInfo.whatsapp && (
           <SimpleCard

@@ -83,6 +83,7 @@ export interface ApartmentKeyInfo {
   map_link: string | null;
   host_phone: string | null;
   emergency_phone: string | null;
+  fire_phone: string | null;
   whatsapp: string | null;
   checkin_time: string | null;
   checkout_time: string | null;

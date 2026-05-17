@@ -433,7 +433,8 @@ export default function AdminGuidePage() {
             <KeyInfoBlock title="Contact & Urgences" icon="phone">
               <KeyInfoField label="Téléphone hôte" value={keyInfo.host_phone ?? ''} onChange={v => setKeyInfo(p => ({ ...p, host_phone: v }))} placeholder="+1 514 947-6100" />
               <KeyInfoField label="WhatsApp" value={keyInfo.whatsapp ?? ''} onChange={v => setKeyInfo(p => ({ ...p, whatsapp: v }))} placeholder="+15149476100" />
-              <KeyInfoField label="Téléphone urgence" value={keyInfo.emergency_phone ?? ''} onChange={v => setKeyInfo(p => ({ ...p, emergency_phone: v }))} />
+              <KeyInfoField label="SAMU / Ambulance" value={keyInfo.emergency_phone ?? ''} onChange={v => setKeyInfo(p => ({ ...p, emergency_phone: v }))} placeholder="ex: 15 ou 912" />
+              <KeyInfoField label="Pompiers" value={keyInfo.fire_phone ?? ''} onChange={v => setKeyInfo(p => ({ ...p, fire_phone: v }))} placeholder="ex: 18 ou 912" />
             </KeyInfoBlock>
 
             {/* Adresse */}
