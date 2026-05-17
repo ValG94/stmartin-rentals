@@ -38,6 +38,7 @@ export default function AdminGuidePage() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [sectionItems, setSectionItems] = useState<Record<string, GuideItem[]>>({});
   const [saving, setSaving] = useState(false);
+  const [keyInfoLoading, setKeyInfoLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [editingItem, setEditingItem] = useState<Partial<GuideItem> | null>(null);
   const [editingItemSectionId, setEditingItemSectionId] = useState<string | null>(null);
@@ -70,12 +71,16 @@ export default function AdminGuidePage() {
 
   const loadKeyInfo = useCallback(async () => {
     if (!selectedApartmentId) return;
+    // Reset immédiat pour éviter d'afficher les données de la villa précédente
+    setKeyInfo({});
+    setKeyInfoLoading(true);
     const { data } = await supabase
       .from('apartment_key_info')
       .select('*')
       .eq('apartment_id', selectedApartmentId)
-      .single();
+      .maybeSingle();
     setKeyInfo(data ?? {});
+    setKeyInfoLoading(false);
   }, [selectedApartmentId]);
 
   useEffect(() => {
@@ -384,12 +389,22 @@ export default function AdminGuidePage() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Infos clés — {selectedApt?.title_fr}</h2>
-                <p className="text-sm text-gray-500">Ces informations apparaissent en accès rapide dans le guide.</p>
+                <p className="text-sm text-gray-500">Ces informations sont propres à cette villa et n&apos;affectent pas les autres.</p>
               </div>
-              <button onClick={saveKeyInfo} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-[#B08B52] text-white rounded-lg text-sm font-medium hover:bg-[#8C6A38] transition-colors disabled:opacity-50">
+              <button onClick={saveKeyInfo} disabled={saving || keyInfoLoading} className="flex items-center gap-2 px-5 py-2.5 bg-[#B08B52] text-white rounded-lg text-sm font-medium hover:bg-[#8C6A38] transition-colors disabled:opacity-50">
                 <Save size={15} /> {saving ? 'Sauvegarde...' : 'Sauvegarder'}
               </button>
             </div>
+
+            {/* Indicateur de chargement */}
+            {keyInfoLoading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-7 h-7 border-2 border-[#B08B52] border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+
+            {/* Formulaire masqué pendant le chargement */}
+            {!keyInfoLoading && (<>
 
             {/* Accès */}
             <KeyInfoBlock title="Accès & Codes" icon="key">
@@ -424,6 +439,8 @@ export default function AdminGuidePage() {
               <KeyInfoField label="Parking (FR)" value={keyInfo.parking_info_fr ?? ''} onChange={v => setKeyInfo(p => ({ ...p, parking_info_fr: v }))} multiline />
               <KeyInfoField label="Parking (EN)" value={keyInfo.parking_info_en ?? ''} onChange={v => setKeyInfo(p => ({ ...p, parking_info_en: v }))} multiline />
             </KeyInfoBlock>
+
+            </>)}
           </div>
         )}
 
