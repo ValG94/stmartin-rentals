@@ -97,6 +97,42 @@ function ActivityCard({ item, isFr }: { item: GuideItem; isFr: boolean }) {
             <p className="text-xs text-amber-800 leading-relaxed">💡 {tip}</p>
           </div>
         )}
+
+        {/* Boutons contact */}
+        {(item.phone || item.whatsapp || item.email || item.website_url || item.map_url) && (
+          <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
+            {item.phone && (
+              <a href={`tel:${item.phone}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium hover:bg-[#0D1B2A] hover:text-white transition-colors">
+                <Phone size={11} /> {item.phone}
+              </a>
+            )}
+            {item.whatsapp && (
+              <a href={`https://wa.me/${item.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-medium hover:bg-green-600 hover:text-white transition-colors">
+                <MessageCircle size={11} /> WhatsApp
+              </a>
+            )}
+            {item.email && (
+              <a href={`mailto:${item.email}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium hover:bg-[#0D1B2A] hover:text-white transition-colors">
+                <Mail size={11} /> Email
+              </a>
+            )}
+            {item.website_url && (
+              <a href={item.website_url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium hover:bg-[#0D1B2A] hover:text-white transition-colors">
+                <Globe size={11} /> {isFr ? 'Site web' : 'Website'}
+              </a>
+            )}
+            {item.map_url && (
+              <a href={item.map_url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#B08B52]/10 text-[#B08B52] text-xs font-medium hover:bg-[#B08B52] hover:text-white transition-colors">
+                <MapPin size={11} /> Maps
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

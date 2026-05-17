@@ -46,6 +46,25 @@ export default function AdminGuidePage() {
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [iconPickerTarget, setIconPickerTarget] = useState<'section' | 'item'>('section');
   const [previewLocale, setPreviewLocale] = useState<'fr' | 'en'>('fr');
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // ── Upload image partenaire ───────────────────────────────────
+  const handleImageUpload = async (file: File) => {
+    setUploadingImage(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/admin/guide/upload-image', { method: 'POST', body: form });
+      const json = await res.json();
+      if (!res.ok) { showMsg('error', json.error ?? 'Erreur upload'); return; }
+      setEditingItem(p => ({ ...p!, image_url: json.url }));
+      showMsg('success', 'Image uploadée !');
+    } catch {
+      showMsg('error', 'Erreur réseau lors de l\'upload');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   // ── Chargement initial ────────────────────────────────────────
   useEffect(() => {
@@ -659,11 +678,40 @@ export default function AdminGuidePage() {
                 <input value={editingItem.map_url ?? ''} onChange={e => setEditingItem(p => ({ ...p!, map_url: e.target.value }))}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52]" placeholder="https://maps.google.com/..." />
               </div>
-              {/* Image URL */}
+              {/* Image */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">URL image (optionnel)</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Photo (optionnel)</label>
+                {/* Upload depuis le PC */}
+                <div className="flex items-center gap-3 mb-2">
+                  <label className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed cursor-pointer text-sm font-medium transition-colors ${
+                    uploadingImage ? 'border-gray-200 text-gray-400' : 'border-[#B08B52]/40 text-[#B08B52] hover:border-[#B08B52] hover:bg-[#B08B52]/5'
+                  }`}>
+                    <input type="file" accept="image/*" className="hidden"
+                      disabled={uploadingImage}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = ''; }}
+                    />
+                    {uploadingImage ? (
+                      <><span className="w-4 h-4 border-2 border-[#B08B52] border-t-transparent rounded-full animate-spin" /> Upload en cours...</>
+                    ) : (
+                      <>📷 Choisir depuis le PC</>
+                    )}
+                  </label>
+                  {editingItem.image_url && (
+                    <button onClick={() => setEditingItem(p => ({ ...p!, image_url: '' }))}
+                      className="text-xs text-red-400 hover:text-red-600 transition-colors">
+                      Supprimer
+                    </button>
+                  )}
+                </div>
+                {/* Ou URL externe */}
                 <input value={editingItem.image_url ?? ''} onChange={e => setEditingItem(p => ({ ...p!, image_url: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52]" placeholder="https://..." />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52]" placeholder="Ou coller une URL https://..." />
+                {/* Aperçu */}
+                {editingItem.image_url && (
+                  <div className="mt-2 rounded-xl overflow-hidden h-28 bg-gray-100">
+                    <img src={editingItem.image_url} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  </div>
+                )}
               </div>
             </div>
             <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 flex justify-end gap-3 rounded-b-2xl">
