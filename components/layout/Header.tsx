@@ -16,12 +16,17 @@ export default function Header() {
 
   const otherLocale = locale === 'fr' ? 'en' : 'fr';
   const isHome = pathname === `/${locale}` || pathname === `/${locale}/`;
+  const isAdmin = pathname.includes('/admin');
 
   useEffect(() => {
+    if (isAdmin) return;
     const handleScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isAdmin]);
+
+  // Masquer le header sur toutes les pages admin
+  if (isAdmin) return null;
 
   const switchLanguage = () => {
     const newPath = pathname.replace(`/${locale}`, `/${otherLocale}`);
