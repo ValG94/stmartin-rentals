@@ -91,6 +91,11 @@ export interface ApartmentKeyInfo {
   checkin_note_en: string | null;
   checkout_note_fr: string | null;
   checkout_note_en: string | null;
+  hero_image_url: string | null;
+  hero_tagline_fr: string | null;
+  hero_tagline_en: string | null;
+  hero_tagline_color: string | null;
+  hero_tagline_italic: boolean | null;
   created_at: string;
   updated_at: string;
 }

@@ -47,6 +47,7 @@ export default function AdminGuidePage() {
   const [iconPickerTarget, setIconPickerTarget] = useState<'section' | 'item'>('section');
   const [previewLocale, setPreviewLocale] = useState<'fr' | 'en'>('fr');
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingHeroImage, setUploadingHeroImage] = useState(false);
 
   // ── Upload image partenaire ───────────────────────────────────
   const handleImageUpload = async (file: File) => {
@@ -429,6 +430,147 @@ export default function AdminGuidePage() {
 
             {/* Formulaire masqué pendant le chargement */}
             {!keyInfoLoading && (<>
+
+            {/* ── Hero du guide ─────────────────────────────── */}
+            <KeyInfoBlock title="Hero du guide" icon="image">
+              {/* Upload photo hero */}
+              <div className="col-span-2">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Photo de fond</label>
+                <div className="flex items-start gap-4">
+                  {/* Preview */}
+                  {keyInfo.hero_image_url ? (
+                    <div className="relative w-32 h-20 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={keyInfo.hero_image_url} alt="Hero" className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => setKeyInfo(p => ({ ...p, hero_image_url: '' }))}
+                        className="absolute top-1 right-1 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-red-500 transition-colors"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-20 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center flex-shrink-0 bg-gray-50">
+                      <span className="text-gray-300 text-xs text-center">Aucune photo</span>
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-2">
+                    {/* Upload PC */}
+                    <label className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 border-dashed cursor-pointer text-sm font-medium transition-colors w-full ${
+                      uploadingHeroImage ? 'border-gray-200 text-gray-400' : 'border-[#B08B52]/40 text-[#B08B52] hover:border-[#B08B52] hover:bg-[#B08B52]/5'
+                    }`}>
+                      <input type="file" accept="image/*" className="hidden"
+                        disabled={uploadingHeroImage}
+                        onChange={async e => {
+                          const f = e.target.files?.[0];
+                          if (!f) return;
+                          setUploadingHeroImage(true);
+                          try {
+                            const form = new FormData();
+                            form.append('file', f);
+                            const res = await fetch('/api/admin/guide/upload-image', { method: 'POST', body: form });
+                            const json = await res.json();
+                            if (res.ok) setKeyInfo(p => ({ ...p, hero_image_url: json.url }));
+                            else showMsg('error', json.error ?? 'Erreur upload');
+                          } catch { showMsg('error', 'Erreur réseau'); }
+                          finally { setUploadingHeroImage(false); e.target.value = ''; }
+                        }}
+                      />
+                      {uploadingHeroImage
+                        ? <><span className="w-4 h-4 border-2 border-[#B08B52] border-t-transparent rounded-full animate-spin" /> Upload en cours...</>
+                        : <>📷 Choisir depuis le PC</>}
+                    </label>
+                    {/* URL manuelle */}
+                    <input
+                      value={keyInfo.hero_image_url ?? ''}
+                      onChange={e => setKeyInfo(p => ({ ...p, hero_image_url: e.target.value }))}
+                      placeholder="ou coller une URL https://..."
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#B08B52]"
+                    />
+                  </div>
+                </div>
+              </div>
+              {/* Tagline FR */}
+              <div className="col-span-2 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Phrase d&apos;accroche (FR)</label>
+                  <input
+                    value={keyInfo.hero_tagline_fr ?? ''}
+                    onChange={e => setKeyInfo(p => ({ ...p, hero_tagline_fr: e.target.value }))}
+                    placeholder="ex: Votre havre de paix à Saint-Martin"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Phrase d&apos;accroche (EN)</label>
+                  <input
+                    value={keyInfo.hero_tagline_en ?? ''}
+                    onChange={e => setKeyInfo(p => ({ ...p, hero_tagline_en: e.target.value }))}
+                    placeholder="ex: Your sanctuary in Saint-Martin"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52]"
+                  />
+                </div>
+              </div>
+              {/* Style tagline */}
+              <div className="col-span-2 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Couleur de la phrase</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={keyInfo.hero_tagline_color ?? '#B08B52'}
+                      onChange={e => setKeyInfo(p => ({ ...p, hero_tagline_color: e.target.value }))}
+                      className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-1"
+                    />
+                    <input
+                      value={keyInfo.hero_tagline_color ?? '#B08B52'}
+                      onChange={e => setKeyInfo(p => ({ ...p, hero_tagline_color: e.target.value }))}
+                      placeholder="#B08B52"
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52] font-mono"
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    {['#B08B52','#FFFFFF','#F5F0E8','#0D1B2A','#D4AF6A'].map(c => (
+                      <button key={c} onClick={() => setKeyInfo(p => ({ ...p, hero_tagline_color: c }))}
+                        className={`w-7 h-7 rounded-full border-2 transition-all ${
+                          keyInfo.hero_tagline_color === c ? 'border-gray-800 scale-110' : 'border-gray-200'
+                        }`}
+                        style={{ backgroundColor: c }}
+                        title={c}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Style</label>
+                  <button
+                    onClick={() => setKeyInfo(p => ({ ...p, hero_tagline_italic: !p.hero_tagline_italic }))}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors ${
+                      keyInfo.hero_tagline_italic
+                        ? 'border-[#B08B52] bg-[#B08B52]/10 text-[#B08B52]'
+                        : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="italic font-serif text-base">I</span>
+                    {keyInfo.hero_tagline_italic ? 'Italique activé' : 'Activer l\'italique'}
+                  </button>
+                  {/* Aperçu */}
+                  {(keyInfo.hero_tagline_fr || keyInfo.hero_tagline_en) && (
+                    <div className="mt-3 p-3 bg-gray-900 rounded-lg">
+                      <p className="text-[10px] text-gray-400 mb-1">Aperçu :</p>
+                      <p
+                        style={{ color: keyInfo.hero_tagline_color ?? '#B08B52' }}
+                        className={`text-sm leading-snug ${
+                          keyInfo.hero_tagline_italic ? 'italic font-serif' : ''
+                        }`}
+                      >
+                        {keyInfo.hero_tagline_fr || keyInfo.hero_tagline_en}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </KeyInfoBlock>
 
             {/* Accès */}
             <KeyInfoBlock title="Accès & Codes" icon="key">

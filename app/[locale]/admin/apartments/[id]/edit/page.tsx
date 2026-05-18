@@ -11,6 +11,7 @@ import {
   ChevronUp, ChevronDown, Play, AlertCircle, Check,
   DollarSign, Calendar, Image as ImageIcon, BookOpen, Info
 } from 'lucide-react';
+import RichTextEditor from '@/components/admin/RichTextEditor';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -498,17 +499,24 @@ export default function EditApartmentPage() {
 
           <div className="bg-white border border-gray-200 rounded-xl p-5">
             <h3 className="font-semibold text-gray-900 mb-4">Description complète</h3>
-            <div className="space-y-3">
-              {(['description_fr', 'description_en'] as const).map(field => (
-                <div key={field}>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                    {field.endsWith('_fr') ? 'FR' : 'EN'}
-                  </label>
-                  <textarea value={apt[field]} rows={5}
-                    onChange={e => setApt(p => ({ ...p, [field]: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52] resize-none" />
-                </div>
-              ))}
+            <p className="text-xs text-gray-400 mb-4">Utilisez la barre d'outils pour mettre en forme le texte — gras, italique, listes, titres…</p>
+            <div className="space-y-5">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">FR</label>
+                <RichTextEditor
+                  value={apt.description_fr}
+                  onChange={html => setApt(p => ({ ...p, description_fr: html }))}
+                  placeholder="Description en français…"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">EN</label>
+                <RichTextEditor
+                  value={apt.description_en}
+                  onChange={html => setApt(p => ({ ...p, description_en: html }))}
+                  placeholder="Description in English…"
+                />
+              </div>
             </div>
           </div>
 
