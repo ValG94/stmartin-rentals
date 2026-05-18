@@ -40,11 +40,12 @@ export default function GuideSectionBlock({ section, locale }: GuideSectionBlock
           </div>
         </div>
 
-        {/* Intro — first sentence highlighted */}
+        {/* Intro — rendu HTML riche depuis l'éditeur WYSIWYG */}
         {intro && (
-          <p className="text-sm text-stone-500 leading-relaxed font-light max-w-prose">
-            {intro}
-          </p>
+          <div
+            className="guide-rich-text text-sm text-stone-600 leading-relaxed font-light w-full"
+            dangerouslySetInnerHTML={{ __html: intro }}
+          />
         )}
       </div>
 

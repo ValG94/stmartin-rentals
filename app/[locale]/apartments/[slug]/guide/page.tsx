@@ -136,7 +136,7 @@ export default async function GuidePage({
       </div>
 
       {/* ── CONTENU ──────────────────────────────────────────────── */}
-      <div className="max-w-3xl mx-auto px-6 sm:px-10 py-14 space-y-16">
+      <div className="max-w-5xl mx-auto px-6 sm:px-10 py-14 space-y-16">
 
         {/* Quick access cards */}
         {keyInfo && (
