@@ -11,6 +11,7 @@ import {
   Globe, Home, Edit3, Info,
 } from 'lucide-react';
 import GuideIcon from '@/components/guide/GuideIcon';
+import RichTextEditor from '@/components/admin/RichTextEditor';
 import { GUIDE_ICON_REGISTRY, GUIDE_ICON_GROUPS } from '@/lib/guide-icons';
 import { ITEM_TYPES, type GuideSection, type GuideItem, type ApartmentKeyInfo } from '@/lib/api-guide';
 
@@ -281,6 +282,15 @@ export default function AdminGuidePage() {
               <option key={a.id} value={a.id}>{a.title_fr}</option>
             ))}
           </select>
+          {selectedApt && (
+            <Link
+              href={`/${locale}/admin/apartments/${selectedApt.id}/edit`}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#B08B52] border border-[#B08B52]/30 rounded-lg hover:bg-[#B08B52]/5 transition-colors flex-shrink-0"
+              title="Modifier les infos de la villa"
+            >
+              <Edit3 size={12} /> Modifier la villa
+            </Link>
+          )}
         </div>
         {/* Onglets */}
         <div className="flex gap-1">
@@ -764,18 +774,22 @@ export default function AdminGuidePage() {
                     className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52]" placeholder="Title in English" />
                 </div>
               </div>
-              {/* Contenu FR/EN */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Contenu FR</label>
-                  <textarea value={editingItem.content_fr ?? ''} onChange={e => setEditingItem(p => ({ ...p!, content_fr: e.target.value }))} rows={3}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52] resize-none" placeholder="Description en français" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Contenu EN</label>
-                  <textarea value={editingItem.content_en ?? ''} onChange={e => setEditingItem(p => ({ ...p!, content_en: e.target.value }))} rows={3}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52] resize-none" placeholder="Description in English" />
-                </div>
+              {/* Contenu FR/EN — éditeur riche */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Contenu FR</label>
+                <RichTextEditor
+                  value={editingItem.content_fr ?? ''}
+                  onChange={v => setEditingItem(p => ({ ...p!, content_fr: v }))}
+                  placeholder="Description en français"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Contenu EN</label>
+                <RichTextEditor
+                  value={editingItem.content_en ?? ''}
+                  onChange={v => setEditingItem(p => ({ ...p!, content_en: v }))}
+                  placeholder="Description in English"
+                />
               </div>
               {/* Catégorie + Badge */}
               <div className="grid grid-cols-2 gap-3">
@@ -923,18 +937,22 @@ export default function AdminGuidePage() {
                     className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52]" />
                 </div>
               </div>
-              {/* Intro */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Intro FR</label>
-                  <textarea value={editingSection.intro_fr ?? ''} onChange={e => setEditingSection(p => ({ ...p!, intro_fr: e.target.value }))} rows={3}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52] resize-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Intro EN</label>
-                  <textarea value={editingSection.intro_en ?? ''} onChange={e => setEditingSection(p => ({ ...p!, intro_en: e.target.value }))} rows={3}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52] resize-none" />
-                </div>
+              {/* Intro — éditeur riche */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Intro FR</label>
+                <RichTextEditor
+                  value={editingSection.intro_fr ?? ''}
+                  onChange={v => setEditingSection(p => ({ ...p!, intro_fr: v }))}
+                  placeholder="Introduction en français"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Intro EN</label>
+                <RichTextEditor
+                  value={editingSection.intro_en ?? ''}
+                  onChange={v => setEditingSection(p => ({ ...p!, intro_en: v }))}
+                  placeholder="Introduction in English"
+                />
               </div>
               {/* Ordre */}
               <div>
