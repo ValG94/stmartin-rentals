@@ -29,26 +29,26 @@ export default async function GuidePage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ── Hero header ─────────────────────────────────────── */}
-      <div className="bg-[#0D1B2A] pt-20 pb-8">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6">
+      {/* ── Bandeau guide sous le header blanc ──────────────────── */}
+      <div className="pt-20 bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5">
           <Link
             href={`/${locale}/apartments/${slug}`}
-            className="inline-flex items-center gap-2 text-[#B08B52] hover:text-[#D4AA6E] font-medium mb-6 transition-colors text-sm"
+            className="inline-flex items-center gap-1.5 text-gray-400 hover:text-[#B08B52] font-medium mb-4 transition-colors text-sm"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={15} />
             {isFr ? 'Retour à la villa' : 'Back to villa'}
           </Link>
 
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#B08B52]/15 border border-[#B08B52]/25 flex items-center justify-center flex-shrink-0">
-              <BookOpen size={22} className="text-[#B08B52]" />
+            <div className="w-11 h-11 rounded-xl bg-[#B08B52]/10 border border-[#B08B52]/20 flex items-center justify-center flex-shrink-0">
+              <BookOpen size={20} className="text-[#B08B52]" />
             </div>
             <div>
-              <p className="text-[#B08B52] text-[10px] font-semibold tracking-[0.3em] uppercase mb-1">
+              <p className="text-[#B08B52] text-[10px] font-semibold tracking-[0.3em] uppercase mb-0.5">
                 {isFr ? 'Guide de la villa' : 'Villa Guide'}
               </p>
-              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white">{name}</h1>
+              <h1 className="font-serif text-xl sm:text-2xl font-bold text-[#0D1B2A]">{name}</h1>
             </div>
           </div>
         </div>
