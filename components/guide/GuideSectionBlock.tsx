@@ -10,21 +10,29 @@ interface GuideSectionBlockProps {
 export default function GuideSectionBlock({ section, locale }: GuideSectionBlockProps) {
   const isFr = locale === 'fr';
   const items = section.items ?? [];
-  const activityItems = items.filter(i => i.item_type === 'activity_card');
-  const itineraryItems = items.filter(i => i.item_type === 'itinerary_day');
-  const otherItems = items.filter(i => i.item_type !== 'activity_card' && i.item_type !== 'itinerary_day');
 
-  const isExploreSection = section.section_key === 'explore_saint_martin';
-  const title = isFr ? section.title_fr : section.title_en;
+  const visibleItems   = items.filter(i => i.is_visible !== false);
+  const activityItems  = visibleItems.filter(i => i.item_type === 'activity_card');
+  const itineraryItems = visibleItems.filter(i => i.item_type === 'itinerary_day');
+  const otherItems     = visibleItems.filter(i => i.item_type !== 'activity_card' && i.item_type !== 'itinerary_day');
+
+  // Section type routing
+  const sectionType = section.section_type ?? 'generic';
+  const isActivities = sectionType === 'activities';
+  const isItinerary  = sectionType === 'itinerary';
+  // Legacy: old "explore" type contained both — keep rendering both
+  const isExplore    = sectionType === 'explore' || section.section_key === 'explore_saint_martin';
+
+  const title    = isFr ? section.title_fr    : section.title_en;
   const subtitle = isFr ? section.subtitle_fr : section.subtitle_en;
-  const intro = isFr ? section.intro_fr : section.intro_en;
+  const intro    = isFr ? section.intro_fr    : section.intro_en;
 
   return (
     <section>
-      {/* ── Section header ───────────────────────────────────── */}
+
+      {/* ── Section header ───────────────────────────────────────── */}
       <div className="mb-8">
-        {/* Eyebrow + rule */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-4">
           <div className="w-10 h-10 rounded-2xl bg-[#0D1B2A] flex items-center justify-center flex-shrink-0">
             <GuideIcon name={section.icon_name} size={18} className="text-[#B08B52]" />
           </div>
@@ -40,7 +48,7 @@ export default function GuideSectionBlock({ section, locale }: GuideSectionBlock
           </div>
         </div>
 
-        {/* Intro — rendu HTML riche depuis l'éditeur WYSIWYG */}
+        {/* Intro — pleine largeur, rendu HTML riche depuis WYSIWYG */}
         {intro && (
           <div
             className="guide-rich-text text-sm text-stone-600 leading-relaxed font-light w-full"
@@ -49,9 +57,47 @@ export default function GuideSectionBlock({ section, locale }: GuideSectionBlock
         )}
       </div>
 
-      {/* ── Content ──────────────────────────────────────────── */}
-      {isExploreSection ? (
-        /* Explore Saint-Martin — activities grid + itinerary timeline */
+      {/* ══════════════════════════════════════════════════════════
+          SECTION TYPE : activities
+          Grille de cards d'activités uniquement
+      ══════════════════════════════════════════════════════════ */}
+      {isActivities && (
+        <div>
+          <div className="flex items-center gap-4 mb-6">
+            <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.3em] whitespace-nowrap">
+              {isFr ? 'Activités & excursions' : 'Activities & excursions'}
+            </p>
+            <div className="h-px flex-1 bg-stone-100" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {activityItems.map(item => (
+              <GuideItemRenderer key={item.id} item={item} locale={locale} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          SECTION TYPE : itinerary
+          Timeline 7 jours — intro déjà affichée dans le header
+      ══════════════════════════════════════════════════════════ */}
+      {isItinerary && (
+        <div className="pl-0">
+          {itineraryItems.map((item, idx) => (
+            <GuideItemRenderer
+              key={item.id}
+              item={item}
+              locale={locale}
+              isLast={idx === itineraryItems.length - 1}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          SECTION TYPE : explore (legacy — activités + itinéraire)
+      ══════════════════════════════════════════════════════════ */}
+      {isExplore && (
         <div className="space-y-12">
           {activityItems.length > 0 && (
             <div>
@@ -68,58 +114,35 @@ export default function GuideSectionBlock({ section, locale }: GuideSectionBlock
               </div>
             </div>
           )}
-
           {itineraryItems.length > 0 && (
-            <div>
-              {/* Titre de la sous-section itinéraire — depuis la BDD (subtitle_fr/en) ou fallback */}
-              <div className="mb-8">
-                <div className="flex items-center gap-4 mb-3">
-                  <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.3em] whitespace-nowrap">
-                    {subtitle || (isFr ? 'Itinéraire curé' : 'Curated itinerary')}
-                  </p>
-                  <div className="h-px flex-1 bg-stone-100" />
-                </div>
-                {/* Titre fort */}
-                <h3 className="font-serif text-2xl sm:text-3xl font-light text-[#0D1B2A] leading-snug mb-3">
-                  {isFr
-                    ? (section.title_fr || 'Votre séjour idéal en 7 jours')
-                    : (section.title_en || 'Your Ideal 7-Day Stay')}
-                </h3>
-                {/* Intro depuis la BDD */}
-                {intro && (
-                  <div
-                    className="guide-rich-text text-sm text-stone-500 leading-relaxed font-light max-w-2xl"
-                    dangerouslySetInnerHTML={{ __html: intro }}
-                  />
-                )}
-              </div>
-
-              {/* Timeline */}
-              <div className="pl-0">
-                {itineraryItems.map((item, idx) => (
-                  <GuideItemRenderer
-                    key={item.id}
-                    item={item}
-                    locale={locale}
-                    isLast={idx === itineraryItems.length - 1}
-                  />
-                ))}
-              </div>
+            <div className="pl-0">
+              {itineraryItems.map((item, idx) => (
+                <GuideItemRenderer
+                  key={item.id}
+                  item={item}
+                  locale={locale}
+                  isLast={idx === itineraryItems.length - 1}
+                />
+              ))}
             </div>
           )}
         </div>
-      ) : (
-        /* Generic sections */
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          SECTION TYPE : generic / contacts / house_rules
+      ══════════════════════════════════════════════════════════ */}
+      {!isActivities && !isItinerary && !isExplore && (
         <div>
           {otherItems.some(i => i.item_type === 'house_rule') ? (
-            /* House rules — contained list */
+            /* House rules — liste contenue */
             <div className="bg-white rounded-3xl border border-stone-100 px-6 py-2 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
               {otherItems.map(item => (
                 <GuideItemRenderer key={item.id} item={item} locale={locale} />
               ))}
             </div>
           ) : (
-            /* Other items — grid */
+            /* Autres items — grille 2 colonnes */
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {otherItems.map(item => (
                 <GuideItemRenderer key={item.id} item={item} locale={locale} />
@@ -129,7 +152,7 @@ export default function GuideSectionBlock({ section, locale }: GuideSectionBlock
         </div>
       )}
 
-      {/* ── Separator ────────────────────────────────────────── */}
+      {/* ── Separator ────────────────────────────────────────────── */}
       <div className="mt-14 flex items-center gap-4">
         <div className="h-px flex-1 bg-stone-100" />
         <div className="w-1 h-1 rounded-full bg-stone-200" />
