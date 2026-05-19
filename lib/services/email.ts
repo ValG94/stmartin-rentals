@@ -4,7 +4,10 @@
 // ============================================================
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = 'Island Living SXM <noreply@islandlivingsxm.com>';
+// FROM_EMAIL doit correspondre soit à un domaine vérifié sur Resend,
+// soit à l'adresse test "onboarding@resend.dev" tant qu'aucun domaine
+// n'est vérifié. À mettre dans .env.local et Vercel.
+const FROM_EMAIL = process.env.EMAIL_FROM || 'Island Living SXM <onboarding@resend.dev>';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'petrillis@bell.net';
 
 interface BookingEmailData {
