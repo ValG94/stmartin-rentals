@@ -67,7 +67,7 @@ export async function computeServerPricing(args: {
   const sb = admin();
   const { data: apt, error: aptErr } = await sb
     .from('apartments')
-    .select('id, slug, name_en, price_per_night')
+    .select('id, slug, title_en, price_per_night')
     .eq('id', apartmentId)
     .single();
 
@@ -103,7 +103,7 @@ export async function computeServerPricing(args: {
   return {
     ...pricing,
     apartmentSlug: apt.slug,
-    apartmentName: apt.name_en,
+    apartmentName: apt.title_en,
     effectiveNightlyRate,
     amountDue,
   };

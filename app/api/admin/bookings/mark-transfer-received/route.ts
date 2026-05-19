@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     // Récupérer la réservation
     const { data: booking, error: fetchError } = await supabase
       .from('bookings')
-      .select(`*, apartments:apartment_id (name_en, name_fr, slug)`)
+      .select(`*, apartments:apartment_id (title_en, title_fr, slug)`)
       .eq('id', bookingId)
       .single();
 
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Envoyer l'email de confirmation au voyageur
-    const villaName = booking.apartments?.name_en || 'Villa';
+    const villaName = booking.apartments?.title_en || 'Villa';
     await sendBookingConfirmationEmail({
       guestName: booking.guest_name,
       guestEmail: booking.guest_email,

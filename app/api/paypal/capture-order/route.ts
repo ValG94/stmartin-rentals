@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       .from('bookings')
       .select(`
         *,
-        apartments:apartment_id (name_fr, name_en, slug)
+        apartments:apartment_id (title_fr, title_en, slug)
       `)
       .eq('id', bookingId)
       .single();
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Email de confirmation
-    const villaName = booking.apartments?.name_en || 'Villa';
+    const villaName = booking.apartments?.title_en || 'Villa';
     await sendBookingConfirmationEmail({
       guestName: booking.guest_name,
       guestEmail: booking.guest_email,

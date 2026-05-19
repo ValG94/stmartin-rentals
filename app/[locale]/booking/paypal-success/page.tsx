@@ -25,7 +25,7 @@ export default async function PayPalSuccessPage({ params, searchParams }: Props)
     deposit_amount: number;
     remaining_balance: number;
     security_deposit_amount: number;
-    apartments?: { name_fr?: string; name_en?: string; title_fr?: string; title_en?: string; location?: string };
+    apartments?: { title_fr?: string; title_en?: string; location?: string };
   };
   let booking: BookingView | null = null;
 
@@ -38,7 +38,7 @@ export default async function PayPalSuccessPage({ params, searchParams }: Props)
           guest_name, guest_email, check_in, check_out, nights, guests,
           booking_total, payment_option, deposit_amount, remaining_balance,
           security_deposit_amount,
-          apartments:apartment_id (name_fr, name_en, title_fr, title_en, location)
+          apartments:apartment_id (title_fr, title_en, location)
         `)
         .eq('id', bookingId)
         .maybeSingle();
@@ -52,9 +52,7 @@ export default async function PayPalSuccessPage({ params, searchParams }: Props)
   }
 
   const villaName = booking?.apartments
-    ? (isFr
-        ? (booking.apartments.title_fr || booking.apartments.name_fr)
-        : (booking.apartments.title_en || booking.apartments.name_en))
+    ? (isFr ? booking.apartments.title_fr : booking.apartments.title_en)
     : null;
 
   const isDeposit = booking?.payment_option === 'deposit_40';
