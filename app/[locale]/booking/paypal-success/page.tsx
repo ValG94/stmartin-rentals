@@ -1,71 +1,223 @@
 import Link from 'next/link';
+import { CheckCircle2, Calendar, MapPin, Users, Mail, Phone } from 'lucide-react';
+import { getServerSupabase } from '@/lib/services/server-pricing';
+import { formatUSD } from '@/lib/services/pricing';
 
 interface Props {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{ bookingId?: string }>;
 }
 
-export default async function PayPalSuccessPage({ searchParams }: Props) {
+export default async function PayPalSuccessPage({ params, searchParams }: Props) {
+  const { locale } = await params;
   const { bookingId = '' } = await searchParams;
+  const isFr = locale === 'fr';
+
+  type BookingView = {
+    guest_name: string;
+    guest_email: string;
+    check_in: string;
+    check_out: string;
+    nights: number;
+    guests: number;
+    booking_total: number;
+    payment_option: string;
+    deposit_amount: number;
+    remaining_balance: number;
+    security_deposit_amount: number;
+    apartments?: { name_fr?: string; name_en?: string; title_fr?: string; title_en?: string; location?: string };
+  };
+  let booking: BookingView | null = null;
+
+  if (bookingId) {
+    try {
+      const supabase = getServerSupabase();
+      const { data } = await supabase
+        .from('bookings')
+        .select(`
+          guest_name, guest_email, check_in, check_out, nights, guests,
+          booking_total, payment_option, deposit_amount, remaining_balance,
+          security_deposit_amount,
+          apartments:apartment_id (name_fr, name_en, title_fr, title_en, location)
+        `)
+        .eq('id', bookingId)
+        .maybeSingle();
+      if (data) {
+        const apartments = Array.isArray(data.apartments) ? data.apartments[0] : data.apartments;
+        booking = { ...data, apartments } as unknown as BookingView;
+      }
+    } catch {
+      /* la page reste utilisable même si le fetch échoue */
+    }
+  }
+
+  const villaName = booking?.apartments
+    ? (isFr
+        ? (booking.apartments.title_fr || booking.apartments.name_fr)
+        : (booking.apartments.title_en || booking.apartments.name_en))
+    : null;
+
+  const isDeposit = booking?.payment_option === 'deposit_40';
+  const paidAmount = booking
+    ? (isDeposit ? booking.deposit_amount : booking.booking_total)
+    : 0;
 
   return (
-    <div className="min-h-screen bg-[#f8f8f6] flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-gray-100 p-8 text-center">
-        {/* Icône succès */}
-        <div className="w-16 h-16 bg-green-50 border border-green-200 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+    <div className="min-h-screen bg-cream-100 py-20 px-4">
+      <div className="max-w-2xl mx-auto">
+
+        {/* Hero confirmation */}
+        <div className="text-center mb-12">
+          <div className="w-20 h-20 bg-cream-50 border border-bronze-300 rounded-full flex items-center justify-center mx-auto mb-8">
+            <CheckCircle2 className="w-10 h-10 text-bronze-500" strokeWidth={1.2} />
+          </div>
+          <p className="section-label mb-4">{isFr ? 'Paiement reçu' : 'Payment received'}</p>
+          <h1
+            className="font-serif font-light text-night-600 mb-5 leading-[1.1]"
+            style={{ fontSize: 'clamp(2rem, 5vw, 3.25rem)' }}
+          >
+            {isFr ? 'Votre séjour est confirmé' : 'Your stay is confirmed'}
+          </h1>
+          <div className="w-12 h-px bg-bronze-400 mx-auto mb-6" />
+          <p className="text-night-400 leading-relaxed font-light max-w-lg mx-auto">
+            {isFr
+              ? 'Nous avons reçu votre paiement et votre réservation est définitivement confirmée. Un email récapitulatif vient de vous être envoyé.'
+              : 'Your payment has been received and your booking is now confirmed. A confirmation email has just been sent to you.'}
+          </p>
         </div>
 
-        <p className="text-xs font-semibold tracking-widest text-amber-600 uppercase mb-1">Island Living SXM</p>
-        <h1 className="text-2xl font-serif text-gray-900 mb-3">Booking Confirmed</h1>
-        <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-          Your payment has been processed successfully. A confirmation email has been sent to your inbox with all the details of your stay.
-        </p>
+        {/* Card récap */}
+        {booking && (
+          <div className="bg-cream-50 border border-bronze-100 rounded-2xl p-8 mb-8">
+            <div className="flex items-baseline justify-between mb-6 pb-6 border-b border-bronze-100">
+              <div>
+                <p className="section-label mb-2">{isFr ? 'Votre villa' : 'Your villa'}</p>
+                <h2 className="font-serif font-light text-2xl text-night-600">{villaName}</h2>
+                {booking.apartments?.location && (
+                  <div className="flex items-center gap-1.5 text-sm text-night-400 mt-1 font-light">
+                    <MapPin size={13} className="text-bronze-400" />
+                    {booking.apartments.location}
+                  </div>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="section-label mb-2">{isFr ? 'Montant réglé' : 'Amount paid'}</p>
+                <p className="font-serif text-2xl text-night-600">{formatUSD(paidAmount)}</p>
+              </div>
+            </div>
 
-        {bookingId && (
-          <div className="bg-gray-50 rounded px-4 py-3 mb-6">
-            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Booking reference</p>
-            <p className="font-mono text-sm text-gray-700 break-all">{bookingId}</p>
+            <div className="grid grid-cols-3 gap-4 mb-6 text-center">
+              <Info
+                icon={<Calendar size={14} className="text-bronze-400" />}
+                label={isFr ? 'Arrivée' : 'Check-in'}
+                value={booking.check_in}
+              />
+              <Info
+                icon={<Calendar size={14} className="text-bronze-400" />}
+                label={isFr ? 'Départ' : 'Check-out'}
+                value={booking.check_out}
+              />
+              <Info
+                icon={<Users size={14} className="text-bronze-400" />}
+                label={isFr ? 'Voyageurs' : 'Guests'}
+                value={`${booking.guests}`}
+              />
+            </div>
+
+            {isDeposit && (
+              <div className="bg-cream-100 border border-bronze-200 rounded-lg p-4 mb-4">
+                <p className="text-[11px] uppercase font-medium text-bronze-600 mb-1" style={{ letterSpacing: '0.12em' }}>
+                  {isFr ? 'Solde à régler avant arrivée' : 'Balance due before arrival'}
+                </p>
+                <p className="font-serif text-xl text-night-600">{formatUSD(booking.remaining_balance)}</p>
+              </div>
+            )}
+
+            <div className="bg-cream-100 border border-bronze-100 rounded-lg p-4">
+              <p className="text-[11px] uppercase font-medium text-night-500 mb-1" style={{ letterSpacing: '0.12em' }}>
+                {isFr ? 'Dépôt de garantie à l’arrivée' : 'Security deposit on arrival'}
+              </p>
+              <p className="font-serif text-lg text-night-600">{formatUSD(booking.security_deposit_amount)}</p>
+              <p className="text-xs text-night-400 mt-1 font-light">
+                {isFr ? 'Restitué sous 48 h après le départ si aucun dégât.' : 'Refunded within 48 h after check-out if no damage.'}
+              </p>
+            </div>
           </div>
         )}
 
-        <div className="bg-amber-50 border border-amber-100 rounded p-4 text-sm text-amber-800 mb-6 text-left">
-          <p className="font-semibold mb-1">What happens next?</p>
-          <ul className="space-y-1 text-xs">
-            <li>✓ Confirmation email sent to your address</li>
-            <li>✓ Dates blocked in our calendar</li>
-            <li>✓ We will contact you 48h before arrival with check-in instructions</li>
-            <li>✓ Security deposit due on arrival</li>
+        {/* Prochaines étapes */}
+        <div className="bg-night-600 text-cream-100 rounded-2xl p-8 mb-8">
+          <p className="text-[11px] uppercase font-medium text-bronze-300 mb-4" style={{ letterSpacing: '0.15em' }}>
+            {isFr ? 'Prochaines étapes' : 'What happens next'}
+          </p>
+          <ul className="space-y-3 text-sm font-light">
+            <Step text={isFr ? 'Vous recevez votre email de confirmation avec tous les détails.' : 'You receive your confirmation email with all the details.'} />
+            <Step text={isFr ? 'Vos dates sont bloquées dans notre calendrier.' : 'Your dates are blocked in our calendar.'} />
+            <Step text={isFr ? 'Nous vous contactons 48 h avant l’arrivée pour les instructions check-in.' : 'We contact you 48 h before arrival with check-in instructions.'} />
+            <Step text={isFr ? 'Le dépôt de garantie sera prélevé à l’arrivée (CB ou espèces).' : 'Security deposit will be collected on arrival (card or cash).'} />
           </ul>
         </div>
 
-        <div className="space-y-3">
-          <Link
-            href="/en"
-            className="block w-full bg-gray-900 text-white py-3 rounded text-sm font-semibold hover:bg-gray-800 transition-colors"
-          >
-            Back to home
+        {/* Référence + contact */}
+        {bookingId && (
+          <div className="text-center mb-8">
+            <p className="text-[10px] uppercase text-night-300 mb-1" style={{ letterSpacing: '0.2em' }}>
+              {isFr ? 'Référence' : 'Reference'}
+            </p>
+            <p className="font-mono text-xs text-night-500 break-all">{bookingId}</p>
+          </div>
+        )}
+
+        {/* CTA */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Link href={`/${locale}`} className="btn-primary text-center">
+            {isFr ? 'Retour à l’accueil' : 'Back to home'}
           </Link>
           <Link
-            href="/en/apartments"
-            className="block w-full border border-gray-200 text-gray-600 py-3 rounded text-sm hover:border-gray-300 transition-colors"
+            href={`/${locale}/apartments`}
+            className="inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-bronze-300 text-bronze-500 hover:bg-bronze-400 hover:text-cream-100 hover:border-bronze-400 transition-all duration-500 text-xs font-medium uppercase rounded-md"
+            style={{ letterSpacing: '0.15em' }}
           >
-            Explore our villas
+            {isFr ? 'Voir nos villas' : 'Explore our villas'}
           </Link>
         </div>
 
-        <p className="text-xs text-gray-400 mt-6">
-          Questions? Contact us at{' '}
-          <a href="mailto:petrillis@bell.net" className="text-amber-600 hover:underline">
-            petrillis@bell.net
-          </a>{' '}
-          or WhatsApp{' '}
-          <a href="https://wa.me/15149476100" className="text-amber-600 hover:underline">
-            +1 (514) 947-6100
-          </a>
-        </p>
+        {/* Contact */}
+        <div className="text-center mt-12 pt-8 border-t border-bronze-100">
+          <p className="text-[10px] uppercase text-night-400 mb-3 font-medium" style={{ letterSpacing: '0.2em' }}>
+            {isFr ? 'Une question ?' : 'Need anything?'}
+          </p>
+          <div className="flex items-center justify-center gap-6 text-sm text-night-500">
+            <a href="mailto:petrillis@bell.net" className="inline-flex items-center gap-1.5 hover:text-bronze-500 transition-colors font-light">
+              <Mail size={13} /> petrillis@bell.net
+            </a>
+            <a href="https://wa.me/15149476100" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-bronze-500 transition-colors font-light">
+              <Phone size={13} /> +1 (514) 947-6100
+            </a>
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+function Info({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div>
+      <div className="flex items-center justify-center gap-1.5 mb-1 text-[10px] uppercase text-night-400 font-medium" style={{ letterSpacing: '0.12em' }}>
+        {icon}
+        {label}
+      </div>
+      <div className="font-serif text-base text-night-600">{value}</div>
+    </div>
+  );
+}
+
+function Step({ text }: { text: string }) {
+  return (
+    <li className="flex items-start gap-3 text-cream-100/90">
+      <CheckCircle2 size={14} className="text-bronze-300 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+      <span>{text}</span>
+    </li>
   );
 }

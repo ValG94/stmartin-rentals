@@ -1,51 +1,66 @@
 import Link from 'next/link';
+import { XCircle, Mail, Phone } from 'lucide-react';
 
 interface Props {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{ bookingId?: string }>;
 }
 
-export default async function PayPalCancelPage({ searchParams }: Props) {
-  await searchParams; // requis par Next.js 15
+export default async function PayPalCancelPage({ params, searchParams }: Props) {
+  const { locale } = await params;
+  await searchParams;
+  const isFr = locale === 'fr';
 
   return (
-    <div className="min-h-screen bg-[#f8f8f6] flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-gray-100 p-8 text-center">
-        {/* Icône annulation */}
-        <div className="w-16 h-16 bg-gray-50 border border-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+    <div className="min-h-screen bg-cream-100 flex items-center justify-center px-4 py-20">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-10">
+          <div className="w-20 h-20 bg-cream-50 border border-bronze-200 rounded-full flex items-center justify-center mx-auto mb-8">
+            <XCircle className="w-10 h-10 text-night-400" strokeWidth={1.2} />
+          </div>
+          <p className="section-label mb-4">{isFr ? 'Paiement interrompu' : 'Payment cancelled'}</p>
+          <h1
+            className="font-serif font-light text-night-600 mb-5 leading-[1.1]"
+            style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)' }}
+          >
+            {isFr ? 'Aucun débit n’a été effectué' : 'No payment was made'}
+          </h1>
+          <div className="w-12 h-px bg-bronze-400 mx-auto mb-6" />
+          <p className="text-night-400 leading-relaxed font-light">
+            {isFr
+              ? 'Vous avez interrompu votre paiement. Aucun montant n’a été prélevé. Vous pouvez reprendre votre réservation ou choisir un autre moyen de paiement.'
+              : 'You cancelled the payment. No amount was charged. You can resume your booking or choose another payment method.'}
+          </p>
         </div>
 
-        <p className="text-xs font-semibold tracking-widest text-amber-600 uppercase mb-1">Island Living SXM</p>
-        <h1 className="text-2xl font-serif text-gray-900 mb-3">Payment Cancelled</h1>
-        <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-          Your payment was cancelled. No charges have been made. You can try again or choose a different payment method.
-        </p>
-
         <div className="space-y-3">
-          <Link
-            href="/en/apartments"
-            className="block w-full bg-gray-900 text-white py-3 rounded text-sm font-semibold hover:bg-gray-800 transition-colors"
-          >
-            Return to villas
+          <Link href={`/${locale}/apartments`} className="btn-primary w-full text-center">
+            {isFr ? 'Reprendre la réservation' : 'Resume booking'}
           </Link>
           <a
             href="https://wa.me/15149476100"
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full border border-gray-200 text-gray-600 py-3 rounded text-sm hover:border-gray-300 transition-colors"
+            className="inline-flex items-center justify-center gap-2 w-full px-8 py-3.5 border border-bronze-300 text-bronze-500 hover:bg-bronze-400 hover:text-cream-100 hover:border-bronze-400 transition-all duration-500 text-xs font-medium uppercase rounded-md"
+            style={{ letterSpacing: '0.15em' }}
           >
-            Contact us via WhatsApp
+            {isFr ? 'Nous contacter via WhatsApp' : 'Contact us via WhatsApp'}
           </a>
         </div>
 
-        <p className="text-xs text-gray-400 mt-6">
-          Need help?{' '}
-          <a href="mailto:petrillis@bell.net" className="text-amber-600 hover:underline">
-            petrillis@bell.net
-          </a>
-        </p>
+        <div className="text-center mt-12 pt-8 border-t border-bronze-100">
+          <p className="text-[10px] uppercase text-night-400 mb-3 font-medium" style={{ letterSpacing: '0.2em' }}>
+            {isFr ? 'Besoin d’aide ?' : 'Need help?'}
+          </p>
+          <div className="flex items-center justify-center gap-6 text-sm text-night-500">
+            <a href="mailto:petrillis@bell.net" className="inline-flex items-center gap-1.5 hover:text-bronze-500 transition-colors font-light">
+              <Mail size={13} /> petrillis@bell.net
+            </a>
+            <a href="https://wa.me/15149476100" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-bronze-500 transition-colors font-light">
+              <Phone size={13} /> +1 (514) 947-6100
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
