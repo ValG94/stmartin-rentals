@@ -9,16 +9,17 @@ import { Phone, MessageCircle, Globe, MapPin, Mail, ChevronDown, ChevronUp, Exte
 interface GuideItemRendererProps {
   item: GuideItem;
   locale: string;
+  isLast?: boolean;
 }
 
-export default function GuideItemRenderer({ item, locale }: GuideItemRendererProps) {
+export default function GuideItemRenderer({ item, locale, isLast = false }: GuideItemRendererProps) {
   const isFr = locale === 'fr';
 
   switch (item.item_type) {
     case 'activity_card':
       return <ActivityCard item={item} isFr={isFr} />;
     case 'itinerary_day':
-      return <ItineraryDayItem item={item} isFr={isFr} />;
+      return <ItineraryDayItem item={item} isFr={isFr} isLast={isLast} />;
     case 'contact':
     case 'partner':
       return <ContactItem item={item} isFr={isFr} />;
@@ -184,28 +185,92 @@ function ActivityCard({ item, isFr }: { item: GuideItem; isFr: boolean }) {
 }
 
 // ── Itinerary Day — timeline premium ─────────────────────────
-function ItineraryDayItem({ item, isFr }: { item: GuideItem; isFr: boolean }) {
+// Palette de variation légère jour par jour (7 couleurs)
+const DAY_PALETTES = [
+  { dot: '#B08B52', bg: 'rgba(176,139,82,0.08)', border: 'rgba(176,139,82,0.2)', text: '#8C6A38' },   // 1 — bronze
+  { dot: '#4A7FA5', bg: 'rgba(74,127,165,0.08)', border: 'rgba(74,127,165,0.2)', text: '#3A6585' },   // 2 — ocean
+  { dot: '#5A9E7A', bg: 'rgba(90,158,122,0.08)', border: 'rgba(90,158,122,0.2)', text: '#3E7A5A' },   // 3 — palm
+  { dot: '#B08B52', bg: 'rgba(176,139,82,0.06)', border: 'rgba(176,139,82,0.15)', text: '#8C6A38' },  // 4 — bronze light
+  { dot: '#8B6BAE', bg: 'rgba(139,107,174,0.08)', border: 'rgba(139,107,174,0.2)', text: '#6B4E8E' }, // 5 — dusk
+  { dot: '#D4845A', bg: 'rgba(212,132,90,0.08)', border: 'rgba(212,132,90,0.2)', text: '#B06040' },   // 6 — sunset
+  { dot: '#4A7FA5', bg: 'rgba(74,127,165,0.06)', border: 'rgba(74,127,165,0.15)', text: '#3A6585' },  // 7 — ocean light
+];
+
+function ItineraryDayItem({ item, isFr, isLast = false }: { item: GuideItem; isFr: boolean; isLast?: boolean }) {
   const meta = item.meta_json ?? {};
-  const day = meta.day as number;
+  const day = (meta.day as number) ?? 1;
   const content = isFr ? item.content_fr : item.content_en;
+  const title = isFr ? item.title_fr : item.title_en;
+  const badge = isFr ? item.badge_fr : item.badge_en;
+  const palette = DAY_PALETTES[(day - 1) % DAY_PALETTES.length];
+  const dayLabel = isFr ? 'Jour' : 'Day';
 
   return (
-    <div className="flex gap-5 group">
-      {/* Timeline */}
-      <div className="flex flex-col items-center flex-shrink-0">
-        <div className="w-9 h-9 rounded-full flex items-center justify-center border-2 border-[#B08B52]/30 bg-white group-hover:border-[#B08B52] group-hover:bg-[#B08B52]/5 transition-all">
-          <span className="text-[#B08B52] text-xs font-semibold">{day}</span>
+    <div className="flex gap-0 group">
+      {/* ── Timeline column ── */}
+      <div className="flex flex-col items-center flex-shrink-0 w-16 sm:w-20">
+        {/* Dot */}
+        <div
+          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex flex-col items-center justify-center flex-shrink-0 shadow-sm transition-transform duration-300 group-hover:-translate-y-0.5"
+          style={{ background: palette.bg, border: `1.5px solid ${palette.border}` }}
+        >
+          <span className="text-[9px] font-semibold uppercase tracking-[0.15em]" style={{ color: palette.text }}>
+            {dayLabel}
+          </span>
+          <span className="text-lg font-bold leading-none" style={{ color: palette.dot }}>
+            {day}
+          </span>
         </div>
-        <div className="flex-1 w-px bg-stone-100 mt-2 group-last:hidden" />
-      </div>
-      {/* Content */}
-      <div className="flex-1 pb-7">
-        <h4 className="font-serif text-sm font-semibold text-[#0D1B2A] mb-1.5 leading-snug">
-          {isFr ? item.title_fr : item.title_en}
-        </h4>
-        {content && (
-          <p className="text-sm text-stone-500 leading-relaxed font-light">{content}</p>
+        {/* Connector line */}
+        {!isLast && (
+          <div className="w-px flex-1 mt-2" style={{ background: `linear-gradient(to bottom, ${palette.border}, rgba(0,0,0,0.04))` }} />
         )}
+      </div>
+
+      {/* ── Content card ── */}
+      <div className={`flex-1 ${isLast ? 'pb-0' : 'pb-8'} pl-3 sm:pl-4`}>
+        <div
+          className="rounded-2xl p-5 sm:p-6 transition-all duration-300 group-hover:shadow-[0_4px_20px_rgba(0,0,0,0.07)]"
+          style={{ background: palette.bg, border: `1px solid ${palette.border}` }}
+        >
+          {/* Header row */}
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              {item.icon_name && (
+                <div
+                  className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${palette.dot}22` }}
+                >
+                  <GuideIcon name={item.icon_name} size={15} style={{ color: palette.dot }} />
+                </div>
+              )}
+              <h4 className="font-serif text-base sm:text-lg font-semibold text-[#0D1B2A] leading-snug">
+                {title}
+              </h4>
+            </div>
+            {/* Badge */}
+            {badge && (
+              <span
+                className="text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0"
+                style={{ background: `${palette.dot}18`, color: palette.text }}
+              >
+                {badge}
+              </span>
+            )}
+          </div>
+
+          {/* Description */}
+          {content && (
+            <p className="text-sm text-stone-600 leading-relaxed font-light">{content}</p>
+          )}
+
+          {/* Image optionnelle */}
+          {item.image_url && (
+            <div className="relative mt-4 h-40 rounded-xl overflow-hidden">
+              <img src={item.image_url} alt={title ?? ''} className="w-full h-full object-cover" />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

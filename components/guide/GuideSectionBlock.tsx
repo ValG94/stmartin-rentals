@@ -71,15 +71,38 @@ export default function GuideSectionBlock({ section, locale }: GuideSectionBlock
 
           {itineraryItems.length > 0 && (
             <div>
-              <div className="flex items-center gap-4 mb-6">
-                <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.3em] whitespace-nowrap">
-                  {isFr ? 'Itinéraire suggéré — 7 jours' : 'Suggested itinerary — 7 days'}
-                </p>
-                <div className="h-px flex-1 bg-stone-100" />
+              {/* Titre de la sous-section itinéraire — depuis la BDD (subtitle_fr/en) ou fallback */}
+              <div className="mb-8">
+                <div className="flex items-center gap-4 mb-3">
+                  <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.3em] whitespace-nowrap">
+                    {subtitle || (isFr ? 'Itinéraire curé' : 'Curated itinerary')}
+                  </p>
+                  <div className="h-px flex-1 bg-stone-100" />
+                </div>
+                {/* Titre fort */}
+                <h3 className="font-serif text-2xl sm:text-3xl font-light text-[#0D1B2A] leading-snug mb-3">
+                  {isFr
+                    ? (section.title_fr || 'Votre séjour idéal en 7 jours')
+                    : (section.title_en || 'Your Ideal 7-Day Stay')}
+                </h3>
+                {/* Intro depuis la BDD */}
+                {intro && (
+                  <div
+                    className="guide-rich-text text-sm text-stone-500 leading-relaxed font-light max-w-2xl"
+                    dangerouslySetInnerHTML={{ __html: intro }}
+                  />
+                )}
               </div>
-              <div className="bg-white rounded-3xl border border-stone-100 px-6 py-7 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-                {itineraryItems.map(item => (
-                  <GuideItemRenderer key={item.id} item={item} locale={locale} />
+
+              {/* Timeline */}
+              <div className="pl-0">
+                {itineraryItems.map((item, idx) => (
+                  <GuideItemRenderer
+                    key={item.id}
+                    item={item}
+                    locale={locale}
+                    isLast={idx === itineraryItems.length - 1}
+                  />
                 ))}
               </div>
             </div>

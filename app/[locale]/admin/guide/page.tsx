@@ -804,6 +804,30 @@ export default function AdminGuidePage() {
                     className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52]" placeholder="ex: Sea / Adventure" />
                 </div>
               </div>
+              {/* Badge */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Badge FR</label>
+                  <input value={editingItem.badge_fr ?? ''} onChange={e => setEditingItem(p => ({ ...p!, badge_fr: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52]" placeholder="ex: Incontournable" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Badge EN</label>
+                  <input value={editingItem.badge_en ?? ''} onChange={e => setEditingItem(p => ({ ...p!, badge_en: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52]" placeholder="ex: Must-do" />
+                </div>
+              </div>
+              {/* Numéro du jour (itinerary_day uniquement) */}
+              {editingItem.item_type === 'itinerary_day' && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Numéro du jour</label>
+                  <input
+                    type="number" min={1} max={30}
+                    value={((editingItem.meta_json as Record<string,unknown>)?.day as number) ?? 1}
+                    onChange={e => setEditingItem(p => ({ ...p!, meta_json: { ...(p!.meta_json as Record<string,unknown> ?? {}), day: parseInt(e.target.value) || 1 } }))}
+                    className="w-28 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#B08B52]" />
+                </div>
+              )}
               {/* Contacts */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
