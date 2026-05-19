@@ -19,7 +19,7 @@ export default async function PayPalSuccessPage({ params, searchParams }: Props)
     check_in: string;
     check_out: string;
     nights: number;
-    guests: number;
+    guests_count: number;
     booking_total: number;
     payment_option: string;
     deposit_amount: number;
@@ -35,7 +35,7 @@ export default async function PayPalSuccessPage({ params, searchParams }: Props)
       const { data } = await supabase
         .from('bookings')
         .select(`
-          guest_name, guest_email, check_in, check_out, nights, guests,
+          guest_name, guest_email, check_in, check_out, nights, guests_count,
           booking_total, payment_option, deposit_amount, remaining_balance,
           security_deposit_amount,
           apartments:apartment_id (title_fr, title_en, location)
@@ -118,7 +118,7 @@ export default async function PayPalSuccessPage({ params, searchParams }: Props)
               <Info
                 icon={<Users size={14} className="text-bronze-400" />}
                 label={isFr ? 'Voyageurs' : 'Guests'}
-                value={`${booking.guests}`}
+                value={`${booking.guests_count}`}
               />
             </div>
 

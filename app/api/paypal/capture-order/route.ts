@@ -63,8 +63,9 @@ export async function POST(req: NextRequest) {
       await supabase
         .from('bookings')
         .update({
-          payment_status: 'mismatch',
-          booking_status: 'pending', // ne pas confirmer
+          payment_status: 'failed', // CHECK constraint accepts: pending|paid|partially_paid|failed|cancelled|pending_bank_transfer
+          booking_status: 'pending',
+          notes: `Amount mismatch: captured=${capturedAmount}, expected=${expectedAmount}. Manual review required.`,
         })
         .eq('id', bookingId);
       return NextResponse.json({ error: 'Amount mismatch — booking flagged for review' }, { status: 400 });

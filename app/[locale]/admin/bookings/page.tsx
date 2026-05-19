@@ -13,7 +13,7 @@ interface Booking {
   guest_email: string;
   check_in: string;
   check_out: string;
-  guests: number;
+  guests_count: number;
   nights?: number;
   booking_status: string;
   payment_status: string;
@@ -271,7 +271,7 @@ function PendingTransferCard({
           <div className="text-sm text-cream-100/80 flex flex-wrap gap-x-5 gap-y-1 font-light">
             <span className="flex items-center gap-1.5"><Building2 size={12} className="text-bronze-300" /> {villaName}</span>
             <span className="flex items-center gap-1.5"><Calendar size={12} className="text-bronze-300" /> {booking.check_in} → {booking.check_out}</span>
-            <span className="flex items-center gap-1.5"><Users size={12} className="text-bronze-300" /> {booking.guests}</span>
+            <span className="flex items-center gap-1.5"><Users size={12} className="text-bronze-300" /> {booking.guests_count}</span>
             <span className="flex items-center gap-1.5"><Mail size={12} className="text-bronze-300" /> {booking.guest_email}</span>
           </div>
         </div>
@@ -354,7 +354,7 @@ function BookingCard({
             <Field label={isFr ? 'Villa' : 'Villa'} value={villaName} />
             <Field label={isFr ? 'Arrivée' : 'Check-in'} value={booking.check_in} />
             <Field label={isFr ? 'Départ' : 'Check-out'} value={booking.check_out} />
-            <Field label={isFr ? 'Voyageurs' : 'Guests'} value={`${booking.guests}`} />
+            <Field label={isFr ? 'Voyageurs' : 'Guests'} value={`${booking.guests_count}`} />
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-night-400 font-light">

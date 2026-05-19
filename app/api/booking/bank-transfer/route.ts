@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         apartment_id: apartmentId,
         check_in: checkIn,
         check_out: checkOut,
-        guests,
+        guests_count: guests,
         guest_name: guestName,
         guest_email: guestEmail,
         currency: 'USD',
