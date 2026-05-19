@@ -19,7 +19,7 @@ SET
   icon_name      = 'compass'
 WHERE section_key = 'explore_saint_martin';
 
--- ── 2. Créer la Section 2 : Itinéraire 7 jours ──
+-- ── 2. Créer la Section 2 : Itinéraire 7 jours (si elle n'existe pas déjà) ──
 INSERT INTO guide_sections (
   id, scope, section_key, section_type,
   title_fr, title_en,
@@ -27,7 +27,7 @@ INSERT INTO guide_sections (
   intro_fr, intro_en,
   icon_name, display_order, is_published
 )
-VALUES (
+SELECT
   gen_random_uuid(),
   'shared',
   'itinerary_7days',
@@ -41,17 +41,9 @@ VALUES (
   'calendar',
   35,
   true
-)
-ON CONFLICT (section_key) DO UPDATE SET
-  title_fr      = EXCLUDED.title_fr,
-  title_en      = EXCLUDED.title_en,
-  subtitle_fr   = EXCLUDED.subtitle_fr,
-  subtitle_en   = EXCLUDED.subtitle_en,
-  intro_fr      = EXCLUDED.intro_fr,
-  intro_en      = EXCLUDED.intro_en,
-  icon_name     = EXCLUDED.icon_name,
-  display_order = EXCLUDED.display_order,
-  is_published  = EXCLUDED.is_published;
+WHERE NOT EXISTS (
+  SELECT 1 FROM guide_sections WHERE section_key = 'itinerary_7days'
+);
 
 -- ── 3. Déplacer les items itinerary_day vers la Section 2 ──
 UPDATE guide_items
