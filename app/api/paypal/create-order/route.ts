@@ -1,36 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPayPalOrder } from '@/lib/services/paypal';
-import { createClient } from '@supabase/supabase-js';
+import { computeServerPricing, getServerSupabase } from '@/lib/services/server-pricing';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const {
-      apartmentSlug,
-      apartmentId,
-      checkIn,
-      checkOut,
-      guests,
-      guestName,
-      guestEmail,
-      nightlyRate,
-      accommodationAmount,
-      cleaningFee,
-      bookingTotal,
-      paymentOption,
-      depositAmount,
-      remainingBalance,
-      securityDepositAmount,
-      nights,
-    } = body;
 
-    // Créer la réservation en base avec statut pending
-    const amountDue = paymentOption === 'full' ? bookingTotal : depositAmount;
+    // Le client n'envoie QUE les champs métier — les montants sont recalculés.
+    const apartmentId: string | undefined = body.apartmentId;
+    const checkIn: string | undefined = body.checkIn;
+    const checkOut: string | undefined = body.checkOut;
+    const guests: number = Number(body.guests);
+    const guestName: string = String(body.guestName || '').trim().slice(0, 200);
+    const guestEmail: string = String(body.guestEmail || '').trim().slice(0, 200);
+    const paymentOption: 'full' | 'deposit_40' =
+      body.paymentOption === 'deposit_40' ? 'deposit_40' : 'full';
+
+    if (!apartmentId || !checkIn || !checkOut) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+    if (!guestName || !EMAIL_RE.test(guestEmail)) {
+      return NextResponse.json({ error: 'Invalid guest info' }, { status: 400 });
+    }
+    if (!Number.isFinite(guests) || guests < 1 || guests > 20) {
+      return NextResponse.json({ error: 'Invalid guest count' }, { status: 400 });
+    }
+
+    const pricing = await computeServerPricing({ apartmentId, checkIn, checkOut, paymentOption });
+
+    const supabase = getServerSupabase();
+
     const { data: booking, error } = await supabase
       .from('bookings')
       .insert({
@@ -41,18 +42,20 @@ export async function POST(req: NextRequest) {
         guest_name: guestName,
         guest_email: guestEmail,
         currency: 'USD',
-        accommodation_amount: accommodationAmount,
-        cleaning_fee: cleaningFee,
-        booking_total: bookingTotal,
+        nights: pricing.nights,
+        price_per_night: pricing.effectiveNightlyRate,
+        accommodation_amount: pricing.accommodationAmount,
+        cleaning_fee: pricing.cleaningFee,
+        booking_total: pricing.bookingTotal,
         payment_option: paymentOption,
-        deposit_amount: depositAmount,
-        remaining_balance: remainingBalance,
+        deposit_amount: pricing.depositAmount,
+        remaining_balance: pricing.remainingBalance,
         security_deposit_due_on_arrival: true,
-        security_deposit_amount: securityDepositAmount,
+        security_deposit_amount: pricing.securityDepositAmount,
         payment_method: 'paypal',
         payment_status: 'pending',
         booking_status: 'pending',
-        total_amount: amountDue,
+        total_amount: pricing.amountDue,
       })
       .select('id')
       .single();
@@ -61,12 +64,10 @@ export async function POST(req: NextRequest) {
 
     const bookingId = booking.id;
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://stmartin-rentals-seven.vercel.app';
-
-    const villaName = apartmentSlug === 'villa-vanille' ? 'La Villa Vanille' : 'Maison Blanche';
-    const description = `${villaName} — ${nights} nights (${checkIn} → ${checkOut}) — ${paymentOption === 'full' ? 'Full payment' : '40% deposit'}`;
+    const description = `${pricing.apartmentName} — ${pricing.nights} nights (${checkIn} → ${checkOut}) — ${paymentOption === 'full' ? 'Full payment' : '40% deposit'}`;
 
     const paypalOrderId = await createPayPalOrder({
-      amount: amountDue,
+      amount: pricing.amountDue,
       currency: 'USD',
       bookingId,
       description,
@@ -74,7 +75,6 @@ export async function POST(req: NextRequest) {
       cancelUrl: `${baseUrl}/en/booking/paypal-cancel?bookingId=${bookingId}`,
     });
 
-    // Stocker l'ID PayPal dans la réservation
     await supabase
       .from('bookings')
       .update({ external_payment_id: paypalOrderId })
@@ -83,7 +83,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ orderId: paypalOrderId, bookingId });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
+    const code = (err as { code?: string }).code;
+    const status = code === 'DATES_UNAVAILABLE' ? 409 : 500;
     console.error('[PayPal create-order]', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status });
   }
 }

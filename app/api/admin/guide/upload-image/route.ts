@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { verifyAdminTokenAsync } from '@/lib/auth-admin';
+
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif']);
+const MIME_TO_EXT: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/avif': 'avif',
+  'image/gif': 'gif',
+};
 
 export async function POST(req: NextRequest) {
   try {
+    const isAuth = await verifyAdminTokenAsync(req);
+    if (!isAuth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
 
@@ -10,17 +23,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validation type MIME
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
+    if (!ALLOWED_MIME.has(file.type)) {
+      return NextResponse.json({ error: 'Unsupported image type' }, { status: 400 });
     }
 
-    // Validation taille (5 Mo max)
     if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json({ error: 'File too large (max 5 MB)' }, { status: 400 });
     }
 
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const ext = MIME_TO_EXT[file.type];
     const fileName = `guide/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
     const arrayBuffer = await file.arrayBuffer();

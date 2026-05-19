@@ -1,4 +1,5 @@
 import type { GuideSection } from '@/lib/api-guide';
+import { sanitizeRichHtml } from '@/lib/services/sanitize';
 import GuideIcon from './GuideIcon';
 import GuideItemRenderer from './GuideItemRenderer';
 
@@ -48,11 +49,11 @@ export default function GuideSectionBlock({ section, locale }: GuideSectionBlock
           </div>
         </div>
 
-        {/* Intro — pleine largeur, rendu HTML riche depuis WYSIWYG */}
+        {/* Intro — pleine largeur, rendu HTML riche depuis WYSIWYG (sanitisé) */}
         {intro && (
           <div
             className="guide-rich-text text-sm text-stone-600 leading-relaxed font-light w-full"
-            dangerouslySetInnerHTML={{ __html: intro }}
+            dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(intro) }}
           />
         )}
       </div>

@@ -1,36 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendBankTransferPendingEmail } from '@/lib/services/email';
-import { createClient } from '@supabase/supabase-js';
+import { computeServerPricing, getServerSupabase } from '@/lib/services/server-pricing';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const {
-      apartmentId,
-      checkIn,
-      checkOut,
-      guests,
-      guestName,
-      guestEmail,
-      accommodationAmount,
-      cleaningFee,
-      bookingTotal,
-      paymentOption,
-      depositAmount,
-      remainingBalance,
-      securityDepositAmount,
-      nights,
-      apartmentSlug,
-    } = body;
 
-    const amountDue = paymentOption === 'full' ? bookingTotal : depositAmount;
+    // Champs réellement acceptés du client (les montants sont IGNORÉS)
+    const apartmentId: string | undefined = body.apartmentId;
+    const checkIn: string | undefined = body.checkIn;
+    const checkOut: string | undefined = body.checkOut;
+    const guests: number = Number(body.guests);
+    const guestName: string = String(body.guestName || '').trim().slice(0, 200);
+    const guestEmail: string = String(body.guestEmail || '').trim().slice(0, 200);
+    const paymentOption: 'full' | 'deposit_40' =
+      body.paymentOption === 'deposit_40' ? 'deposit_40' : 'full';
 
-    // Créer la réservation avec statut pending_bank_transfer
+    if (!apartmentId || !checkIn || !checkOut) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+    if (!guestName || !EMAIL_RE.test(guestEmail)) {
+      return NextResponse.json({ error: 'Invalid guest info' }, { status: 400 });
+    }
+    if (!Number.isFinite(guests) || guests < 1 || guests > 20) {
+      return NextResponse.json({ error: 'Invalid guest count' }, { status: 400 });
+    }
+
+    // Recalcul complet côté serveur (montants jamais lus du client)
+    const pricing = await computeServerPricing({ apartmentId, checkIn, checkOut, paymentOption });
+
+    const supabase = getServerSupabase();
+
     const { data: booking, error } = await supabase
       .from('bookings')
       .insert({
@@ -41,50 +43,47 @@ export async function POST(req: NextRequest) {
         guest_name: guestName,
         guest_email: guestEmail,
         currency: 'USD',
-        accommodation_amount: accommodationAmount,
-        cleaning_fee: cleaningFee,
-        booking_total: bookingTotal,
+        nights: pricing.nights,
+        price_per_night: pricing.effectiveNightlyRate,
+        accommodation_amount: pricing.accommodationAmount,
+        cleaning_fee: pricing.cleaningFee,
+        booking_total: pricing.bookingTotal,
         payment_option: paymentOption,
-        deposit_amount: depositAmount,
-        remaining_balance: remainingBalance,
+        deposit_amount: pricing.depositAmount,
+        remaining_balance: pricing.remainingBalance,
         security_deposit_due_on_arrival: true,
-        security_deposit_amount: securityDepositAmount,
+        security_deposit_amount: pricing.securityDepositAmount,
         payment_method: 'bank_transfer',
         payment_status: 'pending_bank_transfer',
         booking_status: 'pending_bank_transfer',
-        total_amount: amountDue,
+        total_amount: pricing.amountDue,
       })
       .select('id')
       .single();
 
     if (error) throw new Error(`DB error: ${error.message}`);
-
     const bookingId = booking.id;
 
-    // Récupérer les coordonnées bancaires depuis la config sécurisée
     const { data: bankConfig } = await supabase
       .from('bank_transfer_config')
       .select('*')
       .eq('is_active', true)
       .single();
 
-    const villaName = apartmentSlug === 'villa-vanille' ? 'La Villa Vanille' : 'Maison Blanche';
-
-    // Envoyer l'email avec les instructions de virement
     await sendBankTransferPendingEmail({
       guestName,
       guestEmail,
-      villaName,
+      villaName: pricing.apartmentName,
       checkIn,
       checkOut,
-      nights,
-      accommodationAmount,
-      cleaningFee,
-      bookingTotal,
+      nights: pricing.nights,
+      accommodationAmount: pricing.accommodationAmount,
+      cleaningFee: pricing.cleaningFee,
+      bookingTotal: pricing.bookingTotal,
       paymentOption,
-      depositAmount,
-      remainingBalance,
-      securityDepositAmount,
+      depositAmount: pricing.depositAmount,
+      remainingBalance: pricing.remainingBalance,
+      securityDepositAmount: pricing.securityDepositAmount,
       paymentMethod: 'bank_transfer',
       bookingId,
       bankDetails: bankConfig ? {
@@ -102,7 +101,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, bookingId });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
+    const code = (err as { code?: string }).code;
+    const status = code === 'DATES_UNAVAILABLE' ? 409 : 500;
     console.error('[bank-transfer]', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status });
   }
 }

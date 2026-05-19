@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendBookingConfirmationEmail } from '@/lib/services/email';
+import { verifyAdminTokenAsync } from '@/lib/auth-admin';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function POST(req: NextRequest) {
   try {
+    const isAuth = await verifyAdminTokenAsync(req);
+    if (!isAuth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { bookingId } = await req.json();
     if (!bookingId) return NextResponse.json({ error: 'bookingId required' }, { status: 400 });
 
