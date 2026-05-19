@@ -113,12 +113,12 @@ function MonthCalendar({
 
   return (
     <div className="select-none">
-      <div className="text-center font-semibold text-gray-800 mb-3 text-sm">
+      <div className="text-center font-serif font-light text-night-600 mb-3 text-base">
         {monthNames[month]} {year}
       </div>
       <div className="grid grid-cols-7 mb-1">
         {dayNames.map((d) => (
-          <div key={d} className="text-center text-xs font-medium text-gray-400 py-1">{d}</div>
+          <div key={d} className="text-center text-[10px] uppercase font-medium text-night-300 py-1" style={{ letterSpacing: '0.15em' }}>{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7">
@@ -146,17 +146,17 @@ function MonthCalendar({
             'relative flex items-center justify-center h-9 text-sm cursor-pointer transition-colors ';
 
           if (isDisabled) {
-            cellClass += 'text-gray-300 cursor-not-allowed line-through ';
+            cellClass += 'text-night-200 cursor-not-allowed line-through ';
           } else if (isStart || isEnd) {
-            cellClass += 'bg-[#B08B52] text-white font-semibold rounded-full z-10 ';
+            cellClass += 'bg-bronze-400 text-cream-100 font-medium rounded-full z-10 ';
           } else if (inRange) {
-            cellClass += 'bg-[#B08B52]/15 text-gray-800 ';
+            cellClass += 'bg-bronze-400/15 text-night-600 ';
           } else if (wouldContainBlocked) {
-            cellClass += 'text-gray-400 cursor-not-allowed ';
+            cellClass += 'text-night-300 cursor-not-allowed ';
           } else if (isToday) {
-            cellClass += 'text-[#B08B52] font-bold hover:bg-[#B08B52]/10 rounded-full ';
+            cellClass += 'text-bronze-500 font-semibold hover:bg-bronze-50 rounded-full ';
           } else {
-            cellClass += 'text-gray-700 hover:bg-[#B08B52]/10 hover:rounded-full ';
+            cellClass += 'text-night-500 hover:bg-bronze-50 hover:rounded-full ';
           }
 
           // Fond de range (demi-cercles aux extrémités)
@@ -274,21 +274,21 @@ export default function DateRangePicker({
         className="grid grid-cols-2 gap-2 cursor-pointer"
         onClick={() => setOpen((v) => !v)}
       >
-        <div className="border border-gray-200 rounded-xl px-3 py-2.5 hover:border-[#B08B52] transition-colors">
-          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5 flex items-center gap-1">
+        <div className="bg-cream-50 border border-bronze-100 rounded-md px-4 py-3 hover:border-bronze-400 transition-colors">
+          <div className="text-[10px] font-medium text-bronze-500 uppercase mb-1 flex items-center gap-1.5" style={{ letterSpacing: '0.15em' }}>
             <Calendar size={10} />
             {isFr ? 'Arrivée' : 'Check-in'}
           </div>
-          <div className={`text-sm font-medium ${checkIn ? 'text-gray-900' : 'text-gray-400'}`}>
+          <div className={`text-sm ${checkIn ? 'text-night-600 font-medium' : 'text-night-300 font-light'}`}>
             {formatDisplay(checkIn)}
           </div>
         </div>
-        <div className="border border-gray-200 rounded-xl px-3 py-2.5 hover:border-[#B08B52] transition-colors">
-          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5 flex items-center gap-1">
+        <div className="bg-cream-50 border border-bronze-100 rounded-md px-4 py-3 hover:border-bronze-400 transition-colors">
+          <div className="text-[10px] font-medium text-bronze-500 uppercase mb-1 flex items-center gap-1.5" style={{ letterSpacing: '0.15em' }}>
             <Calendar size={10} />
             {isFr ? 'Départ' : 'Check-out'}
           </div>
-          <div className={`text-sm font-medium ${checkOut ? 'text-gray-900' : 'text-gray-400'}`}>
+          <div className={`text-sm ${checkOut ? 'text-night-600 font-medium' : 'text-night-300 font-light'}`}>
             {formatDisplay(checkOut)}
           </div>
         </div>
@@ -296,31 +296,31 @@ export default function DateRangePicker({
 
       {/* Résumé nuits */}
       {nights > 0 && (
-        <div className="mt-1 text-xs text-center text-[#B08B52] font-medium">
+        <div className="mt-2 text-xs text-center text-bronze-500 font-medium uppercase" style={{ letterSpacing: '0.15em' }}>
           {nights} {isFr ? (nights > 1 ? 'nuits' : 'nuit') : (nights > 1 ? 'nights' : 'night')}
         </div>
       )}
 
-      {/* Calendrier déroulant */}
+      {/* Calendrier déroulant — inline pour ne jamais déborder du viewport */}
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 w-full">
+        <div className="mt-3 bg-cream-50 rounded-xl border border-bronze-100 p-5 w-full">
           {loading && (
-            <div className="text-center text-xs text-gray-400 mb-2">
+            <div className="text-center text-xs text-night-300 mb-2 font-light">
               {isFr ? 'Chargement des disponibilités…' : 'Loading availability…'}
             </div>
           )}
 
           {/* Légende */}
-          <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
+          <div className="flex items-center gap-4 mb-4 text-[10px] uppercase text-night-400 font-light" style={{ letterSpacing: '0.1em' }}>
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-[#B08B52] inline-block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-bronze-400 inline-block" />
               {isFr ? 'Sélectionné' : 'Selected'}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-red-400 inline-block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" />
               {isFr ? 'Indisponible' : 'Unavailable'}
             </span>
-            <span className="flex items-center gap-1.5 line-through text-gray-300">
+            <span className="flex items-center gap-1.5 line-through text-night-200">
               {isFr ? 'Passé' : 'Past'}
             </span>
           </div>
@@ -329,16 +329,18 @@ export default function DateRangePicker({
           <div className="flex items-center justify-between mb-3">
             <button
               onClick={(e) => { e.stopPropagation(); setCurrentMonth((m) => addMonths(m, -1)); }}
-              className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-bronze-50 rounded-full transition-colors"
+              aria-label={isFr ? 'Mois précédent' : 'Previous month'}
             >
-              <ChevronLeft size={18} className="text-gray-600" />
+              <ChevronLeft size={18} className="text-night-500" />
             </button>
             <div className="flex-1" />
             <button
               onClick={(e) => { e.stopPropagation(); setCurrentMonth((m) => addMonths(m, 1)); }}
-              className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-bronze-50 rounded-full transition-colors"
+              aria-label={isFr ? 'Mois suivant' : 'Next month'}
             >
-              <ChevronRight size={18} className="text-gray-600" />
+              <ChevronRight size={18} className="text-night-500" />
             </button>
           </div>
 
@@ -357,10 +359,11 @@ export default function DateRangePicker({
 
           {/* Bouton reset */}
           {(checkIn || checkOut) && (
-            <div className="mt-3 text-center">
+            <div className="mt-4 text-center">
               <button
                 onClick={() => { onCheckInChange(''); onCheckOutChange(''); }}
-                className="text-xs text-gray-400 hover:text-gray-600 underline"
+                className="text-[10px] uppercase text-night-400 hover:text-bronze-500 transition-colors font-medium"
+                style={{ letterSpacing: '0.15em' }}
               >
                 {isFr ? 'Effacer les dates' : 'Clear dates'}
               </button>
