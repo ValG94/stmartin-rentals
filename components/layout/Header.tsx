@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, Lock } from 'lucide-react';
@@ -51,14 +52,15 @@ export default function Header() {
           <div className="flex items-center justify-between h-20">
 
             {/* Logo */}
-            <Link href={`/${locale}`} className={`flex items-center gap-3 transition-colors duration-300 ${textColor}`}>
-              <div className={`w-9 h-9 flex items-center justify-center border transition-colors duration-300 ${transparent ? 'border-white/60' : 'border-night-600'}`}>
-                <span className="font-serif text-sm font-light" style={{letterSpacing:'0.15em'}}>IL</span>
-              </div>
-              <div className="hidden sm:block">
-                <div className="font-serif font-light text-lg leading-none" style={{letterSpacing:'0.08em'}}>Island Living SXM</div>
-                <div className={`font-sans text-xs font-light mt-0.5 transition-colors duration-300 ${transparent ? 'text-white/60' : 'text-bronze-400'}`} style={{letterSpacing:'0.2em'}}>LUXURY VACATION RENTALS</div>
-              </div>
+            <Link href={`/${locale}`} className="flex items-center transition-opacity duration-300 hover:opacity-80">
+              <Image
+                src="/logo-island-living-sxm.png"
+                alt="Island Living SXM"
+                width={200}
+                height={60}
+                className={`h-12 w-auto object-contain transition-all duration-300 ${transparent ? 'brightness-0 invert' : ''}`}
+                priority
+              />
             </Link>
 
             {/* Navigation desktop */}
