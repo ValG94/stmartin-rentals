@@ -12,12 +12,27 @@ import { MapPin, ArrowRight, Star, Shield, Phone, ChevronDown } from 'lucide-rea
 // au pire en 60 s, et immédiatement après une action admin.
 export const revalidate = 60;
 
+// Mapping nombre → mot (FR / EN), pour rendre les titres "Deux villas
+// d'exception" / "Two exceptional villas" cohérents avec le nombre réel
+// de villas actives en base.
+const NUMBER_WORDS_FR = ['Aucune', 'Une', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf', 'Dix'];
+const NUMBER_WORDS_EN = ['No',     'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+function numberToWord(n: number, isFr: boolean): string {
+  const words = isFr ? NUMBER_WORDS_FR : NUMBER_WORDS_EN;
+  return words[n] ?? String(n);
+}
+
 export default async function HomePage() {
   const locale = await getLocale();
   const t = await getTranslations('home');
   const res = await getApartments();
   const apartments = res.data ?? [];
   const isFr = locale === 'fr';
+  const villaCount = apartments.length;
+  const villaCountWord = numberToWord(villaCount, isFr);
+  const villaPlural = villaCount > 1
+    ? (isFr ? 'villas d’exception' : 'exceptional villas')
+    : (isFr ? 'villa d’exception' : 'exceptional villa');
 
   return (
     <div className="bg-cream-100">
@@ -54,8 +69,8 @@ export default async function HomePage() {
         <div className="absolute bottom-0 left-0 right-0 border-t border-white/10">
           <div className="max-w-3xl mx-auto px-6 py-5 grid grid-cols-3 gap-4 text-white text-center">
             <div>
-              <div className="font-serif text-3xl font-light">2</div>
-              <div className="font-sans text-xs text-white/60 mt-1 uppercase" style={{letterSpacing:'0.15em'}}>{isFr ? "Villas d'exception" : 'Exceptional villas'}</div>
+              <div className="font-serif text-3xl font-light">{villaCount}</div>
+              <div className="font-sans text-xs text-white/60 mt-1 uppercase" style={{letterSpacing:'0.15em'}}>{isFr ? (villaCount > 1 ? "Villas d'exception" : "Villa d'exception") : (villaCount > 1 ? 'Exceptional villas' : 'Exceptional villa')}</div>
             </div>
             <div>
               <div className="font-serif text-3xl font-light">4.9<span className="text-bronze-300 text-xl">★</span></div>
@@ -106,7 +121,7 @@ export default async function HomePage() {
             <p className="section-label text-bronze-300 mb-4">{isFr ? 'Nos propriétés' : 'Our properties'}</p>
             <div className="divider-bronze mx-auto mb-6" />
             <h2 className="font-serif font-light text-cream-100 leading-tight" style={{fontSize:'clamp(2rem, 4vw, 3.5rem)', letterSpacing:'-0.01em'}}>
-              {isFr ? "Deux villas d'exception" : 'Two exceptional villas'}
+              {villaCountWord} {villaPlural}
             </h2>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">

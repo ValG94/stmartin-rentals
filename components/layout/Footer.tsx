@@ -1,24 +1,29 @@
-'use client';
-
+// Server Component — charge la liste des villas actives directement depuis
+// Supabase pour que tout nouvel ajout côté admin apparaisse dans le footer
+// sans modification de code.
 import Link from 'next/link';
-import { useTranslations, useLocale } from 'next-intl';
+import { getTranslations, getLocale } from 'next-intl/server';
 import { Phone, Mail, MessageCircle, MapPin } from 'lucide-react';
+import { getApartments } from '@/lib/api';
 
-export default function Footer() {
-  const t = useTranslations('footer');
-  const tNav = useTranslations('nav');
-  const locale = useLocale();
+export default async function Footer() {
+  const t = await getTranslations('footer');
+  const tNav = await getTranslations('nav');
+  const locale = await getLocale();
   const year = new Date().getFullYear();
+  const isFr = locale === 'fr';
+
+  const res = await getApartments();
+  const apartments = res.data ?? [];
 
   return (
     <footer className="bg-night-600 text-cream-100">
-      {/* Ligne décorative bronze */}
       <div className="h-px bg-gradient-to-r from-transparent via-bronze-400 to-transparent" />
 
       <div className="max-w-7xl mx-auto px-6 lg:px-10 py-20">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
 
-          {/* Brand — 4 colonnes */}
+          {/* Brand */}
           <div className="md:col-span-4">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-9 h-9 flex items-center justify-center border border-cream-100/20">
@@ -36,26 +41,32 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Nos villas — 2 colonnes */}
+          {/* Nos villas — liste dynamique */}
           <div className="md:col-span-2">
             <h3 className="font-sans text-xs font-medium uppercase text-cream-100/40 mb-6" style={{letterSpacing:'0.2em'}}>
-              {locale === 'fr' ? 'Nos villas' : 'Our villas'}
+              {isFr ? 'Nos villas' : 'Our villas'}
             </h3>
-            <ul className="space-y-3">
-              <li>
-                <Link href={`/${locale}/apartments/villa-vanille`} className="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300">
-                  La Villa Vanille
-                </Link>
-              </li>
-              <li>
-                <Link href={`/${locale}/apartments/villa-blanche`} className="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300">
-                  La Villa Blanche
-                </Link>
-              </li>
-            </ul>
+            {apartments.length === 0 ? (
+              <p className="font-sans text-sm text-cream-100/40 italic">
+                {isFr ? 'Aucune villa disponible' : 'No villas available'}
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {apartments.map((apt) => (
+                  <li key={apt.id}>
+                    <Link
+                      href={`/${locale}/apartments/${apt.slug}`}
+                      className="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300"
+                    >
+                      {isFr ? apt.title_fr : apt.title_en}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
-          {/* Navigation — 2 colonnes */}
+          {/* Navigation */}
           <div className="md:col-span-2">
             <h3 className="font-sans text-xs font-medium uppercase text-cream-100/40 mb-6" style={{letterSpacing:'0.2em'}}>
               {t('links_title')}
@@ -69,7 +80,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact — 4 colonnes */}
+          {/* Contact */}
           <div className="md:col-span-4">
             <h3 className="font-sans text-xs font-medium uppercase text-cream-100/40 mb-6" style={{letterSpacing:'0.2em'}}>
               {t('contact_title')}
@@ -94,7 +105,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bas de footer */}
         <div className="border-t border-cream-100/10 mt-16 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="font-sans text-xs text-cream-100/30" style={{letterSpacing:'0.05em'}}>
             &copy; {year} Island Living SXM. {t('rights')}.
