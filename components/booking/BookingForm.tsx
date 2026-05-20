@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { Users, ShieldCheck, Clock, ChevronDown, CheckCircle2 } from 'lucide-react';
-import { calculatePricing, formatUSD } from '@/lib/services/pricing';
+import { calculatePricing, formatUSD, type SeasonalPriceInput } from '@/lib/services/pricing';
 import DateRangePicker from './DateRangePicker';
 
 interface BookingFormProps {
@@ -14,6 +14,7 @@ interface BookingFormProps {
   maxGuests: number;
   eurRate?: number;
   locale?: string;
+  seasonalPrices?: SeasonalPriceInput[];
 }
 
 type PaymentMethod = 'paypal' | 'bank_transfer';
@@ -28,6 +29,7 @@ export default function BookingForm({
   maxGuests,
   eurRate,
   locale = 'en',
+  seasonalPrices = [],
 }: BookingFormProps) {
   const isFr = locale === 'fr';
 
@@ -47,7 +49,7 @@ export default function BookingForm({
   const [bankTransferDone, setBankTransferDone] = useState(false);
 
   const pricing = checkIn && checkOut ? (() => {
-    try { return calculatePricing(apartmentSlug, checkIn, checkOut, nightlyRate); }
+    try { return calculatePricing(apartmentSlug, checkIn, checkOut, nightlyRate, seasonalPrices); }
     catch { return null; }
   })() : null;
 
@@ -234,7 +236,7 @@ export default function BookingForm({
           {pricing && (
             <div className="bg-sand-100 border border-bronze-100 rounded-lg p-5 space-y-3">
               <div className="flex justify-between text-sm text-night-500">
-                <span className="font-light">{fmt(nightlyRate)} × {pricing.nights} {isFr ? `nuit${pricing.nights > 1 ? 's' : ''}` : `night${pricing.nights > 1 ? 's' : ''}`}</span>
+                <span className="font-light">{fmt(pricing.nightlyRate)} × {pricing.nights} {isFr ? `nuit${pricing.nights > 1 ? 's' : ''}` : `night${pricing.nights > 1 ? 's' : ''}`}</span>
                 <span>{fmt(pricing.accommodationAmount)}</span>
               </div>
               <div className="flex justify-between text-sm text-night-500">

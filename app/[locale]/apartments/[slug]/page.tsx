@@ -175,10 +175,16 @@ export default async function ApartmentDetailPage({
                 apartmentName={name}
                 apartmentId={apartment.id}
                 apartmentSlug={slug}
-                nightlyRate={activePriceUsd}
+                nightlyRate={apartment.price_per_night}
                 maxGuests={apartment.max_guests || 8}
                 locale={locale}
                 eurRate={eurRate}
+                seasonalPrices={(apartment.seasonal_prices ?? []).map((sp) => ({
+                  is_active: sp.is_active,
+                  date_from: sp.date_from,
+                  date_to: sp.date_to,
+                  price_per_night: Number(sp.price_per_night),
+                }))}
               />
             </div>
           </aside>
