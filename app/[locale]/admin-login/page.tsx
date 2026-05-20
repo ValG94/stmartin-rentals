@@ -4,13 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
-
-// Client Supabase côté client — utilise les variables NEXT_PUBLIC_ disponibles dans le bundle
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -20,40 +14,33 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const locale = useLocale();
+  const { login } = useAdminAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    // Passe par /api/admin/login (et non par supabase.auth direct) pour
+    // que les cookies httpOnly admin_token / sb-access-token / sb-refresh-token
+    // soient posés sur le domaine de l'app — sans eux, toutes les routes
+    // /api/admin/* renvoient 401 même quand on est authentifié côté Supabase.
+    const success = await login(email, password);
 
-      if (authError || !data.session) {
-        setError(locale === 'fr' ? 'Identifiants incorrects' : 'Invalid credentials');
-        setLoading(false);
-        return;
-      }
-
-      // Stocker le token en localStorage pour l'état UI
-      localStorage.setItem('sb-admin-token', data.user.id);
-      router.push(`/${locale}/admin/dashboard`);
-    } catch {
-      setError(locale === 'fr' ? 'Erreur de connexion' : 'Connection error');
+    if (!success) {
+      setError(locale === 'fr' ? 'Identifiants incorrects' : 'Invalid credentials');
       setLoading(false);
+      return;
     }
+
+    router.push(`/${locale}/admin/dashboard`);
   };
 
   return (
     <div className="min-h-screen bg-night-600 flex items-center justify-center px-4">
-      {/* Fond décoratif */}
       <div className="absolute inset-0 opacity-5 bg-gradient-to-br from-bronze-400 to-transparent pointer-events-none" />
 
       <div className="relative bg-cream-100 p-10 w-full max-w-md shadow-2xl">
-        {/* Ligne bronze décorative */}
         <div className="h-0.5 bg-bronze-400 w-12 mb-8" />
 
         <div className="mb-8">
@@ -66,7 +53,6 @@ export default function AdminLoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Email */}
           <div>
             <label className="block font-sans text-xs font-medium text-night-400 uppercase mb-2" style={{letterSpacing:'0.15em'}}>
               {locale === 'fr' ? 'Adresse e-mail' : 'Email address'}
@@ -85,7 +71,6 @@ export default function AdminLoginPage() {
             </div>
           </div>
 
-          {/* Mot de passe */}
           <div>
             <label className="block font-sans text-xs font-medium text-night-400 uppercase mb-2" style={{letterSpacing:'0.15em'}}>
               {locale === 'fr' ? 'Mot de passe' : 'Password'}
@@ -111,14 +96,12 @@ export default function AdminLoginPage() {
             </div>
           </div>
 
-          {/* Erreur */}
           {error && (
             <div className="border border-red-200 bg-red-50 text-red-700 font-sans text-sm px-4 py-3">
               {error}
             </div>
           )}
 
-          {/* Bouton */}
           <button
             type="submit"
             disabled={loading}
@@ -131,7 +114,6 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        {/* Ligne bronze décorative bas */}
         <div className="h-0.5 bg-bronze-400/30 w-full mt-10" />
       </div>
     </div>
