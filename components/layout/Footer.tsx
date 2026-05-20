@@ -114,6 +114,21 @@ export default async function Footer() {
             SINT MAARTEN · CARIBBEAN
           </p>
         </div>
+
+        {/* Powered by — credit agence */}
+        <div className="mt-6 pt-4 border-t border-cream-100/5 text-center">
+          <p className="font-sans text-[10px] text-cream-100/25 uppercase" style={{letterSpacing:'0.2em'}}>
+            {isFr ? 'Conçu par' : 'Powered by'}{' '}
+            <a
+              href="https://www.onenationagency.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-bronze-300/70 hover:text-bronze-300 transition-colors duration-300"
+            >
+              One Nation Agency
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );
