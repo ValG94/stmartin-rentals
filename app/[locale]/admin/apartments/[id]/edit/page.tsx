@@ -188,23 +188,39 @@ export default function EditApartmentPage() {
         const slug = apt.title_fr.toLowerCase()
           .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
           .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        const { data, error } = await supabase
-          .from('apartments').insert([{ ...apt, slug }]).select().single();
-        if (error) throw error;
+        const res = await fetch('/api/admin/apartments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ ...apt, slug }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Création échouée (${res.status})`);
+        }
+        const data = await res.json();
         showMsg('success', 'Villa créée avec succès !');
         router.push(`/${locale}/admin/apartments/${data.id}/edit`);
       } else {
-        const { error } = await supabase.from('apartments').update({
-          title_fr: apt.title_fr, title_en: apt.title_en,
-          short_description_fr: apt.short_description_fr,
-          short_description_en: apt.short_description_en,
-          description_fr: apt.description_fr, description_en: apt.description_en,
-          location: apt.location, price_per_night: apt.price_per_night,
-          bedrooms: apt.bedrooms, bathrooms: apt.bathrooms,
-          max_guests: apt.max_guests, amenities: apt.amenities,
-          is_active: apt.is_active,
-        }).eq('id', apartmentId);
-        if (error) throw error;
+        const res = await fetch(`/api/admin/apartments/${apartmentId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            title_fr: apt.title_fr, title_en: apt.title_en,
+            short_description_fr: apt.short_description_fr,
+            short_description_en: apt.short_description_en,
+            description_fr: apt.description_fr, description_en: apt.description_en,
+            location: apt.location, price_per_night: apt.price_per_night,
+            bedrooms: apt.bedrooms, bathrooms: apt.bathrooms,
+            max_guests: apt.max_guests, amenities: apt.amenities,
+            is_active: apt.is_active,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Sauvegarde échouée (${res.status})`);
+        }
         showMsg('success', 'Informations sauvegardées !');
       }
     } catch (e: unknown) {
@@ -247,36 +263,34 @@ export default function EditApartmentPage() {
   };
 
   // ── Upload photos ─────────────────────────────────────────────────────────
+  // Passe par /api/admin/apartments/[id]/images (service_role) — l'upload
+  // direct Supabase + insert apartment_images était bloqué par RLS.
   const handleFileUpload = async (files: FileList) => {
     if (!files.length || isNew) return;
     setUploadingImages(true);
     let uploaded = 0;
     try {
+      const maxPos = images.length > 0 ? Math.max(...images.map(i => i.position)) : 0;
       for (const file of Array.from(files)) {
-        const ext = file.name.split('.').pop();
-        const path = `${apartmentId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const maxPos = images.length > 0 ? Math.max(...images.map(i => i.position)) : 0;
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('alt_fr', file.name.replace(/\.[^.]+$/, ''));
+        fd.append('alt_en', file.name.replace(/\.[^.]+$/, ''));
+        fd.append('is_cover', String(images.length === 0 && uploaded === 0));
+        fd.append('position', String(maxPos + uploaded + 1));
 
-        const { error: uploadErr } = await supabase.storage
-          .from('apartment-images').upload(path, file, { cacheControl: '3600', upsert: false });
-
-        let publicUrl = '';
-        if (!uploadErr) {
-          const { data: { publicUrl: url } } = supabase.storage.from('apartment-images').getPublicUrl(path);
-          publicUrl = url;
-        } else {
-          publicUrl = `/images/placeholder.jpg`;
+        const res = await fetch(`/api/admin/apartments/${apartmentId}/images`, {
+          method: 'POST',
+          credentials: 'include',
+          body: fd,
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Upload échoué (${res.status})`);
         }
-
-        const { data: imgData } = await supabase.from('apartment_images').insert([{
-          apartment_id: apartmentId, url: publicUrl,
-          storage_path: uploadErr ? null : path,
-          alt_fr: file.name.replace(/\.[^.]+$/, ''),
-          alt_en: file.name.replace(/\.[^.]+$/, ''),
-          is_cover: images.length === 0 && uploaded === 0,
-          position: maxPos + uploaded + 1,
-        }]).select().single();
-        if (imgData) { setImages(prev => [...prev, imgData]); uploaded++; }
+        const imgData = await res.json();
+        setImages(prev => [...prev, imgData]);
+        uploaded++;
       }
       showMsg('success', `${uploaded} photo(s) ajoutée(s) !`);
     } catch (e: unknown) {
@@ -290,11 +304,24 @@ export default function EditApartmentPage() {
     if (!videoUrl.trim() || isNew) return;
     try {
       const maxPos = images.length > 0 ? Math.max(...images.map(i => i.position)) : 0;
-      const { data: imgData } = await supabase.from('apartment_images').insert([{
-        apartment_id: apartmentId, url: videoUrl.trim(), storage_path: null,
-        alt_fr: 'Vidéo', alt_en: 'Video', is_cover: false, position: maxPos + 1,
-      }]).select().single();
-      if (imgData) { setImages(prev => [...prev, imgData]); setVideoUrl(''); }
+      const fd = new FormData();
+      fd.append('url', videoUrl.trim());
+      fd.append('alt_fr', 'Vidéo');
+      fd.append('alt_en', 'Video');
+      fd.append('is_cover', 'false');
+      fd.append('position', String(maxPos + 1));
+      const res = await fetch(`/api/admin/apartments/${apartmentId}/images`, {
+        method: 'POST',
+        credentials: 'include',
+        body: fd,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Ajout vidéo échoué (${res.status})`);
+      }
+      const imgData = await res.json();
+      setImages(prev => [...prev, imgData]);
+      setVideoUrl('');
       showMsg('success', 'Vidéo ajoutée !');
     } catch (e: unknown) {
       showMsg('error', `Erreur : ${e instanceof Error ? e.message : 'Erreur inconnue'}`);
@@ -302,15 +329,30 @@ export default function EditApartmentPage() {
   };
 
   const setCover = async (imageId: string) => {
-    await supabase.from('apartment_images').update({ is_cover: false }).eq('apartment_id', apartmentId);
-    await supabase.from('apartment_images').update({ is_cover: true }).eq('id', imageId);
+    // La route PATCH côté API gère le "retire is_cover des autres" automatiquement.
+    const res = await fetch(`/api/admin/apartments/${apartmentId}/images/${imageId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ is_cover: true }),
+    });
+    if (!res.ok) {
+      showMsg('error', 'Impossible de définir la couverture');
+      return;
+    }
     setImages(prev => prev.map(img => ({ ...img, is_cover: img.id === imageId })));
   };
 
   const deleteImage = async (img: ApartmentImage) => {
     if (!confirm('Supprimer cette photo/vidéo ?')) return;
-    if (img.storage_path) await supabase.storage.from('apartment-images').remove([img.storage_path]);
-    await supabase.from('apartment_images').delete().eq('id', img.id);
+    const res = await fetch(`/api/admin/apartments/${apartmentId}/images/${img.id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      showMsg('error', 'Suppression échouée');
+      return;
+    }
     setImages(prev => prev.filter(i => i.id !== img.id));
   };
 
@@ -321,17 +363,26 @@ export default function EditApartmentPage() {
     [arr[index], arr[swap]] = [arr[swap], arr[index]];
     const updated = arr.map((img, i) => ({ ...img, position: i + 1 }));
     setImages(updated);
-    for (const img of updated) {
-      await supabase.from('apartment_images').update({ position: img.position }).eq('id', img.id);
-    }
+    await Promise.all(updated.map(img => fetch(
+      `/api/admin/apartments/${apartmentId}/images/${img.id}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ position: img.position }),
+      },
+    )));
   };
 
   // Mise à jour de l'intitulé d'une photo (alt_fr / alt_en)
   const updateImageAlt = async (imageId: string, field: 'alt_fr' | 'alt_en', value: string) => {
-    // Mise à jour locale immédiate
     setImages(prev => prev.map(img => img.id === imageId ? { ...img, [field]: value } : img));
-    // Persistance en base (débouncée via timeout)
-    await supabase.from('apartment_images').update({ [field]: value }).eq('id', imageId);
+    await fetch(`/api/admin/apartments/${apartmentId}/images/${imageId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ [field]: value }),
+    });
   };
 
   // ── Sauvegarde guide ──────────────────────────────────────────────────────

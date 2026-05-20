@@ -12,12 +12,39 @@ export async function POST(
   const { id: apartmentId } = await params;
   const formData = await req.formData();
   const file = formData.get('file') as File | null;
+  const externalUrl = ((formData.get('url') as string) || '').trim();
   const altFr = (formData.get('alt_fr') as string) || '';
   const altEn = (formData.get('alt_en') as string) || '';
   const isCover = formData.get('is_cover') === 'true';
   const position = parseInt((formData.get('position') as string) || '0', 10);
 
-  if (!file) return NextResponse.json({ error: 'Fichier manquant' }, { status: 400 });
+  // Cas vidéo externe (YouTube / Vimeo) : pas de fichier à uploader,
+  // on insère juste la row apartment_images avec l'URL.
+  if (!file && externalUrl) {
+    if (isCover) {
+      await supabaseAdmin
+        .from('apartment_images')
+        .update({ is_cover: false })
+        .eq('apartment_id', apartmentId);
+    }
+    const { data, error } = await supabaseAdmin
+      .from('apartment_images')
+      .insert({
+        apartment_id: apartmentId,
+        url: externalUrl,
+        storage_path: null,
+        alt_fr: altFr,
+        alt_en: altEn,
+        is_cover: isCover,
+        position,
+      })
+      .select()
+      .single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data, { status: 201 });
+  }
+
+  if (!file) return NextResponse.json({ error: 'Fichier ou URL manquant' }, { status: 400 });
 
   // Valider le type de fichier
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'];
