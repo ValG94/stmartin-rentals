@@ -11,10 +11,7 @@
  * - Chargement plus rapide, pas de spinner au mount
  */
 
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { getLocale } from 'next-intl/server';
-import { isJWTFormat } from '@/lib/auth-admin';
 import { supabaseAdmin } from '@/lib/supabase';
 import BookingsClient, { type Booking } from './BookingsClient';
 
@@ -24,21 +21,17 @@ export const revalidate = 0;
 export default async function AdminBookingsPage() {
   const locale = await getLocale();
 
-  // 1. Vérification d'auth (format JWT du cookie httpOnly).
-  //    On évite le check async via supabase.auth.getUser() ici parce que
-  //    sa latence réseau + sensibilité aux faux négatifs déclencherait
-  //    de fausses redirections vers /admin-login juste après un login OK.
-  //    Les routes API qui modifient des données (PATCH /api/admin/bookings,
-  //    mark-transfer-received) font le check strict — donc la sécurité
-  //    réelle s'applique aux MUTATIONS, pas à la simple lecture.
-  const cookieStore = await cookies();
-  const token =
-    cookieStore.get('admin_token')?.value ||
-    cookieStore.get('sb-access-token')?.value;
-
-  if (!isJWTFormat(token)) {
-    redirect(`/${locale}/admin-login`);
-  }
+  // Auth :
+  // - L'accès à /admin/* est gardé par app/[locale]/admin/layout.tsx
+  //   (useAdminAuth client-side) qui redirige vers /admin-login si l'admin
+  //   n'a pas de session locale.
+  // - Toutes les routes API qui MODIFIENT des données (PATCH
+  //   /api/admin/bookings, mark-transfer-received, etc.) font le check
+  //   strict via verifyAdminToken / verifyAdminTokenAsync.
+  // - On ne fait pas de check de cookie ici car les Server Components
+  //   peuvent recevoir les requêtes RSC sans toujours embarquer les
+  //   cookies httpOnly de manière fiable côté Vercel — ça provoquait des
+  //   redirections incorrectes même avec une session fraîche.
 
   // 2. Chargement des réservations
   const { data, error } = await supabaseAdmin
