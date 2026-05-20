@@ -86,14 +86,23 @@ function StatusSelect({
   );
 }
 
+import VillaPlanning from './VillaPlanning';
+import type { ApartmentRow, PlanningBooking, PlanningBlock } from './DashboardData';
+
 export default function DashboardClient({
   stats: initialStats,
   recentBookings: initialBookings,
   locale,
+  apartments,
+  planningBookings,
+  planningBlocks,
 }: {
   stats: DashboardStats;
   recentBookings: BookingRow[];
   locale: string;
+  apartments: ApartmentRow[];
+  planningBookings: PlanningBooking[];
+  planningBlocks: PlanningBlock[];
 }) {
   const isFr = locale === 'fr';
   const [stats, setStats] = useState(initialStats);
@@ -165,6 +174,16 @@ export default function DashboardClient({
             {kpi.sub && <div className="text-xs text-gray-400 mt-0.5">{kpi.sub}</div>}
           </div>
         ))}
+      </div>
+
+      {/* Planning des villas */}
+      <div className="mb-8">
+        <VillaPlanning
+          apartments={apartments}
+          bookings={planningBookings}
+          blocks={planningBlocks}
+          locale={locale}
+        />
       </div>
 
       {/* Tableau réservations */}
