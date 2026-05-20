@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     const guestEmail: string = String(body.guestEmail || '').trim().slice(0, 200);
     const paymentOption: 'full' | 'deposit_40' =
       body.paymentOption === 'deposit_40' ? 'deposit_40' : 'full';
+    const locale: 'fr' | 'en' = body.locale === 'fr' ? 'fr' : 'en';
 
     if (!apartmentId || !checkIn || !checkOut) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest) {
         payment_status: 'pending_bank_transfer',
         booking_status: 'pending_bank_transfer',
         total_amount: pricing.amountDue,
+        locale,
       })
       .select('id')
       .single();
@@ -86,6 +88,7 @@ export async function POST(req: NextRequest) {
       securityDepositAmount: pricing.securityDepositAmount,
       paymentMethod: 'bank_transfer',
       bookingId,
+      locale,
       bankDetails: bankConfig ? {
         bankName: bankConfig.bank_name,
         correspondentBank: bankConfig.correspondent_bank,

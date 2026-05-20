@@ -50,8 +50,11 @@ export async function POST(req: NextRequest) {
       reason: `Bank transfer confirmed — Booking #${bookingId}`,
     });
 
-    // Envoyer l'email de confirmation au voyageur
-    const villaName = booking.apartments?.title_en || 'Villa';
+    // Envoyer l'email de confirmation au voyageur — dans sa langue
+    const locale: 'fr' | 'en' = booking.locale === 'fr' ? 'fr' : 'en';
+    const villaName = locale === 'fr'
+      ? (booking.apartments?.title_fr || booking.apartments?.title_en || 'Villa')
+      : (booking.apartments?.title_en || 'Villa');
     await sendBookingConfirmationEmail({
       guestName: booking.guest_name,
       guestEmail: booking.guest_email,
@@ -68,6 +71,7 @@ export async function POST(req: NextRequest) {
       securityDepositAmount: booking.security_deposit_amount,
       paymentMethod: 'bank_transfer',
       bookingId,
+      locale,
     });
 
     return NextResponse.json({ success: true, bookingId });

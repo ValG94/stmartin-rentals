@@ -83,6 +83,7 @@ export default function BookingForm({
           guestName,
           guestEmail,
           paymentOption,
+          locale,
         }),
       });
       const data = await res.json();
@@ -109,6 +110,7 @@ export default function BookingForm({
         guestName,
         guestEmail,
         paymentOption,
+        locale,
       }),
     });
     const data = await res.json();

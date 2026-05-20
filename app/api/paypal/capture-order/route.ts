@@ -91,8 +91,11 @@ export async function POST(req: NextRequest) {
       reason: `Booking #${bookingId}`,
     });
 
-    // Email de confirmation
-    const villaName = booking.apartments?.title_en || 'Villa';
+    // Email de confirmation — dans la langue choisie au moment de la réservation
+    const locale: 'fr' | 'en' = booking.locale === 'fr' ? 'fr' : 'en';
+    const villaName = locale === 'fr'
+      ? (booking.apartments?.title_fr || booking.apartments?.title_en || 'Villa')
+      : (booking.apartments?.title_en || 'Villa');
     await sendBookingConfirmationEmail({
       guestName: booking.guest_name,
       guestEmail: booking.guest_email,
@@ -109,6 +112,7 @@ export async function POST(req: NextRequest) {
       securityDepositAmount: booking.security_deposit_amount,
       paymentMethod: 'paypal',
       bookingId,
+      locale,
     });
 
     return NextResponse.json({ success: true, bookingId, paymentStatus });
