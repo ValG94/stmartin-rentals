@@ -109,9 +109,15 @@ export async function computeServerPricing(args: {
   };
 }
 
+const PENDING_TTL_MINUTES = 30;
+
 /**
- * Throw si les dates demandées chevauchent une réservation pending/confirmed
- * ou un blocage de disponibilité.
+ * Throw si les dates demandées chevauchent une réservation engagée
+ * (confirmed / partially_paid / pending_bank_transfer) ou un blocage manuel.
+ *
+ * Les bookings 'pending' (checkout PayPal en cours) ne bloquent les dates
+ * que pendant 30 minutes. Au-delà, on considère le checkout abandonné et
+ * on libère les dates pour le prochain voyageur.
  */
 async function assertAvailable(
   sb: SupabaseClient,
@@ -119,31 +125,49 @@ async function assertAvailable(
   checkIn: string,
   checkOut: string,
 ): Promise<void> {
-  // Conflit avec d'autres bookings (status actifs)
-  const { data: conflicts, error: err1 } = await sb
+  // 1. Bookings engagées (pas de TTL)
+  const { data: committed, error: err1 } = await sb
     .from('bookings')
-    .select('id, booking_status, check_in, check_out')
+    .select('id, booking_status')
     .eq('apartment_id', apartmentId)
-    .in('booking_status', ['pending', 'pending_bank_transfer', 'confirmed', 'partially_paid'])
+    .in('booking_status', ['confirmed', 'partially_paid', 'pending_bank_transfer'])
     .lt('check_in', checkOut)
     .gt('check_out', checkIn);
 
   if (err1) throw new Error(`Availability check failed: ${err1.message}`);
-  if (conflicts && conflicts.length > 0) {
+  if (committed && committed.length > 0) {
     const e = new Error('Dates no longer available') as Error & { code?: string };
     e.code = 'DATES_UNAVAILABLE';
     throw e;
   }
 
-  // Conflit avec un blocage manuel
-  const { data: blocks, error: err2 } = await sb
+  // 2. Bookings 'pending' récentes uniquement
+  const pendingCutoff = new Date(Date.now() - PENDING_TTL_MINUTES * 60_000).toISOString();
+  const { data: recentPending, error: err2 } = await sb
+    .from('bookings')
+    .select('id')
+    .eq('apartment_id', apartmentId)
+    .eq('booking_status', 'pending')
+    .gte('created_at', pendingCutoff)
+    .lt('check_in', checkOut)
+    .gt('check_out', checkIn);
+
+  if (err2) throw new Error(`Availability check failed: ${err2.message}`);
+  if (recentPending && recentPending.length > 0) {
+    const e = new Error('Dates no longer available') as Error & { code?: string };
+    e.code = 'DATES_UNAVAILABLE';
+    throw e;
+  }
+
+  // 3. Blocages manuels (maintenance, propriétaire)
+  const { data: blocks, error: err3 } = await sb
     .from('availability_blocks')
     .select('id, start_date, end_date')
     .eq('apartment_id', apartmentId)
     .lt('start_date', checkOut)
     .gt('end_date', checkIn);
 
-  if (err2) throw new Error(`Availability check failed: ${err2.message}`);
+  if (err3) throw new Error(`Availability check failed: ${err3.message}`);
   if (blocks && blocks.length > 0) {
     const e = new Error('Dates no longer available') as Error & { code?: string };
     e.code = 'DATES_UNAVAILABLE';

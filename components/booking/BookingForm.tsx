@@ -128,6 +128,21 @@ export default function BookingForm({
     window.location.href = `/${locale}/booking/paypal-success?bookingId=${bookingId}`;
   }
 
+  // Libère immédiatement les dates quand l'utilisateur ferme la popup PayPal
+  // sans payer (sinon le TTL serveur de 30 min les libérera plus tard).
+  async function cancelPendingBooking() {
+    if (!bookingId) return;
+    try {
+      await fetch('/api/booking/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId }),
+      });
+    } catch {
+      /* échec silencieux : le TTL serveur libérera les dates de toute façon */
+    }
+  }
+
   // ── Écran de confirmation virement ────────────────────────────
   if (bankTransferDone) {
     return (
@@ -458,7 +473,8 @@ export default function BookingForm({
                   style={{ layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay' }}
                   createOrder={createPayPalOrder}
                   onApprove={async (data) => { await capturePayPalOrder(data.orderID); }}
-                  onError={(err) => setError(String(err))}
+                  onCancel={cancelPendingBooking}
+                  onError={(err) => { setError(String(err)); cancelPendingBooking(); }}
                 />
               ) : paymentMethod === 'paypal' ? (
                 <div className="bg-bronze-50 border border-bronze-200 rounded-md p-3 text-sm text-bronze-600 text-center">
