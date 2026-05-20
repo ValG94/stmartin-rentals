@@ -28,24 +28,28 @@ function extractToken(req: NextRequest): string | null {
 }
 
 /**
- * Validation complète : vérifie que le JWT est signé par Supabase
- * et correspond à un utilisateur existant. À utiliser sur toutes les
- * routes admin qui modifient de la donnée (mutations, paiements).
+ * Validation complète d'un token JWT Supabase : vérifie la signature
+ * et l'existence de l'utilisateur. Utilisable depuis un Server Component
+ * (où on n'a pas de NextRequest) en lui passant la valeur du cookie.
  */
-export async function verifyAdminTokenAsync(req: NextRequest): Promise<boolean> {
-  const token = extractToken(req);
+export async function isAdminTokenValid(token: string | null | undefined): Promise<boolean> {
   if (!token) return false;
-
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { persistSession: false },
     });
     const { data, error } = await supabase.auth.getUser(token);
-    if (error || !data.user) return false;
-    return true;
+    return !error && !!data.user;
   } catch {
     return false;
   }
+}
+
+/**
+ * Validation complète depuis une NextRequest (routes API).
+ */
+export async function verifyAdminTokenAsync(req: NextRequest): Promise<boolean> {
+  return isAdminTokenValid(extractToken(req));
 }
 
 /**
