@@ -7,6 +7,11 @@ import {
   AlertCircle, Calendar, Users, CreditCard,
 } from 'lucide-react';
 
+// La liste des bookings vient toujours du Server Component (initialBookings).
+// Quand on fait router.refresh() après une mutation, Next.js re-rend le
+// parent côté serveur et nous repasse une nouvelle référence de la prop —
+// l'affichage se met à jour automatiquement. Pas besoin de useState local.
+
 export interface Booking {
   id: string;
   guest_name: string;
@@ -38,17 +43,12 @@ export default function BookingsClient({
   const isFr = locale === 'fr';
   const router = useRouter();
   const [refreshing, startRefresh] = useTransition();
-  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [filter, setFilter] = useState<'all' | 'pending_bank_transfer' | 'confirmed' | 'pending' | 'cancelled' | 'completed'>('all');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Resync state when the Server Component reloads (after router.refresh)
-  if (initialBookings !== bookings && initialBookings.length !== bookings.length) {
-    setBookings(initialBookings);
-  }
-
+  const bookings = initialBookings;
   const pendingTransfers = bookings.filter(b => b.booking_status === 'pending_bank_transfer');
   const filtered = filter === 'all' ? bookings : bookings.filter(b => b.booking_status === filter);
 
@@ -90,7 +90,23 @@ export default function BookingsClient({
         credentials: 'include',
         body: JSON.stringify({ id: bookingId, status: newStatus }),
       });
-      if (!res.ok) throw new Error('Update failed');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Update failed (${res.status})`);
+      }
+
+      const statusLabel: Record<string, { fr: string; en: string }> = {
+        confirmed: { fr: 'confirmée', en: 'confirmed' },
+        cancelled: { fr: 'annulée', en: 'cancelled' },
+        completed: { fr: 'terminée', en: 'completed' },
+      };
+      const label = statusLabel[newStatus];
+      if (label) {
+        setSuccessMsg(isFr
+          ? `Réservation ${bookingId.slice(0, 8)}… ${label.fr}`
+          : `Booking ${bookingId.slice(0, 8)}… ${label.en}`);
+        setTimeout(() => setSuccessMsg(''), 4000);
+      }
       refresh();
     } catch (e: unknown) {
       setErrorMsg(e instanceof Error ? e.message : 'Error');
