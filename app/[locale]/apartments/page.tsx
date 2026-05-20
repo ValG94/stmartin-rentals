@@ -3,6 +3,9 @@ import { getApartments } from '@/lib/api';
 import ApartmentCard from '@/components/apartments/ApartmentCard';
 import Image from 'next/image';
 
+// Revalide la liste des villas toutes les 60 s côté CDN.
+export const revalidate = 60;
+
 export default async function ApartmentsPage() {
   const locale = await getLocale();
   const t = await getTranslations('apartments');

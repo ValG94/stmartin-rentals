@@ -8,6 +8,11 @@ import ImageGallery from '@/components/apartments/ImageGallery';
 import BookingForm from '@/components/booking/BookingForm';
 import { AMENITIES_MAP } from '@/components/apartments/AmenityIcon';
 
+// Revalide la fiche villa toutes les 60 s côté CDN. Les nouvelles villas
+// pas pré-rendues au build seront générées à la première requête (dynamicParams
+// reste à true par défaut), puis cachées 60 s avant nouvelle revalidation.
+export const revalidate = 60;
+
 export async function generateStaticParams() {
   const res = await getApartments();
   const apartments = res.data ?? [];

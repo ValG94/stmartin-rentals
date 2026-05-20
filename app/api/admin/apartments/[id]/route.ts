@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { adminGetApartmentById, adminUpdateApartment } from '@/lib/api-admin';
 import { verifyAdminToken } from '@/lib/auth-admin';
 
@@ -26,5 +27,13 @@ export async function PATCH(
   const body = await req.json();
   const result = await adminUpdateApartment(id, body);
   if (!result.success) return NextResponse.json({ error: result.error }, { status: 400 });
+
+  // Invalide le cache des pages publiques (homepage + liste + fiche villa)
+  // pour que toute modification (titre, prix, activation/désactivation, etc.)
+  // soit visible immédiatement côté visiteur.
+  revalidatePath('/[locale]', 'page');
+  revalidatePath('/[locale]/apartments', 'page');
+  revalidatePath('/[locale]/apartments/[slug]', 'page');
+
   return NextResponse.json(result.data);
 }

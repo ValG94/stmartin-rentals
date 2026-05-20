@@ -6,6 +6,12 @@ import Image from 'next/image';
 import { getApartments } from '@/lib/api';
 import { MapPin, ArrowRight, Star, Shield, Phone, ChevronDown } from 'lucide-react';
 
+// Revalide la liste des villas toutes les 60 s côté CDN.
+// Combiné avec revalidatePath('/[locale]') déclenché par les mutations
+// admin (création / modification de villa), une nouvelle villa apparaît
+// au pire en 60 s, et immédiatement après une action admin.
+export const revalidate = 60;
+
 export default async function HomePage() {
   const locale = await getLocale();
   const t = await getTranslations('home');
