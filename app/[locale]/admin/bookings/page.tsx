@@ -14,7 +14,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getLocale } from 'next-intl/server';
-import { isAdminTokenValid } from '@/lib/auth-admin';
+import { isJWTFormat } from '@/lib/auth-admin';
 import { supabaseAdmin } from '@/lib/supabase';
 import BookingsClient, { type Booking } from './BookingsClient';
 
@@ -24,13 +24,19 @@ export const revalidate = 0;
 export default async function AdminBookingsPage() {
   const locale = await getLocale();
 
-  // 1. Vérification d'auth côté serveur (cookie httpOnly)
+  // 1. Vérification d'auth (format JWT du cookie httpOnly).
+  //    On évite le check async via supabase.auth.getUser() ici parce que
+  //    sa latence réseau + sensibilité aux faux négatifs déclencherait
+  //    de fausses redirections vers /admin-login juste après un login OK.
+  //    Les routes API qui modifient des données (PATCH /api/admin/bookings,
+  //    mark-transfer-received) font le check strict — donc la sécurité
+  //    réelle s'applique aux MUTATIONS, pas à la simple lecture.
   const cookieStore = await cookies();
   const token =
     cookieStore.get('admin_token')?.value ||
     cookieStore.get('sb-access-token')?.value;
 
-  if (!(await isAdminTokenValid(token))) {
+  if (!isJWTFormat(token)) {
     redirect(`/${locale}/admin-login`);
   }
 

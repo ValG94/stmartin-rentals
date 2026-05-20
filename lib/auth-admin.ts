@@ -53,14 +53,22 @@ export async function verifyAdminTokenAsync(req: NextRequest): Promise<boolean> 
 }
 
 /**
- * Validation rapide structurelle : vérifie uniquement que le cookie
- * contient un JWT bien formé (3 segments base64). Utile pour les routes
- * read-only où une validation pleine est trop coûteuse.
+ * Vérifie qu'une chaîne ressemble à un JWT bien formé (3 segments
+ * séparés par des points, premier segment commençant par "eyJ").
+ * Synchrone, n'effectue aucun appel réseau — à utiliser dans les
+ * Server Components où on veut éviter la latence/faux négatifs
+ * d'un round-trip Supabase, et où la sécurité réelle est assurée
+ * par les routes API mutation qui font le check async strict.
  */
-export function verifyAdminToken(req: NextRequest): boolean {
-  const token = extractToken(req);
-  if (!token) return false;
-  if (!token.startsWith('eyJ')) return false;
+export function isJWTFormat(token: string | null | undefined): boolean {
+  if (!token || !token.startsWith('eyJ')) return false;
   const parts = token.split('.');
   return parts.length === 3 && parts[0].length > 5 && parts[1].length > 10;
+}
+
+/**
+ * Validation rapide structurelle pour les routes API read-only.
+ */
+export function verifyAdminToken(req: NextRequest): boolean {
+  return isJWTFormat(extractToken(req));
 }
