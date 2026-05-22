@@ -12,6 +12,7 @@ import {
   DollarSign, Calendar, Image as ImageIcon, BookOpen, Info
 } from 'lucide-react';
 import RichTextEditor from '@/components/admin/RichTextEditor';
+import { AMENITIES_LIST } from '@/components/apartments/AmenityIcon';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -81,25 +82,11 @@ const TABS = [
   { id: 'guide', label: 'Guide digital', icon: BookOpen },
 ];
 
-// Commodités standardisées (clés internes)
-const AMENITIES_CATALOG = [
-  { key: 'pool',            label: 'Piscine' },
-  { key: 'jacuzzi',         label: 'Jacuzzi' },
-  { key: 'wifi',            label: 'Wi-Fi' },
-  { key: 'tv',              label: 'Télévision' },
-  { key: 'ac',              label: 'Climatisation' },
-  { key: 'kitchen',         label: 'Cuisine équipée' },
-  { key: 'bbq',             label: 'Barbecue' },
-  { key: 'terrace',         label: 'Terrasse' },
-  { key: 'sea_view',        label: 'Vue mer' },
-  { key: 'lagoon_view',     label: 'Vue lagon' },
-  { key: 'parking',         label: 'Parking' },
-  { key: 'washing_machine', label: 'Lave-linge' },
-  { key: 'hair_dryer',      label: 'Sèche-cheveux' },
-  { key: 'bed_linen',       label: 'Linge de maison' },
-  { key: 'beach_towels',    label: 'Serviettes de plage' },
-  { key: 'massage_room',    label: 'Salle de massage' },
-];
+// Catalogue de commodités cochables — dérivé d'AMENITIES_LIST pour garder
+// une source de vérité unique (sinon ajouter une nouvelle commodité
+// nécessitait deux modifications synchrones, et "drying_machine" est
+// resté invisible dans l'admin parce qu'oublié ici).
+const AMENITIES_CATALOG = AMENITIES_LIST.map((a) => ({ key: a.key, label: a.label_fr }));
 
 const GUIDE_ICONS = ['🏠', '🔑', '📶', '🚗', '🏖️', '🍽️', '🛒', '🚑', '📞', '🌊', '⚠️', '✨', '👋', '📋', '🛎️'];
 

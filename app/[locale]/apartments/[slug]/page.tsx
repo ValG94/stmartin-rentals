@@ -7,6 +7,7 @@ import { getUsdToEurRate } from '@/lib/currency';
 import ImageGallery from '@/components/apartments/ImageGallery';
 import BookingForm from '@/components/booking/BookingForm';
 import { AMENITIES_MAP } from '@/components/apartments/AmenityIcon';
+import { sanitizeRichHtml } from '@/lib/services/sanitize';
 
 // Revalide la fiche villa toutes les 60 s côté CDN. Les nouvelles villas
 // pas pré-rendues au build seront générées à la première requête (dynamicParams
@@ -117,9 +118,10 @@ export default async function ApartmentDetailPage({
                 {t('description')}
               </h2>
               <div className="w-12 h-px bg-bronze-400 mb-8" />
-              <p className="text-night-500 leading-relaxed text-base md:text-lg font-light whitespace-pre-line max-w-3xl">
-                {description}
-              </p>
+              <div
+                className="text-night-500 leading-relaxed text-base md:text-lg font-light max-w-3xl villa-description"
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(description) }}
+              />
             </section>
 
             {/* Amenities */}
