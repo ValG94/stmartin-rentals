@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Home, Calendar, TrendingUp, DollarSign, Clock, ChevronDown } from 'lucide-react';
+import { Home, Calendar, TrendingUp, DollarSign, Clock, ChevronDown, Wallet } from 'lucide-react';
 
 interface BookingRow {
   id: string;
@@ -24,6 +24,7 @@ interface DashboardStats {
   pendingBookings: number;
   cancelledBookings: number;
   totalRevenue: number;
+  totalCollected: number;
 }
 
 const STATUS_CONFIG: Record<string, { label_fr: string; label_en: string; class: string }> = {
@@ -150,11 +151,20 @@ export default function DashboardClient({
       sub: stats.pendingBookings > 0 ? `${stats.pendingBookings} ${isFr ? 'en attente' : 'pending'}` : undefined,
     },
     {
-      label: isFr ? 'Revenus ($)' : 'Revenue ($)',
+      label: isFr ? 'CA confirmé ($)' : 'Confirmed revenue ($)',
       value: fmtMoney(stats.totalRevenue),
       icon: <DollarSign size={22} />,
       color: 'bg-amber-500',
-      sub: isFr ? 'réservations confirmées' : 'confirmed bookings',
+      sub: isFr ? 'total des séjours confirmés' : 'total of confirmed stays',
+    },
+    {
+      label: isFr ? 'Encaissé ($)' : 'Collected ($)',
+      value: fmtMoney(stats.totalCollected),
+      icon: <Wallet size={22} />,
+      color: 'bg-emerald-600',
+      sub: stats.totalRevenue > 0
+        ? `${Math.round((stats.totalCollected / stats.totalRevenue) * 100)}% ${isFr ? 'du CA' : 'of revenue'}`
+        : (isFr ? 'paiements reçus' : 'payments received'),
     },
   ];
 
@@ -167,7 +177,7 @@ export default function DashboardClient({
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         {kpis.map((kpi, i) => (
           <div key={i} className="bg-white rounded-2xl p-5 shadow-sm">
             <div className={`w-10 h-10 ${kpi.color} rounded-xl flex items-center justify-center text-white mb-3`}>

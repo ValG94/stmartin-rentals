@@ -104,6 +104,12 @@ async function getDashboardData() {
     .filter((b) => b.booking_status === 'confirmed')
     .reduce((sum, b) => sum + (b.booking_total || b.total_amount || 0), 0);
 
+  // Encaissé = somme des montants effectivement reçus sur le compte
+  // (paiements PayPal complets ou acomptes 40% confirmés).
+  const totalCollected = bookings
+    .filter((b) => b.payment_status === 'paid' || b.payment_status === 'partially_paid')
+    .reduce((sum, b) => sum + (b.total_amount || 0), 0);
+
   // Données pour le planning visuel par villa
   const { data: apartmentsList } = await supabaseAdmin
     .from('apartments')
@@ -148,6 +154,7 @@ async function getDashboardData() {
       pendingBookings,
       cancelledBookings,
       totalRevenue,
+      totalCollected,
     },
     recentBookings: bookings.slice(0, 10),
     apartments,
