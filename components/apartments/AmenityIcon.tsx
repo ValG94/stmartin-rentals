@@ -134,10 +134,12 @@ const icons: Record<string, React.ReactNode> = {
     </svg>
   ),
   iron_and_ironing_board: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
-      <path d="M3 11c4-4 10-5 16-3l2 1-3 3H3z" />
-      <path d="M8 14v2M12 14v2M16 14v2" />
-      <path d="M2 20h20" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M8 6h8" />
+      <path d="M9 6v2M15 6v2" />
+      <path d="M5 14c0-3 3-6 7-6s7 3 7 6H5z" />
+      <path d="M3 18h18" />
+      <path d="M7 18v3M17 18v3" />
     </svg>
   ),
 };
