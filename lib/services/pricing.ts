@@ -10,9 +10,9 @@ export const CLEANING_FEES: Record<string, number> = {
 };
 
 export const SECURITY_DEPOSITS: Record<string, number> = {
-  'villa-vanille': 530,
-  'villa-blanche': 300,
-  'maison-blanche': 300,
+  'villa-vanille': 800,
+  'villa-blanche': 500,
+  'maison-blanche': 500,
 };
 
 export const DEPOSIT_RATE = 0.40; // 40%

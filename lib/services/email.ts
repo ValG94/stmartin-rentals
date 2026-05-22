@@ -64,8 +64,8 @@ const TR = {
   total:          { fr: 'Total',                                         en: 'Total' },
   depositPaid:    { fr: 'Acompte versé (40 %)',                          en: 'Deposit paid (40%)' },
   remainingBal:   { fr: 'Solde restant',                                 en: 'Remaining balance' },
-  securityDep:    { fr: 'Dépôt de garantie (à l\'arrivée)',              en: 'Security deposit (on arrival)' },
-  securityNote:   { fr: 'Dépôt de garantie prélevé à l\'arrivée (espèces ou CB). Restitué sous 48 h après le départ si aucun dégât.', en: 'Security deposit due on arrival, payable in cash or by card. Refunded within 48 hours after check-out if no damage is found.' },
+  securityDep:    { fr: 'Dépôt de garantie (empreinte CB à l\'arrivée)',  en: 'Security deposit (card imprint on arrival)' },
+  securityNote:   { fr: 'Empreinte bancaire prise à votre arrivée par carte bancaire. Aucun débit ne sera effectué sauf en cas de dégât constaté au départ. Si vous avez réglé par virement bancaire, merci de présenter une carte bancaire à l\'arrivée pour l\'empreinte.', en: 'Card imprint taken on arrival. No amount will be charged unless damage is found at check-out. If you paid by bank transfer, please present a credit card on arrival for the imprint.' },
   // Bank transfer instructions
   wireTitle:      { fr: 'Instructions de virement (USD)',                en: 'Wire Transfer Instructions (USD)' },
   amountToTransfer:{ fr: 'Montant à virer :',                            en: 'Amount to transfer:' },

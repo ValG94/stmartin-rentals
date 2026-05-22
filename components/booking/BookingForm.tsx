@@ -264,8 +264,8 @@ export default function BookingForm({
                   </div>
                   <p className="text-xs text-night-400 leading-relaxed font-light">
                     {isFr
-                      ? 'Prélevé à l’arrivée (CB ou espèces) et restitué sous 48 h après le départ si aucun dégât.'
-                      : 'Collected on arrival (card or cash) and refunded within 48 h after check-out if no damage.'}
+                      ? 'Empreinte bancaire prise à l’arrivée par carte bancaire — aucun débit sauf en cas de dégât constaté au départ. Pour les paiements par virement, merci de présenter une carte bancaire à l’arrivée pour l’empreinte.'
+                      : 'Card imprint taken on arrival — no charge unless damage is found at check-out. For bank transfer bookings, please present a credit card on arrival for the imprint.'}
                   </p>
                 </div>
               </div>

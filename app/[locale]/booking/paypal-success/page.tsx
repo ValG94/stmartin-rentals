@@ -133,11 +133,13 @@ export default async function PayPalSuccessPage({ params, searchParams }: Props)
 
             <div className="bg-cream-100 border border-bronze-100 rounded-lg p-4">
               <p className="text-[11px] uppercase font-medium text-night-500 mb-1" style={{ letterSpacing: '0.12em' }}>
-                {isFr ? 'Dépôt de garantie à l’arrivée' : 'Security deposit on arrival'}
+                {isFr ? 'Dépôt de garantie (empreinte CB à l’arrivée)' : 'Security deposit (card imprint on arrival)'}
               </p>
               <p className="font-serif text-lg text-night-600">{formatUSD(booking.security_deposit_amount)}</p>
               <p className="text-xs text-night-400 mt-1 font-light">
-                {isFr ? 'Restitué sous 48 h après le départ si aucun dégât.' : 'Refunded within 48 h after check-out if no damage.'}
+                {isFr
+                  ? 'Empreinte bancaire à l’arrivée par CB. Aucun débit sauf en cas de dégât constaté au départ.'
+                  : 'Card imprint on arrival. No charge unless damage is found at check-out.'}
               </p>
             </div>
           </div>
@@ -152,7 +154,7 @@ export default async function PayPalSuccessPage({ params, searchParams }: Props)
             <Step text={isFr ? 'Vous recevez votre email de confirmation avec tous les détails.' : 'You receive your confirmation email with all the details.'} />
             <Step text={isFr ? 'Vos dates sont bloquées dans notre calendrier.' : 'Your dates are blocked in our calendar.'} />
             <Step text={isFr ? 'Nous vous contactons 48 h avant l’arrivée pour les instructions check-in.' : 'We contact you 48 h before arrival with check-in instructions.'} />
-            <Step text={isFr ? 'Le dépôt de garantie sera prélevé à l’arrivée (CB ou espèces).' : 'Security deposit will be collected on arrival (card or cash).'} />
+            <Step text={isFr ? 'Une empreinte CB sera prise à l’arrivée à titre de dépôt de garantie (aucun débit sauf en cas de dégât).' : 'A card imprint will be taken on arrival as security deposit (no charge unless damage is found).'} />
           </ul>
         </div>
 
