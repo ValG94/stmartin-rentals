@@ -40,7 +40,7 @@ export default async function HomePage() {
       {/* HERO */}
       <section className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <Image src="/images/villa-vanille/vue piscine drone.jpeg" alt="Villa luxe Saint-Martin" fill className="object-cover" priority quality={90} />
+          <Image src="/images/home hero.jpeg" alt="Villa luxe Saint-Martin" fill className="object-cover" priority quality={90} />
           <div className="absolute inset-0 bg-gradient-to-b from-night-600/50 via-night-600/20 to-night-600/70" />
           <div className="absolute inset-0 bg-gradient-to-r from-night-600/30 via-transparent to-transparent" />
         </div>
@@ -51,7 +51,7 @@ export default async function HomePage() {
             <span>Saint-Martin, Deutch Side</span>
           </div>
           <h1 className="font-serif font-light text-white mb-6 leading-none" style={{fontSize:'clamp(3.5rem, 9vw, 8rem)', letterSpacing:'-0.02em'}}>
-            {isFr ? <>L&apos;art de vivre<br /><em className="font-light italic">caraïbe</em></> : <>The art of<br /><em className="font-light italic">Caribbean living</em></>}
+            {isFr ? <>La vie au<br /><em className="font-light italic">Paradis</em></> : <>Paradise<br /><em className="font-light italic">Living</em></>}
           </h1>
           <p className="font-sans font-light text-white/80 mb-12 max-w-xl mx-auto leading-relaxed" style={{fontSize:'clamp(0.9rem, 2vw, 1.1rem)', letterSpacing:'0.02em'}}>
             {isFr ? "Deux villas d'exception à Saint-Martin. Piscine privée, vue mer, expérience sur-mesure." : "Two exceptional villas in Saint-Martin. Private pool, sea view, bespoke experience."}
