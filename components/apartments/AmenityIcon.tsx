@@ -126,6 +126,20 @@ const icons: Record<string, React.ReactNode> = {
       <path d="M9 11l3 3 3-3" />
     </svg>
   ),
+  baby_bed: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+      <path d="M3 8v12M21 8v12M3 14h18" />
+      <path d="M3 8c3-2 6-3 9-3s6 1 9 3" />
+      <path d="M7 8v6M11 8v6M15 8v6M19 8v6" />
+    </svg>
+  ),
+  iron_and_ironing_board: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+      <path d="M3 11c4-4 10-5 16-3l2 1-3 3H3z" />
+      <path d="M8 14v2M12 14v2M16 14v2" />
+      <path d="M2 20h20" />
+    </svg>
+  ),
 };
 
 export const AMENITIES_LIST: AmenityDef[] = [
@@ -147,7 +161,7 @@ export const AMENITIES_LIST: AmenityDef[] = [
   { key: 'massage_room',    label_fr: 'Salle de massage',   label_en: 'Massage room',     icon: icons.massage_room },
   { key: 'drying_machine',  label_fr: 'Sèche-linge',        label_en: 'Tumble dryer',     icon: icons.drying_machine },
   { key: 'baby_bed',        label_fr: 'Lit parapluie',      label_en: 'Baby bed',         icon: icons.baby_bed },
-  { key: 'iron and ironing board',  label_fr: 'Fer & planche à repasser',      label_en: 'Iron and ironing board',     icon: icons.iron_and_ironing_board },
+  { key: 'iron_and_ironing_board',  label_fr: 'Fer & planche à repasser',      label_en: 'Iron and ironing board',     icon: icons.iron_and_ironing_board },
 ];
 
 export const AMENITIES_MAP = Object.fromEntries(
