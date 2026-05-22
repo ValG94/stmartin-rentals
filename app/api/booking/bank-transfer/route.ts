@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Recalcul complet côté serveur (montants jamais lus du client)
-    const pricing = await computeServerPricing({ apartmentId, checkIn, checkOut, paymentOption });
+    const pricing = await computeServerPricing({ apartmentId, checkIn, checkOut, paymentOption, guestsCount: guests });
 
     const supabase = getServerSupabase();
 

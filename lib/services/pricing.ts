@@ -24,11 +24,19 @@ export interface SeasonalPriceInput {
   price_per_night: number;
 }
 
+export interface ExtraGuestsConfig {
+  guestsCount: number;            // total voyageurs annoncés par le voyageur
+  baseCapacity: number;           // capacité incluse dans le prix de base (= apt.max_guests)
+  pricePerNight: number;          // tarif par voyageur supplémentaire par nuit
+}
+
 export interface PricingResult {
   nights: number;
   nightlyRate: number;             // prix moyen pondéré par nuit
   accommodationAmount: number;
   cleaningFee: number;
+  extraGuestsCount: number;        // nombre de voyageurs sup. facturés
+  extraGuestsAmount: number;       // surcoût total des voyageurs sup.
   bookingTotal: number;
   depositAmount: number;
   remainingBalance: number;
@@ -59,6 +67,7 @@ export function calculatePricing(
   checkOut: string,
   nightlyRate: number,
   seasonalPrices: SeasonalPriceInput[] = [],
+  extraGuests?: ExtraGuestsConfig,
 ): PricingResult {
   const checkInDate = new Date(checkIn);
   const checkOutDate = new Date(checkOut);
@@ -87,7 +96,17 @@ export function calculatePricing(
   }
 
   const cleaningFee = CLEANING_FEES[slug] ?? 250;
-  const bookingTotal = accommodationAmount + cleaningFee;
+
+  // Voyageurs supplémentaires — payés en plus si guestsCount > baseCapacity.
+  // Le surcoût est inclus dans bookingTotal et donc aussi dans l'acompte 40%.
+  let extraGuestsCount = 0;
+  let extraGuestsAmount = 0;
+  if (extraGuests && extraGuests.pricePerNight > 0) {
+    extraGuestsCount = Math.max(0, extraGuests.guestsCount - extraGuests.baseCapacity);
+    extraGuestsAmount = extraGuestsCount * extraGuests.pricePerNight * nights;
+  }
+
+  const bookingTotal = accommodationAmount + cleaningFee + extraGuestsAmount;
   const depositAmount = Math.round(bookingTotal * DEPOSIT_RATE * 100) / 100;
   const remainingBalance = Math.round((bookingTotal - depositAmount) * 100) / 100;
   const securityDepositAmount = SECURITY_DEPOSITS[slug] ?? 300;
@@ -102,6 +121,8 @@ export function calculatePricing(
     nightlyRate: avgNightlyRate,
     accommodationAmount,
     cleaningFee,
+    extraGuestsCount,
+    extraGuestsAmount,
     bookingTotal,
     depositAmount,
     remainingBalance,

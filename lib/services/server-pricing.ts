@@ -45,8 +45,9 @@ export async function computeServerPricing(args: {
   checkIn: string;
   checkOut: string;
   paymentOption: 'full' | 'deposit_40';
+  guestsCount: number;
 }): Promise<ServerPricing> {
-  const { apartmentId, checkIn, checkOut, paymentOption } = args;
+  const { apartmentId, checkIn, checkOut, paymentOption, guestsCount } = args;
 
   // 1. Validation basique des dates
   if (!checkIn || !checkOut) throw new Error('checkIn and checkOut are required');
@@ -63,15 +64,24 @@ export async function computeServerPricing(args: {
     throw new Error('check-in cannot be in the past');
   }
 
-  // 2. Récupérer l'appartement (slug + prix de base)
+  // 2. Récupérer l'appartement (slug + prix de base + config voyageurs sup.)
   const sb = admin();
   const { data: apt, error: aptErr } = await sb
     .from('apartments')
-    .select('id, slug, title_en, price_per_night')
+    .select('id, slug, title_en, price_per_night, max_guests, extra_guests_max, extra_guest_price_per_night')
     .eq('id', apartmentId)
     .single();
 
   if (aptErr || !apt) throw new Error('Apartment not found');
+
+  // 2bis. Validation du nombre de voyageurs : doit être ≥ 1 et ≤ max_guests + extras_max
+  const baseCapacity = Number(apt.max_guests) || 0;
+  const extraMax = Number(apt.extra_guests_max) || 0;
+  const extraPrice = Number(apt.extra_guest_price_per_night) || 0;
+  const capacityCeiling = baseCapacity + extraMax;
+  if (!Number.isFinite(guestsCount) || guestsCount < 1 || guestsCount > capacityCeiling) {
+    throw new Error(`Invalid guests count: must be between 1 and ${capacityCeiling}`);
+  }
 
   // 3. Tous les tarifs saisonniers actifs qui chevauchent la période.
   //    Le calcul nuit par nuit fait dans calculatePricing choisira pour
@@ -93,6 +103,7 @@ export async function computeServerPricing(args: {
   await assertAvailable(sb, apartmentId, checkIn, checkOut);
 
   // 5. Calcul des montants — nuit par nuit avec les saisons applicables
+  //    + surcoût voyageurs supplémentaires (configuré sur l'apartment)
   const pricing = calculatePricing(
     apt.slug,
     checkIn,
@@ -104,6 +115,9 @@ export async function computeServerPricing(args: {
       date_to: s.date_to as string,
       price_per_night: Number(s.price_per_night),
     })),
+    extraPrice > 0
+      ? { guestsCount, baseCapacity, pricePerNight: extraPrice }
+      : undefined,
   );
   const amountDue = paymentOption === 'full' ? pricing.bookingTotal : pricing.depositAmount;
 

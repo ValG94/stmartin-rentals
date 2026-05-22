@@ -179,6 +179,8 @@ export default async function ApartmentDetailPage({
                 apartmentSlug={slug}
                 nightlyRate={apartment.price_per_night}
                 maxGuests={apartment.max_guests || 8}
+                extraGuestsMax={apartment.extra_guests_max || 0}
+                extraGuestPricePerNight={apartment.extra_guest_price_per_night || 0}
                 locale={locale}
                 eurRate={eurRate}
                 seasonalPrices={(apartment.seasonal_prices ?? []).map((sp) => ({

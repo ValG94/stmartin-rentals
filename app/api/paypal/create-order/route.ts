@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid guest count' }, { status: 400 });
     }
 
-    const pricing = await computeServerPricing({ apartmentId, checkIn, checkOut, paymentOption });
+    const pricing = await computeServerPricing({ apartmentId, checkIn, checkOut, paymentOption, guestsCount: guests });
 
     const supabase = getServerSupabase();
 

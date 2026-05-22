@@ -37,6 +37,8 @@ export interface Apartment {
   bedrooms: number;
   bathrooms: number;
   max_guests: number;
+  extra_guests_max: number;            // nb max de voyageurs sup. payants au-delà de max_guests
+  extra_guest_price_per_night: number; // tarif par voyageur sup. par nuit (USD)
   amenities: string[];
   images: ApartmentImage[];
   sections: GuideSection[];

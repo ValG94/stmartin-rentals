@@ -71,6 +71,8 @@ function mapApartment(row: Record<string, unknown>): Apartment {
     bedrooms: Number(row.bedrooms),
     bathrooms: Number(row.bathrooms),
     max_guests: Number(row.max_guests),
+    extra_guests_max: Number(row.extra_guests_max) || 0,
+    extra_guest_price_per_night: Number(row.extra_guest_price_per_night) || 0,
     amenities: (row.amenities as string[]) || [],
     images: (row.apartment_images as ApartmentImage[]) || [],
     sections: (row.apartment_sections as GuideSection[]) || [],

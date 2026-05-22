@@ -12,6 +12,8 @@ interface BookingFormProps {
   apartmentName: string;
   nightlyRate: number;
   maxGuests: number;
+  extraGuestsMax?: number;            // capacité supplémentaire payante (0 = pas d'extras)
+  extraGuestPricePerNight?: number;   // tarif par voyageur supplémentaire par nuit
   eurRate?: number;
   locale?: string;
   seasonalPrices?: SeasonalPriceInput[];
@@ -27,6 +29,8 @@ export default function BookingForm({
   apartmentSlug,
   nightlyRate,
   maxGuests,
+  extraGuestsMax = 0,
+  extraGuestPricePerNight = 0,
   eurRate,
   locale = 'en',
   seasonalPrices = [],
@@ -49,9 +53,22 @@ export default function BookingForm({
   const [bankTransferDone, setBankTransferDone] = useState(false);
 
   const pricing = checkIn && checkOut ? (() => {
-    try { return calculatePricing(apartmentSlug, checkIn, checkOut, nightlyRate, seasonalPrices); }
-    catch { return null; }
+    try {
+      return calculatePricing(
+        apartmentSlug,
+        checkIn,
+        checkOut,
+        nightlyRate,
+        seasonalPrices,
+        extraGuestPricePerNight > 0
+          ? { guestsCount: guests, baseCapacity: maxGuests, pricePerNight: extraGuestPricePerNight }
+          : undefined,
+      );
+    } catch { return null; }
   })() : null;
+
+  const guestsCeiling = maxGuests + extraGuestsMax;
+  const extraGuestsActive = pricing && pricing.extraGuestsCount > 0;
 
   const amountDue = pricing
     ? (paymentOption === 'full' ? pricing.bookingTotal : pricing.depositAmount)
@@ -224,12 +241,19 @@ export default function BookingForm({
                 id="guest-count"
                 type="number"
                 min={1}
-                max={maxGuests}
+                max={guestsCeiling}
                 value={guests}
                 onChange={e => setGuests(Number(e.target.value))}
                 className="w-full pl-11 pr-4 py-3 bg-cream-50 border border-bronze-100 rounded-md text-sm text-night-600 focus:outline-none focus:border-bronze-400 focus:ring-1 focus:ring-bronze-400 transition-colors"
               />
             </div>
+            {extraGuestsMax > 0 && (
+              <p className="text-[11px] text-night-400 mt-2 font-light leading-relaxed">
+                {isFr
+                  ? `Capacité incluse : ${maxGuests} voyageurs. Jusqu'à ${extraGuestsMax} voyageurs supplémentaires acceptés à ${fmt(extraGuestPricePerNight)}/nuit/personne.`
+                  : `Included capacity: ${maxGuests} guests. Up to ${extraGuestsMax} extra guests at ${fmt(extraGuestPricePerNight)}/night/person.`}
+              </p>
+            )}
           </div>
 
           {/* Récap pricing */}
@@ -243,6 +267,16 @@ export default function BookingForm({
                 <span className="font-light">{isFr ? 'Frais de ménage' : 'Cleaning fee'}</span>
                 <span>{fmt(pricing.cleaningFee)}</span>
               </div>
+              {extraGuestsActive && (
+                <div className="flex justify-between text-sm text-night-500">
+                  <span className="font-light">
+                    {isFr
+                      ? `Voyageurs sup. : ${pricing.extraGuestsCount} × ${fmt(extraGuestPricePerNight)} × ${pricing.nights} nuit${pricing.nights > 1 ? 's' : ''}`
+                      : `Extra guests: ${pricing.extraGuestsCount} × ${fmt(extraGuestPricePerNight)} × ${pricing.nights} night${pricing.nights > 1 ? 's' : ''}`}
+                  </span>
+                  <span>{fmt(pricing.extraGuestsAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-baseline pt-3 border-t border-bronze-200">
                 <span className="text-xs uppercase font-medium text-night-600" style={{ letterSpacing: '0.15em' }}>Total</span>
                 <span className="font-serif font-light text-2xl text-night-600">{fmt(pricing.bookingTotal)}</span>

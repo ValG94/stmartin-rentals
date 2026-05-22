@@ -41,6 +41,8 @@ export default function NewApartmentPage() {
     bedrooms: 2,
     bathrooms: 2,
     max_guests: 4,
+    extra_guests_max: 0,
+    extra_guest_price_per_night: 0,
     amenities: [] as string[],
   });
 

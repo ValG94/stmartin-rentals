@@ -52,6 +52,8 @@ interface ApartmentData {
   bedrooms: number;
   bathrooms: number;
   max_guests: number;
+  extra_guests_max: number;
+  extra_guest_price_per_night: number;
   amenities: string[];
   is_active: boolean;
 }
@@ -128,6 +130,7 @@ export default function EditApartmentPage() {
     location: 'Saint-Martin, Côté Hollandais',
     price_per_night: 0, currency: 'USD',
     bedrooms: 1, bathrooms: 1, max_guests: 2,
+    extra_guests_max: 0, extra_guest_price_per_night: 0,
     amenities: [], is_active: true,
   });
 
@@ -218,7 +221,10 @@ export default function EditApartmentPage() {
             description_fr: apt.description_fr, description_en: apt.description_en,
             location: apt.location, price_per_night: apt.price_per_night,
             bedrooms: apt.bedrooms, bathrooms: apt.bathrooms,
-            max_guests: apt.max_guests, amenities: apt.amenities,
+            max_guests: apt.max_guests,
+            extra_guests_max: apt.extra_guests_max,
+            extra_guest_price_per_night: apt.extra_guest_price_per_night,
+            amenities: apt.amenities,
             is_active: apt.is_active,
           }),
         });
@@ -606,7 +612,7 @@ export default function EditApartmentPage() {
               {[
                 { field: 'bedrooms' as const, label: 'Chambres' },
                 { field: 'bathrooms' as const, label: 'Salles de bain' },
-                { field: 'max_guests' as const, label: 'Capacité max' },
+                { field: 'max_guests' as const, label: 'Capacité incluse' },
                 { field: 'price_per_night' as const, label: 'Prix de base / nuit ($)' },
               ].map(({ field, label }) => (
                 <div key={field}>
@@ -616,6 +622,43 @@ export default function EditApartmentPage() {
                     className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52]" />
                 </div>
               ))}
+            </div>
+
+            {/* Voyageurs supplémentaires payants — section dédiée */}
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <h4 className="text-sm font-semibold text-gray-700 mb-1">Voyageurs supplémentaires payants</h4>
+              <p className="text-xs text-gray-500 mb-4">
+                Permet d&apos;accueillir des voyageurs au-delà de la capacité incluse, moyennant un surcoût par personne et par nuit (ex : canapé-lit, lit d&apos;appoint). Laissez à 0 pour désactiver.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Voyageurs sup. max</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={apt.extra_guests_max}
+                    onChange={e => setApt(p => ({ ...p, extra_guests_max: parseInt(e.target.value) || 0 }))}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Prix par personne / nuit ($)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={apt.extra_guest_price_per_night}
+                    onChange={e => setApt(p => ({ ...p, extra_guest_price_per_night: parseFloat(e.target.value) || 0 }))}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52]"
+                  />
+                </div>
+              </div>
+              {apt.extra_guests_max > 0 && apt.extra_guest_price_per_night > 0 && (
+                <p className="text-xs text-[#B08B52] mt-3 font-medium">
+                  Capacité totale acceptée : <strong>{apt.max_guests}</strong> + jusqu&apos;à <strong>{apt.extra_guests_max}</strong> en sup. = <strong>{apt.max_guests + apt.extra_guests_max} voyageurs max</strong>
+                </p>
+              )}
             </div>
           </div>
 
