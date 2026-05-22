@@ -23,6 +23,8 @@ const AMENITIES_CATALOG = [
   { key: 'bed_linen',       label: 'Linge de maison' },
   { key: 'beach_towels',    label: 'Serviettes de plage' },
   { key: 'massage_room',    label: 'Salle de massage' },
+  { key: 'baby_bed',        label: 'Lit parapluie'},
+  { key: 'iron and ironing board',  label: 'Fer & planche à repasser'},
 ];
 
 export default function NewApartmentPage() {
