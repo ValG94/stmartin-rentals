@@ -22,12 +22,15 @@ ALTER TABLE apartments
   ADD COLUMN IF NOT EXISTS extra_guest_price_per_night NUMERIC NOT NULL DEFAULT 0;
 
 -- Configuration initiale : Maison Blanche → +2 voyageurs à 80 USD/nuit
+-- Note : le slug réel en DB est 'villa-blanche' (legacy depuis la création
+-- du projet — le titre affiché est bien "Maison Blanche" mais le slug n'a
+-- pas suivi le renommage). On vise les deux orthographes pour être robuste.
 UPDATE apartments
 SET
   extra_guests_max = 2,
   extra_guest_price_per_night = 80,
   updated_at = NOW()
-WHERE slug = 'maison-blanche';
+WHERE slug IN ('maison-blanche', 'villa-blanche');
 
 -- Vérification
 SELECT slug, title_en, max_guests, extra_guests_max, extra_guest_price_per_night

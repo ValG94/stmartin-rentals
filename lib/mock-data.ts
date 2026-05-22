@@ -24,6 +24,8 @@ The villa has 4 spacious bedrooms, each with a private bathroom. The living spac
     bedrooms: 4,
     bathrooms: 4,
     max_guests: 8,
+    extra_guests_max: 0,
+    extra_guest_price_per_night: 0,
     amenities: ['pool', 'wifi', 'ac', 'parking', 'sea_view', 'terrace', 'bbq', 'kitchen'],
     images: [
       {
@@ -323,6 +325,8 @@ With 2 comfortable bedrooms, a private pool and a fully equipped kitchen, Villa 
     bedrooms: 2,
     bathrooms: 2,
     max_guests: 4,
+    extra_guests_max: 2,
+    extra_guest_price_per_night: 80,
     amenities: ['pool', 'wifi', 'ac', 'parking', 'lagoon_view', 'terrace', 'kitchen'],
     images: [
       {
