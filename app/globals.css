@@ -177,10 +177,15 @@
 
 /* ── Villa description (WYSIWYG output) ───────────────────────── */
 .villa-description p {
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 .villa-description p:last-child {
   margin-bottom: 0;
+}
+.villa-description br {
+  display: block;
+  content: '';
+  margin-top: 0.5rem;
 }
 .villa-description strong {
   font-weight: 600;
