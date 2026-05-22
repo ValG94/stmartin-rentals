@@ -107,8 +107,34 @@ export default async function ApartmentDetailPage({
               <div className="grid grid-cols-3 gap-px bg-bronze-100">
                 <Spec icon={<Bed size={22} className="text-bronze-400" />} value={apartment.bedrooms} label={t('bedrooms')} />
                 <Spec icon={<Bath size={22} className="text-bronze-400" />} value={apartment.bathrooms} label={t('bathrooms')} />
-                <Spec icon={<Users size={22} className="text-bronze-400" />} value={apartment.max_guests} label={t('guests')} />
+                <Spec
+                  icon={<Users size={22} className="text-bronze-400" />}
+                  value={
+                    apartment.extra_guests_max > 0 ? (
+                      <span className="inline-flex items-baseline gap-1">
+                        <span>{apartment.max_guests}</span>
+                        <span className="text-base text-bronze-400 font-medium">+{apartment.extra_guests_max}</span>
+                      </span>
+                    ) : (
+                      apartment.max_guests
+                    )
+                  }
+                  label={t('guests')}
+                />
               </div>
+              {apartment.extra_guests_max > 0 && (
+                <p className="mt-5 pt-5 border-t border-bronze-100 text-xs text-night-400 text-center leading-relaxed">
+                  {isFr
+                    ? <>
+                        <strong className="text-night-500 font-medium">{apartment.max_guests} voyageurs inclus</strong>
+                        {' '}+ jusqu&apos;à {apartment.extra_guests_max} en supplément à {apartment.extra_guest_price_per_night}$/nuit/personne
+                      </>
+                    : <>
+                        <strong className="text-night-500 font-medium">{apartment.max_guests} guests included</strong>
+                        {' '}+ up to {apartment.extra_guests_max} extra at ${apartment.extra_guest_price_per_night}/night/person
+                      </>}
+                </p>
+              )}
             </div>
 
             {/* Description */}
@@ -198,7 +224,7 @@ export default async function ApartmentDetailPage({
   );
 }
 
-function Spec({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
+function Spec({ icon, value, label }: { icon: React.ReactNode; value: React.ReactNode; label: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-4 bg-sand-100">
       {icon}
