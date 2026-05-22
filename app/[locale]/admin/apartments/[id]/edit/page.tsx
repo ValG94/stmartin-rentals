@@ -8,11 +8,29 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { createClient } from '@supabase/supabase-js';
 import {
   Save, ArrowLeft, Plus, Trash2, Star, Upload, X,
-  ChevronUp, ChevronDown, Play, AlertCircle, Check,
-  DollarSign, Calendar, Image as ImageIcon, BookOpen, Info
+  Play, AlertCircle, Check,
+  DollarSign, Calendar, Image as ImageIcon, BookOpen, Info,
+  GripVertical,
 } from 'lucide-react';
 import RichTextEditor from '@/components/admin/RichTextEditor';
 import { AMENITIES_LIST } from '@/components/apartments/AmenityIcon';
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -343,23 +361,40 @@ export default function EditApartmentPage() {
     setImages(prev => prev.filter(i => i.id !== img.id));
   };
 
-  const moveImage = async (index: number, dir: 'up' | 'down') => {
-    const arr = [...images];
-    const swap = dir === 'up' ? index - 1 : index + 1;
-    if (swap < 0 || swap >= arr.length) return;
-    [arr[index], arr[swap]] = [arr[swap], arr[index]];
-    const updated = arr.map((img, i) => ({ ...img, position: i + 1 }));
-    setImages(updated);
-    await Promise.all(updated.map(img => fetch(
-      `/api/admin/apartments/${apartmentId}/images/${img.id}`,
-      {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ position: img.position }),
-      },
-    )));
+  // Drag-and-drop : appelé par dnd-kit quand l'utilisateur lâche une carte
+  // après l'avoir déplacée. Met à jour l'ordre local + persiste les nouvelles
+  // positions en parallèle via PATCH /images/[imageId].
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = images.findIndex((i) => i.id === active.id);
+    const newIndex = images.findIndex((i) => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(images, oldIndex, newIndex).map((img, i) => ({
+      ...img,
+      position: i + 1,
+    }));
+    setImages(reordered);
+
+    await Promise.all(
+      reordered.map((img) =>
+        fetch(`/api/admin/apartments/${apartmentId}/images/${img.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ position: img.position }),
+        }),
+      ),
+    );
   };
+
+  // Sensors dnd-kit : pointer (souris + tactile) + clavier pour l'accessibilité
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   // Mise à jour de l'intitulé d'une photo (alt_fr / alt_en)
   const updateImageAlt = async (imageId: string, field: 'alt_fr' | 'alt_en', value: string) => {
@@ -785,89 +820,41 @@ export default function EditApartmentPage() {
             <div className="bg-white border border-gray-200 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900">Médias ({images.length})</h3>
-                <p className="text-xs text-gray-400">⭐ couverture · ↑↓ réordonner</p>
+                <p className="text-xs text-gray-400">⭐ couverture · ≡ glisser pour réordonner</p>
               </div>
-              <div className="space-y-2">
-                {images.map((img, i) => {
-                  const video = isVideo(img.url);
-                  const thumb = video ? getYTThumb(img.url) : img.url;
-                  return (
-                    <div key={img.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                      img.is_cover ? 'border-[#B08B52] bg-[#B08B52]/5' : 'border-gray-100 hover:border-gray-200'
-                    }`}>
-                      <div className="w-16 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
-                        {thumb ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={thumb} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Play size={16} className="text-gray-400" />
-                          </div>
-                        )}
-                        {video && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <Play size={12} className="text-white" fill="white" />
-                          </div>
-                        )}
-                        {img.is_cover && (
-                          <div className="absolute top-0.5 left-0.5 bg-[#B08B52] rounded-full p-0.5">
-                            <Star size={7} className="text-white" fill="white" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-gray-500 mb-1.5">
-                          {video ? '🎬 Vidéo' : `📷 Photo ${i + 1}`}
-                          {img.is_cover && <span className="ml-2 text-[#B08B52]">Couverture</span>}
-                        </p>
-                        <div className="flex flex-col gap-1">
-                          <input
-                            type="text"
-                            value={img.alt_fr}
-                            onChange={(e) => setImages(prev => prev.map(im => im.id === img.id ? { ...im, alt_fr: e.target.value } : im))}
-                            onBlur={(e) => updateImageAlt(img.id, 'alt_fr', e.target.value)}
-                            placeholder="Intitulé FR (ex: Piscine avec vue mer)"
-                            className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#B08B52] focus:border-[#B08B52] bg-white placeholder-gray-300"
-                          />
-                          <input
-                            type="text"
-                            value={img.alt_en}
-                            onChange={(e) => setImages(prev => prev.map(im => im.id === img.id ? { ...im, alt_en: e.target.value } : im))}
-                            onBlur={(e) => updateImageAlt(img.id, 'alt_en', e.target.value)}
-                            placeholder="Caption EN (e.g. Pool with sea view)"
-                            className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#B08B52] focus:border-[#B08B52] bg-white placeholder-gray-300"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <button onClick={() => moveImage(i, 'up')} disabled={i === 0}
-                          className="p-1.5 text-gray-400 hover:text-gray-600 disabled:opacity-20 hover:bg-gray-100 rounded">
-                          <ChevronUp size={14} />
-                        </button>
-                        <button onClick={() => moveImage(i, 'down')} disabled={i === images.length - 1}
-                          className="p-1.5 text-gray-400 hover:text-gray-600 disabled:opacity-20 hover:bg-gray-100 rounded">
-                          <ChevronDown size={14} />
-                        </button>
-                        {!video && (
-                          <button onClick={() => setCover(img.id)} disabled={img.is_cover}
-                            className={`p-1.5 rounded transition-colors ${img.is_cover ? 'text-[#B08B52] cursor-default' : 'text-gray-400 hover:text-[#B08B52] hover:bg-[#B08B52]/10'}`}
-                            title="Définir comme couverture">
-                            <Star size={14} fill={img.is_cover ? 'currentColor' : 'none'} />
-                          </button>
-                        )}
-                        <button onClick={() => deleteImage(img)}
-                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={images.map((img) => img.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {images.map((img, i) => (
+                      <SortableImageRow
+                        key={img.id}
+                        img={img}
+                        index={i}
+                        videoCheck={isVideo}
+                        thumbGetter={getYTThumb}
+                        onAltChange={(field, value) => setImages(prev =>
+                          prev.map(im => im.id === img.id ? { ...im, [field]: value } : im))}
+                        onAltBlur={(field, value) => updateImageAlt(img.id, field, value)}
+                        onSetCover={() => setCover(img.id)}
+                        onDelete={() => deleteImage(img)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             </div>
           )}
         </div>
       )}
+
+      {/* SortableImageRow rendu ci-dessous, à la fin du fichier */}
 
       {/* ── ONGLET GUIDE DIGITAL ─────────────────────────────────────────────── */}
       {activeTab === 'guide' && (
@@ -900,6 +887,141 @@ export default function EditApartmentPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// SortableImageRow — une carte image draggable via @dnd-kit
+// ─────────────────────────────────────────────────────────────
+function SortableImageRow({
+  img,
+  index,
+  videoCheck,
+  thumbGetter,
+  onAltChange,
+  onAltBlur,
+  onSetCover,
+  onDelete,
+}: {
+  img: ApartmentImage;
+  index: number;
+  videoCheck: (url: string) => boolean;
+  thumbGetter: (url: string) => string;
+  onAltChange: (field: 'alt_fr' | 'alt_en', value: string) => void;
+  onAltBlur: (field: 'alt_fr' | 'alt_en', value: string) => void;
+  onSetCover: () => void;
+  onDelete: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: img.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : 'auto',
+  };
+
+  const video = videoCheck(img.url);
+  const thumb = video ? thumbGetter(img.url) : img.url;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+        img.is_cover
+          ? 'border-[#B08B52] bg-[#B08B52]/5'
+          : 'border-gray-100 hover:border-gray-200'
+      } ${isDragging ? 'shadow-lg ring-2 ring-[#B08B52]/30' : 'bg-white'}`}
+    >
+      {/* Poignée drag */}
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="p-1.5 text-gray-400 hover:text-[#B08B52] cursor-grab active:cursor-grabbing touch-none rounded hover:bg-gray-100 transition-colors flex-shrink-0"
+        title="Glisser pour réordonner"
+        aria-label="Glisser pour réordonner"
+      >
+        <GripVertical size={16} />
+      </button>
+
+      {/* Thumbnail */}
+      <div className="w-16 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
+        {thumb ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={thumb} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Play size={16} className="text-gray-400" />
+          </div>
+        )}
+        {video && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+            <Play size={12} className="text-white" fill="white" />
+          </div>
+        )}
+        {img.is_cover && (
+          <div className="absolute top-0.5 left-0.5 bg-[#B08B52] rounded-full p-0.5">
+            <Star size={7} className="text-white" fill="white" />
+          </div>
+        )}
+      </div>
+
+      {/* Inputs alt */}
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-gray-500 mb-1.5">
+          {video ? '🎬 Vidéo' : `📷 Photo ${index + 1}`}
+          {img.is_cover && <span className="ml-2 text-[#B08B52]">Couverture</span>}
+        </p>
+        <div className="flex flex-col gap-1">
+          <input
+            type="text"
+            value={img.alt_fr}
+            onChange={(e) => onAltChange('alt_fr', e.target.value)}
+            onBlur={(e) => onAltBlur('alt_fr', e.target.value)}
+            placeholder="Intitulé FR (ex: Piscine avec vue mer)"
+            className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#B08B52] focus:border-[#B08B52] bg-white placeholder-gray-300"
+          />
+          <input
+            type="text"
+            value={img.alt_en}
+            onChange={(e) => onAltChange('alt_en', e.target.value)}
+            onBlur={(e) => onAltBlur('alt_en', e.target.value)}
+            placeholder="Caption EN (e.g. Pool with sea view)"
+            className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#B08B52] focus:border-[#B08B52] bg-white placeholder-gray-300"
+          />
+        </div>
+      </div>
+
+      {/* Actions (cover, delete) */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {!video && (
+          <button
+            type="button"
+            onClick={onSetCover}
+            disabled={img.is_cover}
+            className={`p-1.5 rounded transition-colors ${
+              img.is_cover
+                ? 'text-[#B08B52] cursor-default'
+                : 'text-gray-400 hover:text-[#B08B52] hover:bg-[#B08B52]/10'
+            }`}
+            title="Définir comme couverture"
+          >
+            <Star size={14} fill={img.is_cover ? 'currentColor' : 'none'} />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onDelete}
+          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+          title="Supprimer"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
     </div>
   );
 }
