@@ -1,24 +1,50 @@
-import { getTranslations, getLocale } from 'next-intl/server';
+import { getLocale } from 'next-intl/server';
+import BrandLogo from '@/components/layout/BrandLogo';
+import PrivacyContentFR from './PrivacyContentFR';
+import PrivacyContentEN from './PrivacyContentEN';
+
+export const revalidate = 3600;
 
 export default async function PrivacyPage() {
   const locale = await getLocale();
-  const t = await getTranslations('privacy');
+  const isFr = locale === 'fr';
 
   return (
-    <div className="bg-white min-h-screen pt-20">
-      <div className="bg-primary-700 text-white py-12 px-4 text-center">
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
-      </div>
-      <div className="max-w-4xl mx-auto px-4 py-12 prose prose-gray max-w-none">
-        <h2>{t('collect_title')}</h2>
-        <p>{t('collect_content')}</p>
-        <h2>{t('use_title')}</h2>
-        <p>{t('use_content')}</p>
-        <h2>{t('rights_title')}</h2>
-        <p>{t('rights_content')}</p>
-        <h2>{t('contact_title')}</h2>
-        <p>{t('contact_content')}</p>
-      </div>
+    <div className="bg-cream-100 min-h-screen">
+      {/* En-tête avec logo */}
+      <header className="bg-cream-100 border-b border-bronze-100">
+        <div className="max-w-4xl mx-auto px-6 lg:px-10 py-10 flex items-center justify-center">
+          <BrandLogo variant="light" forceTagline />
+        </div>
+      </header>
+
+      {/* Bandeau titre */}
+      <section className="border-b border-bronze-100">
+        <div className="max-w-4xl mx-auto px-6 lg:px-10 py-12 text-center">
+          <p className="section-label mb-3">
+            {isFr ? 'Vie privée' : 'Privacy'}
+          </p>
+          <h1
+            className="font-serif font-light text-night-600 leading-tight"
+            style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', letterSpacing: '-0.01em' }}
+          >
+            {isFr
+              ? 'Politique de confidentialité'
+              : 'Privacy Policy'}
+          </h1>
+          <div className="divider-bronze mx-auto mt-6" />
+          <p className="text-xs text-night-400 mt-6 uppercase font-medium" style={{ letterSpacing: '0.15em' }}>
+            {isFr ? 'Dernière mise à jour : mai 2026' : 'Last updated: May 2026'}
+          </p>
+        </div>
+      </section>
+
+      {/* Contenu */}
+      <article className="max-w-4xl mx-auto px-6 lg:px-10 py-16">
+        <div className="legal-content">
+          {isFr ? <PrivacyContentFR /> : <PrivacyContentEN />}
+        </div>
+      </article>
     </div>
   );
 }
