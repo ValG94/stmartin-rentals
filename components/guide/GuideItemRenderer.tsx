@@ -4,7 +4,19 @@ import { useState } from 'react';
 import Image from 'next/image';
 import type { GuideItem } from '@/lib/api-guide';
 import GuideIcon from './GuideIcon';
+import { sanitizeRichHtml } from '@/lib/services/sanitize';
 import { Phone, MessageCircle, Globe, MapPin, Mail, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+
+// Mini composant interne pour rendre le contenu rich-text (sortie TipTap)
+// avec sanitization. Évite la répétition à 5 endroits + garde la sécurité XSS.
+function RichContent({ html, className }: { html: string; className?: string }) {
+  return (
+    <div
+      className={`guide-rich-text ${className ?? ''}`}
+      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(html) }}
+    />
+  );
+}
 
 interface GuideItemRendererProps {
   item: GuideItem;
@@ -113,7 +125,7 @@ function ActivityCard({ item, isFr }: { item: GuideItem; isFr: boolean }) {
 
         {/* Description */}
         {content && (
-          <p className="text-sm text-stone-500 leading-relaxed mb-4 font-light">{content}</p>
+          <RichContent html={content} className="text-sm text-stone-500 leading-relaxed mb-4 font-light" />
         )}
 
         {/* Duration + Tip toggle */}
@@ -261,7 +273,7 @@ function ItineraryDayItem({ item, isFr, isLast = false }: { item: GuideItem; isF
 
           {/* Description */}
           {content && (
-            <p className="text-sm text-stone-600 leading-relaxed font-light">{content}</p>
+            <RichContent html={content} className="text-sm text-stone-600 leading-relaxed font-light" />
           )}
 
           {/* Image optionnelle */}
@@ -299,7 +311,7 @@ function ContactItem({ item, isFr }: { item: GuideItem; isFr: boolean }) {
         </div>
       </div>
       {content && (
-        <p className="text-sm text-stone-500 leading-relaxed font-light mb-4">{content}</p>
+        <RichContent html={content} className="text-sm text-stone-500 leading-relaxed font-light mb-4" />
       )}
       <div className="flex flex-wrap gap-2">
         {item.phone && (
@@ -351,7 +363,7 @@ function HouseRuleItem({ item, isFr }: { item: GuideItem; isFr: boolean }) {
           {isFr ? item.title_fr : item.title_en}
         </p>
         {content && (
-          <p className="text-sm text-stone-500 leading-relaxed font-light">{content}</p>
+          <RichContent html={content} className="text-sm text-stone-500 leading-relaxed font-light" />
         )}
       </div>
     </div>
@@ -386,7 +398,7 @@ function InfoCardItem({ item, isFr }: { item: GuideItem; isFr: boolean }) {
         </h4>
       </div>
       {content && (
-        <p className="text-sm text-stone-500 leading-relaxed font-light">{content}</p>
+        <RichContent html={content} className="text-sm text-stone-500 leading-relaxed font-light" />
       )}
       {item.image_url && (
         <div className="relative mt-4 h-36 rounded-2xl overflow-hidden">
