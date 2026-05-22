@@ -147,7 +147,7 @@ export const AMENITIES_LIST: AmenityDef[] = [
   { key: 'massage_room',    label_fr: 'Salle de massage',   label_en: 'Massage room',     icon: icons.massage_room },
   { key: 'drying_machine',  label_fr: 'Sèche-linge',        label_en: 'Tumble dryer',     icon: icons.drying_machine },
   { key: 'baby_bed',        label_fr: 'Lit parapluie',      label_en: 'Baby bed',         icon: icons.baby_bed },
-  { key: 'iron and ironing board',  label_fr: 'Fer à repasser & planche à repasser',      label_en: 'Iron and ironing board',     icon: icons.iron_and_ironing_board },
+  { key: 'iron and ironing board',  label_fr: 'Fer & planche à repasser',      label_en: 'Iron and ironing board',     icon: icons.iron_and_ironing_board },
 ];
 
 export const AMENITIES_MAP = Object.fromEntries(
