@@ -10,6 +10,7 @@ interface BookingRow {
   check_in: string;
   check_out: string;
   total_amount: number;
+  booking_total: number;
   booking_status: string;
   created_at: string;
   apartment_id: string;
@@ -118,10 +119,13 @@ export default function DashboardClient({
       confirmedBookings: prev.confirmedBookings + (newStatus === 'confirmed' ? 1 : 0) - (old === 'confirmed' ? 1 : 0),
       pendingBookings:   prev.pendingBookings   + (newStatus === 'pending'   ? 1 : 0) - (old === 'pending'   ? 1 : 0),
       cancelledBookings: prev.cancelledBookings + (newStatus === 'cancelled' ? 1 : 0) - (old === 'cancelled' ? 1 : 0),
-      totalRevenue:
-        newStatus === 'confirmed' && old !== 'confirmed' ? prev.totalRevenue + (booking.total_amount || 0) :
-        old === 'confirmed' && newStatus !== 'confirmed' ? prev.totalRevenue - (booking.total_amount || 0) :
-        prev.totalRevenue,
+      totalRevenue: (() => {
+        // CA total : booking_total (= prix complet du séjour), fallback total_amount
+        const amount = booking.booking_total || booking.total_amount || 0;
+        if (newStatus === 'confirmed' && old !== 'confirmed') return prev.totalRevenue + amount;
+        if (old === 'confirmed' && newStatus !== 'confirmed') return prev.totalRevenue - amount;
+        return prev.totalRevenue;
+      })(),
     }));
   };
 
@@ -232,7 +236,7 @@ export default function DashboardClient({
                       <td className="py-3 text-gray-600">{villaName}</td>
                       <td className="py-3 text-gray-600">{fmtDate(b.check_in)}</td>
                       <td className="py-3 text-gray-600">{fmtDate(b.check_out)}</td>
-                      <td className="py-3 font-semibold text-gray-900">{fmtMoney(b.total_amount)}</td>
+                      <td className="py-3 font-semibold text-gray-900">{fmtMoney(b.booking_total || b.total_amount)}</td>
                       <td className="py-3">
                         <StatusSelect
                           bookingId={b.id}

@@ -11,7 +11,8 @@ interface BookingRow {
   guest_email: string;
   check_in: string;
   check_out: string;
-  total_amount: number;
+  total_amount: number;     // ce qui est dû maintenant (acompte ou solde)
+  booking_total: number;    // total du séjour (accommodation + ménage)
   booking_status: string;
   payment_status?: string;
   payment_method?: string;
@@ -62,7 +63,7 @@ async function getDashboardData() {
   const { data: rawBookings } = await supabaseAdmin
     .from('bookings')
     .select(
-      'id, booking_status, payment_status, payment_method, total_amount, guest_name, guest_email, check_in, check_out, created_at, apartment_id, apartments(title_fr, title_en, slug)'
+      'id, booking_status, payment_status, payment_method, total_amount, booking_total, guest_name, guest_email, check_in, check_out, created_at, apartment_id, apartments(title_fr, title_en, slug)'
     )
     .order('created_at', { ascending: false });
 
@@ -81,6 +82,7 @@ async function getDashboardData() {
       check_in: b.check_in as string,
       check_out: b.check_out as string,
       total_amount: Number(b.total_amount) || 0,
+      booking_total: Number(b.booking_total) || 0,
       booking_status: b.booking_status as string,
       payment_status: b.payment_status as string | undefined,
       payment_method: b.payment_method as string | undefined,
@@ -95,9 +97,12 @@ async function getDashboardData() {
   const confirmedBookings = bookings.filter((b) => b.booking_status === 'confirmed').length;
   const pendingBookings = bookings.filter((b) => b.booking_status === 'pending').length;
   const cancelledBookings = bookings.filter((b) => b.booking_status === 'cancelled').length;
+  // CA total des réservations confirmées = somme des booking_total
+  // (= prix du séjour + frais de ménage), pas total_amount qui ne reflète
+  // que l'acompte payé pour les réservations en deposit_40.
   const totalRevenue = bookings
     .filter((b) => b.booking_status === 'confirmed')
-    .reduce((sum, b) => sum + b.total_amount, 0);
+    .reduce((sum, b) => sum + (b.booking_total || b.total_amount || 0), 0);
 
   // Données pour le planning visuel par villa
   const { data: apartmentsList } = await supabaseAdmin
