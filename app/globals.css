@@ -129,6 +129,52 @@
   }
 }
 
+/* ── Legal content (CGV / Privacy / etc.) ─────────────────────── */
+.legal-content p {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  margin-bottom: 1rem;
+  color: #1A3D5C;
+}
+.legal-content p:last-child {
+  margin-bottom: 0;
+}
+.legal-content strong {
+  font-weight: 600;
+  color: #0D1B2A;
+}
+.legal-content ul {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 1.25rem;
+}
+.legal-content li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #1A3D5C;
+}
+.legal-content li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.7rem;
+  width: 0.4rem;
+  height: 1px;
+  background-color: #B08B52;
+}
+.legal-content h3 {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 400;
+  font-size: 1.15rem;
+  color: #0D1B2A;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.005em;
+}
+
 /* ── Guide rich text (WYSIWYG output) ─────────────────────────── */
 .guide-rich-text p {
   margin-bottom: 0.75rem;

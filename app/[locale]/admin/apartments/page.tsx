@@ -8,7 +8,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { createClient } from '@supabase/supabase-js';
 import {
   Plus, Edit, Eye, EyeOff, Home, Image as ImageIcon,
-  BedDouble, Bath, Users, MapPin, DollarSign
+  BedDouble, Bath, Users, MapPin, DollarSign, Trash2
 } from 'lucide-react';
 
 const supabase = createClient(
@@ -38,6 +38,7 @@ export default function AdminApartmentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -73,21 +74,59 @@ export default function AdminApartmentsPage() {
     }
   }
 
+  // Passe par l'API admin (service_role) sinon RLS bloque silencieusement
+  // l'UPDATE et le toggle ne se persiste pas en base.
   async function toggleActive(apt: ApartmentRow) {
     setTogglingId(apt.id);
     try {
-      const { error: err } = await supabase
-        .from('apartments')
-        .update({ is_active: !apt.is_active })
-        .eq('id', apt.id);
-      if (err) throw err;
+      const res = await fetch(`/api/admin/apartments/${apt.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ is_active: !apt.is_active }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Update failed');
+      }
       setApartments((prev) =>
         prev.map((a) => (a.id === apt.id ? { ...a, is_active: !a.is_active } : a))
       );
-    } catch {
-      alert('Erreur lors de la mise à jour');
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Erreur lors de la mise à jour');
     } finally {
       setTogglingId(null);
+    }
+  }
+
+  async function deleteApartment(apt: ApartmentRow) {
+    const villaName = locale === 'fr' ? apt.title_fr : apt.title_en;
+    const confirmMsg = locale === 'fr'
+      ? `Supprimer définitivement "${villaName}" ?\n\nCela effacera toutes les photos, sections, tarifs saisonniers et infos liées. Cette action est irréversible.`
+      : `Permanently delete "${villaName}"?\n\nThis will erase all photos, sections, seasonal prices and related info. This action is irreversible.`;
+    if (!confirm(confirmMsg)) return;
+
+    setDeletingId(apt.id);
+    try {
+      const res = await fetch(`/api/admin/apartments/${apt.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // Cas "a des réservations" → on propose le masquage
+        if (res.status === 409 && data.code === 'HAS_BOOKINGS') {
+          alert(data.error);
+        } else {
+          alert(data.error || (locale === 'fr' ? 'Suppression échouée' : 'Delete failed'));
+        }
+        return;
+      }
+      setApartments((prev) => prev.filter((a) => a.id !== apt.id));
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -232,8 +271,21 @@ export default function AdminApartmentsPage() {
                       className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors text-sm"
                     >
                       <Eye size={15} />
-                      Voir la page
+                      {locale === 'fr' ? 'Voir la page' : 'View page'}
                     </Link>
+                    <button
+                      onClick={() => deleteApartment(apt)}
+                      disabled={deletingId === apt.id}
+                      title={locale === 'fr' ? 'Supprimer la villa' : 'Delete villa'}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium disabled:opacity-50"
+                    >
+                      {deletingId === apt.id ? (
+                        <div className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Trash2 size={15} />
+                      )}
+                      {locale === 'fr' ? 'Supprimer' : 'Delete'}
+                    </button>
                   </div>
                 </div>
               </div>
