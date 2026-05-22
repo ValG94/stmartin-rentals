@@ -90,6 +90,14 @@ const icons: Record<string, React.ReactNode> = {
       <path d="M7 6h.01M10 6h.01" />
     </svg>
   ),
+  drying_machine: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+      <rect x="3" y="2" width="18" height="20" rx="2" />
+      <circle cx="12" cy="13" r="4" />
+      <path d="M10 13c.6-.7 1.4-.7 2 0s1.4.7 2 0M10 14.5c.6-.7 1.4-.7 2 0s1.4.7 2 0" />
+      <path d="M7 6h.01M10 6h.01" />
+    </svg>
+  ),
   hair_dryer: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
       <path d="M10 8a4 4 0 1 0 0 8" />
@@ -137,6 +145,7 @@ export const AMENITIES_LIST: AmenityDef[] = [
   { key: 'bed_linen',       label_fr: 'Linge de maison',    label_en: 'Bed linen',        icon: icons.bed_linen },
   { key: 'beach_towels',    label_fr: 'Serviettes de plage', label_en: 'Beach towels',    icon: icons.beach_towels },
   { key: 'massage_room',    label_fr: 'Salle de massage',   label_en: 'Massage room',     icon: icons.massage_room },
+  { key: 'drying_machine',  label_fr: 'Sèche-linge',        label_en: 'Drying room',      icon: icons.drying_machine },
 ];
 
 export const AMENITIES_MAP = Object.fromEntries(
