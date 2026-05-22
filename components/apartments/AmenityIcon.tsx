@@ -145,7 +145,7 @@ export const AMENITIES_LIST: AmenityDef[] = [
   { key: 'bed_linen',       label_fr: 'Linge de maison',    label_en: 'Bed linen',        icon: icons.bed_linen },
   { key: 'beach_towels',    label_fr: 'Serviettes de plage', label_en: 'Beach towels',    icon: icons.beach_towels },
   { key: 'massage_room',    label_fr: 'Salle de massage',   label_en: 'Massage room',     icon: icons.massage_room },
-  { key: 'drying_machine',  label_fr: 'Sèche-linge',        label_en: 'Drying room',      icon: icons.drying_machine },
+  { key: 'drying_machine',  label_fr: 'Sèche-linge',        label_en: 'Tumble dryer',     icon: icons.drying_machine },
 ];
 
 export const AMENITIES_MAP = Object.fromEntries(
