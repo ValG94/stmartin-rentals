@@ -172,7 +172,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="relative">
               <div className="relative h-[450px] overflow-hidden">
-                <Image src="/images/villa-blanche/vue-lagon.jpg" alt="Saint-Martin lagon" fill className="object-cover" />
+                <Image src="/images/destination beach.jpg" alt="Saint-Martin beach" fill className="object-cover" />
               </div>
               <div className="absolute -bottom-8 -right-8 w-48 h-48 overflow-hidden hidden lg:block border-4 border-cream-100">
                 <Image src="/images/villa-vanille/exterieur.jpg" alt="Villa extérieur" fill className="object-cover" />
