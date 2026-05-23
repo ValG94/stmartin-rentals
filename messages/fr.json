@@ -224,6 +224,13 @@
     "guests": "voyageurs",
     "guest": "voyageur"
   },
+  "concierge": {
+    "hero_title": "Notre conciergerie",
+    "hero_subtitle": "Profitez pleinement de votre séjour. Nos services sur mesure sont pensés pour rendre votre arrivée et votre quotidien aussi sereins que possible.",
+    "cta_title": "Parlons-en directement",
+    "cta_subtitle": "Pour toute demande spécifique, un échange rapide via WhatsApp ou email permet d'organiser votre service avant votre arrivée.",
+    "link": "Conciergerie"
+  },
   "footer": {
     "tagline": "Luxury Vacation Rentals in Sint Maarten",
     "links_title": "Liens rapides",

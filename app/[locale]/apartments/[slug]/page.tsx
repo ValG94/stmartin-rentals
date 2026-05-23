@@ -187,11 +187,26 @@ export default async function ApartmentDetailPage({
                   title={isFr ? 'Réponse en moins de 2 h' : 'Reply within 2 h'}
                   body={isFr ? 'Votre hôte vous répond personnellement, en français ou en anglais.' : 'Your host replies personally, in English or French.'}
                 />
-                <Commitment
-                  icon={<Sparkles size={22} className="text-bronze-400" />}
-                  title={isFr ? 'Conciergerie incluse' : 'Concierge included'}
-                  body={isFr ? 'Restaurants, location de bateau, chef à domicile — sur simple demande.' : 'Restaurants, boat rental, private chef — on request.'}
-                />
+                <Link
+                  href={`/${locale}/concierge`}
+                  className="group block text-center md:text-left transition-opacity duration-300 hover:opacity-80"
+                >
+                  <div className="mb-3 flex justify-center md:justify-start">
+                    <Sparkles size={22} className="text-bronze-400" />
+                  </div>
+                  <h3 className="font-serif text-lg text-night-600 mb-2 group-hover:text-bronze-500 transition-colors duration-300">
+                    {isFr ? 'Conciergerie incluse' : 'Concierge included'}
+                  </h3>
+                  <p className="text-sm text-night-400 leading-relaxed font-light">
+                    {isFr ? 'Livraison de courses, restaurants, location de bateau — sur simple demande.' : 'Grocery delivery, restaurants, boat rental — on request.'}
+                  </p>
+                  <span
+                    className="inline-flex items-center gap-1.5 mt-3 text-[11px] uppercase font-medium text-bronze-400 group-hover:text-bronze-500 transition-colors duration-300"
+                    style={{ letterSpacing: '0.15em' }}
+                  >
+                    {isFr ? 'Voir les services' : 'View services'} →
+                  </span>
+                </Link>
               </div>
             </section>
           </div>

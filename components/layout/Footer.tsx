@@ -9,6 +9,7 @@ import { getApartments } from '@/lib/api';
 export default async function Footer() {
   const t = await getTranslations('footer');
   const tNav = await getTranslations('nav');
+  const tConcierge = await getTranslations('concierge');
   const locale = await getLocale();
   const year = new Date().getFullYear();
   const isFr = locale === 'fr';
@@ -74,6 +75,7 @@ export default async function Footer() {
             <ul className="space-y-3">
               <li><Link href={`/${locale}`} className="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300">{tNav('home')}</Link></li>
               <li><Link href={`/${locale}/apartments`} className="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300">{tNav('apartments')}</Link></li>
+              <li><Link href={`/${locale}/concierge`} className="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300">{tConcierge('link')}</Link></li>
               <li><Link href={`/${locale}/contact`} className="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300">{tNav('contact')}</Link></li>
               <li><Link href={`/${locale}/legal`} className="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300">{t('legal_mentions')}</Link></li>
               <li><Link href={`/${locale}/privacy`} className="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300">{t('privacy')}</Link></li>
