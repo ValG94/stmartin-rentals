@@ -14,10 +14,16 @@ function getVimeoId(url: string): string | null {
   const m = url.match(/vimeo\.com\/(\d+)/);
   return m ? m[1] : null;
 }
+function isHostedVideo(url: string): boolean {
+  return /\.(mp4|webm|mov)(\?|$)/i.test(url) || url.includes('/apartment-videos/');
+}
 function isVideoUrl(url: string): boolean {
-  return !!(getYouTubeId(url) || getVimeoId(url));
+  return !!(getYouTubeId(url) || getVimeoId(url)) || isHostedVideo(url);
 }
 function getVideoThumbnail(url: string): string {
+  // YouTube : thumbnail générée par Google. Pour MP4/Vimeo : pas de
+  // thumbnail simple — on retourne '' et la mosaïque affichera la
+  // première frame via <video> ou un fallback dark + play icon.
   const ytId = getYouTubeId(url);
   return ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : '';
 }
@@ -130,6 +136,7 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
             const isFirst = i === 0;
             const isLastVisible = !showAll && i === 8 && hasMore;
             const isVideo = isVideoUrl(item.url);
+            const hosted = isHostedVideo(item.url);
             const thumbSrc = isVideo ? getVideoThumbnail(item.url) : item.url;
             const caption = getAlt(item, i);
 
@@ -141,11 +148,23 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
                 onClick={() => !isLastVisible && setLightboxIndex(i)}
               >
                 {/* Image / vidéo */}
-                <SafeImg
-                  src={thumbSrc}
-                  alt={caption}
-                  priority={isFirst}
-                />
+                {hosted ? (
+                  // MP4/WebM/MOV hébergé : on affiche la première frame
+                  // (le fragment #t=0.1 force Safari à seek pour révéler la frame)
+                  <video
+                    src={`${item.url}#t=0.1`}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    muted
+                    playsInline
+                    preload="metadata"
+                  />
+                ) : (
+                  <SafeImg
+                    src={thumbSrc}
+                    alt={caption}
+                    priority={isFirst}
+                  />
+                )}
 
                 {/* Overlay hover */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 pointer-events-none" />
@@ -242,7 +261,18 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
             className="relative w-full max-w-5xl mx-20 flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            {isVideoUrl(current.url) ? (
+            {isHostedVideo(current.url) ? (
+              <div className="w-full aspect-video rounded-xl overflow-hidden shadow-2xl bg-black">
+                <video
+                  src={current.url}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="w-full h-full"
+                  title={getAlt(current, lightboxIndex)}
+                />
+              </div>
+            ) : isVideoUrl(current.url) ? (
               <div className="w-full aspect-video rounded-xl overflow-hidden shadow-2xl">
                 <iframe
                   src={getVideoEmbedUrl(current.url)}
@@ -288,6 +318,7 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
             <div className="flex gap-1.5 overflow-x-auto max-w-lg px-4 pb-1">
               {sorted.map((item, i) => {
                 const isVideo = isVideoUrl(item.url);
+                const hosted = isHostedVideo(item.url);
                 const thumb = isVideo ? getVideoThumbnail(item.url) : item.url;
                 return (
                   <button
@@ -297,7 +328,15 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
                       i === lightboxIndex ? 'ring-2 ring-[#B08B52] opacity-100' : 'opacity-50 hover:opacity-80'
                     }`}
                   >
-                    {thumb ? (
+                    {hosted ? (
+                      <video
+                        src={`${item.url}#t=0.1`}
+                        className="w-full h-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                    ) : thumb ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={thumb}

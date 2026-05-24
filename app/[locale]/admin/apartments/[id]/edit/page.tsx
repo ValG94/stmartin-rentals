@@ -10,7 +10,7 @@ import {
   Save, ArrowLeft, Plus, Trash2, Star, Upload, X,
   Play, AlertCircle, Check,
   DollarSign, Calendar, Image as ImageIcon, BookOpen, Info,
-  GripVertical,
+  GripVertical, Film,
 } from 'lucide-react';
 import RichTextEditor from '@/components/admin/RichTextEditor';
 import { AMENITIES_LIST } from '@/components/apartments/AmenityIcon';
@@ -139,8 +139,11 @@ export default function EditApartmentPage() {
   const [guideSections, setGuideSections] = useState<GuideSection[]>([]);
   // newAmenity supprimé — commodités gérées via checkboxes
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [videoUploadProgress, setVideoUploadProgress] = useState<string>('');
   const [videoUrl, setVideoUrl] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -339,6 +342,72 @@ export default function EditApartmentPage() {
     }
   };
 
+  // ── Upload vidéo MP4 (signed URL, contourne la limite 4.5 MB de Vercel) ─
+  // Flow :
+  // 1. POST /videos/sign-upload → reçoit { signedUrl, token, storage_path, public_url }
+  // 2. uploadToSignedUrl(...) → envoi direct browser → Supabase Storage
+  // 3. POST /images avec url + storage_path → insertion DB
+  const handleVideoFileUpload = async (file: File) => {
+    if (!file || isNew) return;
+    if (!file.type.startsWith('video/')) {
+      showMsg('error', 'Format non supporté (MP4/WebM/MOV uniquement)');
+      return;
+    }
+    setUploadingVideo(true);
+    setVideoUploadProgress('Préparation...');
+    try {
+      // 1. Obtenir une URL signée
+      const signRes = await fetch(`/api/admin/apartments/${apartmentId}/videos/sign-upload`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: file.name, fileSize: file.size, fileType: file.type }),
+      });
+      if (!signRes.ok) {
+        const err = await signRes.json().catch(() => ({}));
+        throw new Error(err.error || `Échec préparation upload (${signRes.status})`);
+      }
+      const { signedUrl: _signedUrl, token, storage_path, public_url } = await signRes.json();
+
+      // 2. Upload direct vers Supabase Storage (contourne Vercel)
+      const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+      setVideoUploadProgress(`Envoi du fichier (${sizeMB} MB)...`);
+      const { error: uploadErr } = await supabase.storage
+        .from('apartment-videos')
+        .uploadToSignedUrl(storage_path, token, file, { contentType: file.type });
+      if (uploadErr) throw new Error(`Upload échoué : ${uploadErr.message}`);
+
+      // 3. Enregistrer la row apartment_images
+      setVideoUploadProgress('Enregistrement...');
+      const maxPos = images.length > 0 ? Math.max(...images.map(i => i.position)) : 0;
+      const fd = new FormData();
+      fd.append('url', public_url);
+      fd.append('storage_path', storage_path);
+      fd.append('alt_fr', file.name.replace(/\.[^.]+$/, ''));
+      fd.append('alt_en', file.name.replace(/\.[^.]+$/, ''));
+      fd.append('is_cover', 'false');
+      fd.append('position', String(maxPos + 1));
+      const res = await fetch(`/api/admin/apartments/${apartmentId}/images`, {
+        method: 'POST',
+        credentials: 'include',
+        body: fd,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Enregistrement échoué (${res.status})`);
+      }
+      const imgData = await res.json();
+      setImages(prev => [...prev, imgData]);
+      showMsg('success', `Vidéo ajoutée ! (${sizeMB} MB)`);
+    } catch (e: unknown) {
+      showMsg('error', `Erreur : ${e instanceof Error ? e.message : 'Erreur inconnue'}`);
+    } finally {
+      setUploadingVideo(false);
+      setVideoUploadProgress('');
+      if (videoFileInputRef.current) videoFileInputRef.current.value = '';
+    }
+  };
+
   const setCover = async (imageId: string) => {
     // La route PATCH côté API gère le "retire is_cover des autres" automatiquement.
     const res = await fetch(`/api/admin/apartments/${apartmentId}/images/${imageId}`, {
@@ -443,7 +512,9 @@ export default function EditApartmentPage() {
     }
   };
 
-  const isVideo = (url: string) => url.includes('youtube') || url.includes('youtu.be') || url.includes('vimeo');
+  const isVideo = (url: string) =>
+    url.includes('youtube') || url.includes('youtu.be') || url.includes('vimeo') ||
+    /\.(mp4|webm|mov)(\?|$)/i.test(url) || url.includes('/apartment-videos/');
   const getYTThumb = (url: string) => {
     const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
     return m ? `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg` : '';
@@ -842,18 +913,55 @@ export default function EditApartmentPage() {
           </div>
 
           {/* Ajouter vidéo */}
-          <div className="bg-white border border-gray-200 rounded-xl p-5">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <Play size={16} className="text-[#B08B52]" />
-              Ajouter une vidéo YouTube ou Vimeo
-            </h3>
-            <div className="flex gap-2">
-              <input type="url" value={videoUrl} onChange={e => setVideoUrl(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=..." disabled={isNew}
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52] disabled:opacity-50" />
-              <button onClick={addVideo} disabled={isNew || !videoUrl.trim()}
-                className="bg-[#0D1B2A] text-white px-4 py-2.5 rounded-lg text-sm hover:bg-[#1a2f45] transition-colors disabled:opacity-50 flex items-center gap-2">
-                <Plus size={16} />Ajouter
+          <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-5">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <Play size={16} className="text-[#B08B52]" />
+                Ajouter une vidéo YouTube ou Vimeo
+              </h3>
+              <div className="flex gap-2">
+                <input type="url" value={videoUrl} onChange={e => setVideoUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..." disabled={isNew}
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52] disabled:opacity-50" />
+                <button onClick={addVideo} disabled={isNew || !videoUrl.trim()}
+                  className="bg-[#0D1B2A] text-white px-4 py-2.5 rounded-lg text-sm hover:bg-[#1a2f45] transition-colors disabled:opacity-50 flex items-center gap-2">
+                  <Plus size={16} />Ajouter
+                </button>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100" />
+
+            {/* Upload vidéo MP4 depuis l'ordinateur */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <Film size={16} className="text-[#B08B52]" />
+                Téléverser une vidéo MP4 depuis votre ordinateur
+              </h3>
+              <input
+                ref={videoFileInputRef}
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime"
+                className="hidden"
+                onChange={e => e.target.files?.[0] && handleVideoFileUpload(e.target.files[0])}
+              />
+              <button
+                onClick={() => !isNew && videoFileInputRef.current?.click()}
+                disabled={isNew || uploadingVideo}
+                className="w-full border-2 border-dashed border-gray-200 hover:border-[#B08B52] rounded-lg px-4 py-6 text-sm flex flex-col items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {uploadingVideo ? (
+                  <>
+                    <div className="w-6 h-6 border-2 border-[#B08B52] border-t-transparent rounded-full animate-spin" />
+                    <span className="text-gray-600">{videoUploadProgress || 'Upload en cours...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload size={24} className="text-gray-300" />
+                    <span className="font-medium text-gray-700">Sélectionner un fichier MP4</span>
+                    <span className="text-xs text-gray-400">MP4, WebM ou MOV — max 100 MB</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

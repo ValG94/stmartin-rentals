@@ -40,17 +40,19 @@ export async function DELETE(
 
   const { imageId } = await params;
 
-  // Récupérer le storage_path pour supprimer le fichier
+  // Récupérer le storage_path + url pour supprimer le fichier dans
+  // le bon bucket (images ou vidéos)
   const { data: img } = await supabaseAdmin
     .from('apartment_images')
-    .select('storage_path')
+    .select('storage_path, url')
     .eq('id', imageId)
     .single();
 
   if (img?.storage_path) {
-    await supabaseAdmin.storage
-      .from('apartment-images')
-      .remove([img.storage_path]);
+    const bucket = (img.url || '').includes('/apartment-videos/')
+      ? 'apartment-videos'
+      : 'apartment-images';
+    await supabaseAdmin.storage.from(bucket).remove([img.storage_path]);
   }
 
   const { error } = await supabaseAdmin

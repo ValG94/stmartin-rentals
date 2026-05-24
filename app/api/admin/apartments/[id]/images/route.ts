@@ -17,9 +17,13 @@ export async function POST(
   const altEn = (formData.get('alt_en') as string) || '';
   const isCover = formData.get('is_cover') === 'true';
   const position = parseInt((formData.get('position') as string) || '0', 10);
+  // Cas vidéo MP4 déjà uploadée via signed URL : le client envoie le
+  // storage_path retourné par /videos/sign-upload, on n'a plus qu'à
+  // insérer la row.
+  const preUploadedPath = ((formData.get('storage_path') as string) || '').trim();
 
-  // Cas vidéo externe (YouTube / Vimeo) : pas de fichier à uploader,
-  // on insère juste la row apartment_images avec l'URL.
+  // Cas vidéo externe (YouTube / Vimeo) OU vidéo MP4 déjà uploadée :
+  // pas de fichier à uploader côté serveur, on insère juste la row.
   if (!file && externalUrl) {
     if (isCover) {
       await supabaseAdmin
@@ -32,7 +36,7 @@ export async function POST(
       .insert({
         apartment_id: apartmentId,
         url: externalUrl,
-        storage_path: null,
+        storage_path: preUploadedPath || null,
         alt_fr: altFr,
         alt_en: altEn,
         is_cover: isCover,
