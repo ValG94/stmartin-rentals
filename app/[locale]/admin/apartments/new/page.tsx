@@ -22,7 +22,7 @@ const AMENITIES_CATALOG = [
   { key: 'hair_dryer',      label: 'Sèche-cheveux' },
   { key: 'bed_linen',       label: 'Linge de maison' },
   { key: 'beach_towels',    label: 'Serviettes de plage' },
-  { key: 'massage_room',    label: 'Salle de massage' },
+  { key: 'massage_room',    label: 'Espace massage' },
   { key: 'baby_bed',        label: 'Lit parapluie'},
   { key: 'iron_and_ironing_board',  label: 'Fer & planche à repasser'},
 ];
