@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase';
 import { verifyAdminToken } from '@/lib/auth-admin';
 
@@ -28,6 +29,7 @@ export async function PATCH(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  revalidatePath('/[locale]/apartments/[slug]', 'page');
   return NextResponse.json(data);
 }
 
@@ -61,5 +63,6 @@ export async function DELETE(
     .eq('id', imageId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  revalidatePath('/[locale]/apartments/[slug]', 'page');
   return NextResponse.json({ success: true });
 }

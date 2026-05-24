@@ -142,6 +142,7 @@ export default function EditApartmentPage() {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videoUploadProgress, setVideoUploadProgress] = useState<string>('');
   const [videoUrl, setVideoUrl] = useState<string>('');
+  const [previewMedia, setPreviewMedia] = useState<ApartmentImage | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -995,6 +996,7 @@ export default function EditApartmentPage() {
                         onAltBlur={(field, value) => updateImageAlt(img.id, field, value)}
                         onSetCover={() => setCover(img.id)}
                         onDelete={() => deleteImage(img)}
+                        onPreview={() => setPreviewMedia(img)}
                       />
                     ))}
                   </div>
@@ -1006,6 +1008,42 @@ export default function EditApartmentPage() {
       )}
 
       {/* SortableImageRow rendu ci-dessous, à la fin du fichier */}
+
+      {/* Modal de prévisualisation média (image ou vidéo) */}
+      {previewMedia && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-6"
+          onClick={() => setPreviewMedia(null)}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setPreviewMedia(null); }}
+            className="absolute top-4 right-4 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-colors"
+            aria-label="Fermer"
+          >
+            <X size={22} />
+          </button>
+          <div className="w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
+            {/\.(mp4|webm|mov)(\?|$)/i.test(previewMedia.url) || previewMedia.url.includes('/apartment-videos/') ? (
+              <video src={previewMedia.url} controls autoPlay playsInline className="w-full max-h-[85vh] rounded-xl bg-black" />
+            ) : isVideo(previewMedia.url) ? (
+              <div className="w-full aspect-video">
+                <iframe
+                  src={previewMedia.url.includes('youtube') || previewMedia.url.includes('youtu.be')
+                    ? `https://www.youtube.com/embed/${(previewMedia.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/) ?? [])[1] ?? ''}?autoplay=1`
+                    : `https://player.vimeo.com/video/${(previewMedia.url.match(/vimeo\.com\/(\d+)/) ?? [])[1] ?? ''}?autoplay=1`
+                  }
+                  className="w-full h-full rounded-xl"
+                  allow="autoplay; fullscreen"
+                  allowFullScreen
+                />
+              </div>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={previewMedia.url} alt="" className="w-full max-h-[85vh] object-contain rounded-xl" />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── ONGLET GUIDE DIGITAL ─────────────────────────────────────────────── */}
       {activeTab === 'guide' && (
@@ -1054,6 +1092,7 @@ function SortableImageRow({
   onAltBlur,
   onSetCover,
   onDelete,
+  onPreview,
 }: {
   img: ApartmentImage;
   index: number;
@@ -1063,6 +1102,7 @@ function SortableImageRow({
   onAltBlur: (field: 'alt_fr' | 'alt_en', value: string) => void;
   onSetCover: () => void;
   onDelete: () => void;
+  onPreview: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: img.id });
@@ -1075,6 +1115,7 @@ function SortableImageRow({
   };
 
   const video = videoCheck(img.url);
+  const hostedVideo = /\.(mp4|webm|mov)(\?|$)/i.test(img.url) || img.url.includes('/apartment-videos/');
   const thumb = video ? thumbGetter(img.url) : img.url;
 
   return (
@@ -1100,8 +1141,20 @@ function SortableImageRow({
       </button>
 
       {/* Thumbnail */}
-      <div className="w-16 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
-        {thumb ? (
+      <div
+        className={`w-16 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 relative ${video ? 'cursor-pointer hover:ring-2 hover:ring-[#B08B52]/50' : ''}`}
+        onClick={video ? onPreview : undefined}
+        title={video ? 'Prévisualiser' : undefined}
+      >
+        {hostedVideo ? (
+          <video
+            src={`${img.url}#t=0.1`}
+            className="w-full h-full object-cover"
+            muted
+            playsInline
+            preload="metadata"
+          />
+        ) : thumb ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={thumb} alt="" className="w-full h-full object-cover" />
         ) : (

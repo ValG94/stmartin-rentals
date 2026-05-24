@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase';
 import { verifyAdminToken } from '@/lib/auth-admin';
 
@@ -45,6 +46,7 @@ export async function POST(
       .select()
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    revalidatePath('/[locale]/apartments/[slug]', 'page');
     return NextResponse.json(data, { status: 201 });
   }
 
@@ -102,5 +104,6 @@ export async function POST(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  revalidatePath('/[locale]/apartments/[slug]', 'page');
   return NextResponse.json(data, { status: 201 });
 }
