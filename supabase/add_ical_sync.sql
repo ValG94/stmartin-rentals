@@ -41,9 +41,15 @@ ALTER TABLE availability_blocks
 
 -- Index unique (apartment_id, source, external_uid) pour permettre l'upsert
 -- propre lors du sync iCal (évite les doublons à chaque pull).
-CREATE UNIQUE INDEX IF NOT EXISTS uniq_availability_blocks_external
-  ON availability_blocks (apartment_id, source, external_uid)
-  WHERE external_uid IS NOT NULL;
+--
+-- /!\ PAS de clause WHERE : Supabase JS ne sait pas l'inclure dans son
+-- ON CONFLICT, et Postgres ne reconnaît un index partiel que si la WHERE
+-- est répétée à l'identique côté INSERT. Sans WHERE, les blocs manuels
+-- (external_uid = NULL) restent valides : Postgres traite NULL != NULL
+-- donc plusieurs rows avec NULL n'entrent jamais en conflit.
+DROP INDEX IF EXISTS uniq_availability_blocks_external;
+CREATE UNIQUE INDEX uniq_availability_blocks_external
+  ON availability_blocks (apartment_id, source, external_uid);
 
 -- Index pour requêtes par source
 CREATE INDEX IF NOT EXISTS idx_availability_blocks_source
