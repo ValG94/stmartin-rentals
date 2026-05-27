@@ -45,7 +45,8 @@ export interface PlanningBlock {
   apartment_id: string;
   start_date: string;
   end_date: string;
-  reason?: string | null;
+  label?: string | null;
+  source?: 'manual' | 'airbnb' | 'vrbo' | 'booking_com' | null;
 }
 
 async function getDashboardData() {
@@ -138,10 +139,11 @@ async function getDashboardData() {
       total_amount: b.total_amount,
     }));
 
-  // Blocages manuels (maintenance, propriétaire, etc.)
+  // Blocages : manuels (maintenance, propriétaire) + externes (Airbnb, VRBO)
+  // La colonne s'appelle bien `label` (pas `reason` qui n'existe pas).
   const { data: blocksRaw } = await supabaseAdmin
     .from('availability_blocks')
-    .select('id, apartment_id, start_date, end_date, reason')
+    .select('id, apartment_id, start_date, end_date, label, source')
     .gte('end_date', today);
 
   const planningBlocks: PlanningBlock[] = (blocksRaw ?? []) as PlanningBlock[];

@@ -11,7 +11,7 @@ interface Props {
   locale: string;
 }
 
-type CellType = 'free' | 'confirmed' | 'partially_paid' | 'pending_bank_transfer' | 'pending' | 'blocked';
+type CellType = 'free' | 'confirmed' | 'partially_paid' | 'pending_bank_transfer' | 'pending' | 'blocked' | 'external';
 
 interface DayCell {
   date: string;       // YYYY-MM-DD
@@ -82,7 +82,8 @@ function buildMonthGrid(
     if (booking) {
       type = booking.booking_status as CellType;
     } else if (block) {
-      type = 'blocked';
+      // Blocs externes (Airbnb/VRBO) affichés différemment des blocs manuels
+      type = block.source && block.source !== 'manual' ? 'external' : 'blocked';
     }
 
     cells.push({
@@ -117,6 +118,7 @@ function cellClasses(type: CellType, inMonth: boolean): string {
     case 'pending_bank_transfer':  return 'bg-amber-100 text-amber-800 border-amber-200';
     case 'pending':                return 'bg-blue-50 text-blue-700 border-blue-200';
     case 'blocked':                return 'bg-night-100 text-night-600 border-night-200';
+    case 'external':               return 'bg-rose-100 text-rose-700 border-rose-200';
     default:                        return 'bg-white text-night-500 border-transparent';
   }
 }
@@ -287,7 +289,7 @@ function VillaCalendar({
           const tooltip = cell.booking
             ? `${cell.booking.guest_name} · ${cell.booking.check_in} → ${cell.booking.check_out}${cell.booking.payment_method ? ` · ${cell.booking.payment_method}` : ''}`
             : cell.block
-            ? cell.block.reason || (isFr ? 'Bloqué' : 'Blocked')
+            ? `${cell.block.label || (isFr ? 'Bloqué' : 'Blocked')} · ${cell.block.start_date} → ${cell.block.end_date}`
             : '';
 
           const dayNum = parseDate(cell.date).getDate();
@@ -316,14 +318,30 @@ function VillaCalendar({
             || (parseDate(b.check_out).getFullYear() === year && parseDate(b.check_out).getMonth() === month)
           )
         )}
+        blocks={blocks.filter(bk =>
+          bk.apartment_id === apartment.id
+          && bk.source && bk.source !== 'manual'
+          && (
+            (parseDate(bk.start_date).getFullYear() === year && parseDate(bk.start_date).getMonth() === month)
+            || (parseDate(bk.end_date).getFullYear() === year && parseDate(bk.end_date).getMonth() === month)
+          )
+        )}
         isFr={isFr}
       />
     </div>
   );
 }
 
-function MonthBookingsList({ bookings, isFr }: { bookings: PlanningBooking[]; isFr: boolean }) {
-  if (bookings.length === 0) {
+function MonthBookingsList({
+  bookings,
+  blocks,
+  isFr,
+}: {
+  bookings: PlanningBooking[];
+  blocks: PlanningBlock[];
+  isFr: boolean;
+}) {
+  if (bookings.length === 0 && blocks.length === 0) {
     return (
       <p className="mt-4 pt-4 border-t border-bronze-100 text-[11px] text-night-400 font-light italic text-center">
         {isFr ? 'Aucune réservation ce mois-ci' : 'No bookings this month'}
@@ -340,8 +358,30 @@ function MonthBookingsList({ bookings, isFr }: { bookings: PlanningBooking[]; is
           </span>
         </div>
       ))}
+      {blocks.map(b => (
+        <div key={b.id} className="flex items-center justify-between text-[11px] gap-2">
+          <span className="inline-flex items-center gap-1.5 truncate">
+            <span className="inline-block px-1.5 py-0.5 rounded text-[9px] uppercase font-semibold bg-rose-100 text-rose-700" style={{ letterSpacing: '0.05em' }}>
+              {sourceLabel(b.source)}
+            </span>
+            <span className="text-night-500 font-light truncate">{b.label || (isFr ? 'Réservé' : 'Reserved')}</span>
+          </span>
+          <span className="text-night-400 font-light whitespace-nowrap">
+            {b.start_date.slice(5)} → {b.end_date.slice(5)}
+          </span>
+        </div>
+      ))}
     </div>
   );
+}
+
+function sourceLabel(source?: string | null): string {
+  switch (source) {
+    case 'airbnb': return 'Airbnb';
+    case 'vrbo': return 'VRBO';
+    case 'booking_com': return 'Booking';
+    default: return 'Ext.';
+  }
 }
 
 function LegendItem({ color, label }: { color: string; label: string }) {
