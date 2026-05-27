@@ -39,6 +39,9 @@ export interface Apartment {
   max_guests: number;
   extra_guests_max: number;            // nb max de voyageurs sup. payants au-delà de max_guests
   extra_guest_price_per_night: number; // tarif par voyageur sup. par nuit (USD)
+  airbnb_ical_url?: string | null;     // URL iCal Airbnb pour sync entrante
+  vrbo_ical_url?: string | null;       // URL iCal VRBO pour sync entrante
+  ical_last_sync_at?: string | null;   // timestamp ISO du dernier sync iCal réussi
   amenities: string[];
   images: ApartmentImage[];
   sections: GuideSection[];

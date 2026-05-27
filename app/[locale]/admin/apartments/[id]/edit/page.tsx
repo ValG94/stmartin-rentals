@@ -10,8 +10,10 @@ import {
   Save, ArrowLeft, Plus, Trash2, Star, Upload, X,
   Play, AlertCircle, Check,
   DollarSign, Calendar, Image as ImageIcon, BookOpen, Info,
-  GripVertical, Film,
+  GripVertical, Film, RefreshCw, Copy, ExternalLink,
 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { fr as frLocale } from 'date-fns/locale';
 import RichTextEditor from '@/components/admin/RichTextEditor';
 import { AMENITIES_LIST } from '@/components/apartments/AmenityIcon';
 import {
@@ -54,6 +56,9 @@ interface ApartmentData {
   max_guests: number;
   extra_guests_max: number;
   extra_guest_price_per_night: number;
+  airbnb_ical_url: string | null;
+  vrbo_ical_url: string | null;
+  ical_last_sync_at: string | null;
   amenities: string[];
   is_active: boolean;
 }
@@ -131,6 +136,7 @@ export default function EditApartmentPage() {
     price_per_night: 0, currency: 'USD',
     bedrooms: 1, bathrooms: 1, max_guests: 2,
     extra_guests_max: 0, extra_guest_price_per_night: 0,
+    airbnb_ical_url: null, vrbo_ical_url: null, ical_last_sync_at: null,
     amenities: [], is_active: true,
   });
 
@@ -143,6 +149,8 @@ export default function EditApartmentPage() {
   const [videoUploadProgress, setVideoUploadProgress] = useState<string>('');
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [previewMedia, setPreviewMedia] = useState<ApartmentImage | null>(null);
+  const [icalSyncing, setIcalSyncing] = useState(false);
+  const [icalCopied, setIcalCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -228,6 +236,8 @@ export default function EditApartmentPage() {
             max_guests: apt.max_guests,
             extra_guests_max: apt.extra_guests_max,
             extra_guest_price_per_night: apt.extra_guest_price_per_night,
+            airbnb_ical_url: apt.airbnb_ical_url || null,
+            vrbo_ical_url: apt.vrbo_ical_url || null,
             amenities: apt.amenities,
             is_active: apt.is_active,
           }),
@@ -513,6 +523,48 @@ export default function EditApartmentPage() {
     }
   };
 
+  // ── Sync iCal manuel (bouton "Synchroniser maintenant") ──────────────────
+  const triggerIcalSync = async () => {
+    if (isNew || icalSyncing) return;
+    setIcalSyncing(true);
+    try {
+      const res = await fetch(`/api/admin/apartments/${apartmentId}/sync-ical`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Sync échouée (${res.status})`);
+      }
+      const data = await res.json();
+      const s = data.summary || { upserted: 0, deleted: 0, errors: 0 };
+      if (s.errors > 0) {
+        showMsg('error', `Sync terminée avec ${s.errors} erreur(s). +${s.upserted} / -${s.deleted}`);
+      } else {
+        showMsg('success', `Sync terminée — ${s.upserted} bloc(s) ajouté(s)/maj, ${s.deleted} supprimé(s)`);
+      }
+      // Refresh apt pour récupérer ical_last_sync_at à jour
+      const { data: refreshed } = await supabase
+        .from('apartments').select('*').eq('id', apartmentId).single();
+      if (refreshed) setApt(refreshed);
+    } catch (e: unknown) {
+      showMsg('error', `Erreur : ${e instanceof Error ? e.message : 'Erreur inconnue'}`);
+    } finally {
+      setIcalSyncing(false);
+    }
+  };
+
+  const copyExportUrl = async () => {
+    const url = `${window.location.origin}/api/ical/${apt.slug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setIcalCopied(true);
+      setTimeout(() => setIcalCopied(false), 2000);
+    } catch {
+      showMsg('error', 'Impossible de copier (copie manuelle requise)');
+    }
+  };
+
   const isVideo = (url: string) =>
     url.includes('youtube') || url.includes('youtu.be') || url.includes('vimeo') ||
     /\.(mp4|webm|mov)(\?|$)/i.test(url) || url.includes('/apartment-videos/');
@@ -778,6 +830,101 @@ export default function EditApartmentPage() {
               })}
             </div>
           </div>
+
+          {/* ── Synchronisation calendriers externes (iCal) ────────────── */}
+          {!isNew && (
+            <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-5">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Calendar size={16} className="text-[#B08B52]" />
+                  Synchronisation calendriers externes
+                </h3>
+                {apt.ical_last_sync_at && (
+                  <span className="text-xs text-gray-400">
+                    Dernière sync : {formatDistanceToNow(new Date(apt.ical_last_sync_at), { addSuffix: true, locale: frLocale })}
+                  </span>
+                )}
+              </div>
+
+              {/* IMPORT */}
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                  ↓ Import — Airbnb / VRBO → ce site
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">URL iCal Airbnb</label>
+                    <input
+                      type="url"
+                      value={apt.airbnb_ical_url || ''}
+                      onChange={e => setApt(p => ({ ...p, airbnb_ical_url: e.target.value || null }))}
+                      placeholder="https://www.airbnb.fr/calendar/ical/..."
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">URL iCal VRBO</label>
+                    <input
+                      type="url"
+                      value={apt.vrbo_ical_url || ''}
+                      onChange={e => setApt(p => ({ ...p, vrbo_ical_url: e.target.value || null }))}
+                      placeholder="https://www.vrbo.com/icalendar/..."
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#B08B52]/30 focus:border-[#B08B52]"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  Sauvegarde d&apos;abord les infos (bouton ci-dessous), puis lance la sync.
+                </p>
+                <button
+                  type="button"
+                  onClick={triggerIcalSync}
+                  disabled={icalSyncing || (!apt.airbnb_ical_url && !apt.vrbo_ical_url)}
+                  className="mt-3 inline-flex items-center gap-2 px-4 py-2 border border-[#B08B52] text-[#B08B52] rounded-lg text-sm hover:bg-[#B08B52]/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw size={14} className={icalSyncing ? 'animate-spin' : ''} />
+                  {icalSyncing ? 'Synchronisation en cours...' : 'Synchroniser maintenant'}
+                </button>
+                <p className="text-xs text-gray-400 mt-2">
+                  Sync automatique toutes les 30 min via cron. Le bouton ci-dessus force une sync immédiate.
+                </p>
+              </div>
+
+              <div className="border-t border-gray-100" />
+
+              {/* EXPORT */}
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                  ↑ Export — ce site → Airbnb / VRBO
+                </p>
+                <p className="text-xs text-gray-500 mb-2">
+                  Colle cette URL dans Airbnb (Annonce → Calendrier → Sync calendars → Import calendar) pour que les réservations faites sur ce site bloquent les dates côté Airbnb.
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono text-gray-700 truncate">
+                    {typeof window !== 'undefined' ? `${window.location.origin}/api/ical/${apt.slug}` : `/api/ical/${apt.slug}`}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={copyExportUrl}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-200 text-gray-700 rounded-lg text-xs hover:bg-gray-50 transition-colors flex-shrink-0"
+                  >
+                    {icalCopied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                    {icalCopied ? 'Copié' : 'Copier'}
+                  </button>
+                  <a
+                    href={`/api/ical/${apt.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-200 text-gray-700 rounded-lg text-xs hover:bg-gray-50 transition-colors flex-shrink-0"
+                    title="Tester le flux iCal"
+                  >
+                    <ExternalLink size={12} />
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
 
           <button onClick={saveInfo} disabled={saving}
             className="w-full bg-[#0D1B2A] text-white py-3 rounded-xl font-semibold hover:bg-[#1a2f45] transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
