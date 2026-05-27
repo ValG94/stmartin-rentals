@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
       { protocol: 'http', hostname: '**' },
     ],
   },
+  // node-ical embarque des modules Node natifs (BigInt côté init de certains
+  // chunks) qui plantent quand Next.js tente de les bundler. On l'externalise
+  // pour qu'il soit require() au runtime côté serveur uniquement.
+  serverExternalPackages: ['node-ical'],
 };
 
 export default withNextIntl(nextConfig);

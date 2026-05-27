@@ -4,6 +4,11 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { verifyAdminToken } from '@/lib/auth-admin';
 import { syncApartmentIcal, type IcalSource } from '@/lib/services/ical-sync';
 
+// node-ical → Node-only deps qui plantent au build. Voir le commentaire
+// dans /api/cron/sync-ical/route.ts.
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // POST /api/admin/apartments/:id/sync-ical
 //
 // Déclenche un sync iCal manuel pour cette villa, toutes plateformes

@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { syncAllApartments } from '@/lib/services/ical-sync';
 
+// node-ical embarque des deps Node-only (BigInt côté init de certains
+// chunks) qui plantent si Next.js tente de pré-évaluer la route au build.
+// On force le runtime Node + dynamic pour court-circuiter la phase
+// "Collecting page data".
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // Endpoint cron — appelé toutes les 30 min par Vercel Cron OU cron-job.org.
 // Auth via Bearer token (env CRON_SECRET) ou query ?secret=...
 //
