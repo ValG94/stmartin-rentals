@@ -47,6 +47,7 @@ export interface PlanningBlock {
   end_date: string;
   label?: string | null;
   source?: 'manual' | 'airbnb' | 'vrbo' | 'booking_com' | null;
+  block_type?: 'booking' | 'owner' | 'maintenance' | 'external' | null;
 }
 
 async function getDashboardData() {
@@ -143,7 +144,7 @@ async function getDashboardData() {
   // La colonne s'appelle bien `label` (pas `reason` qui n'existe pas).
   const { data: blocksRaw } = await supabaseAdmin
     .from('availability_blocks')
-    .select('id, apartment_id, start_date, end_date, label, source')
+    .select('id, apartment_id, start_date, end_date, label, source, block_type')
     .gte('end_date', today);
 
   const planningBlocks: PlanningBlock[] = (blocksRaw ?? []) as PlanningBlock[];
