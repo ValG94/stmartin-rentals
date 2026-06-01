@@ -1,15 +1,24 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { ShoppingBasket, ChefHat, Car, Sparkles, Sailboat, Flower2, MessageCircle, Mail, ArrowRight } from 'lucide-react';
+import {
+  ShoppingBasket, ChefHat, Car, Sparkles, Sailboat, Flower2,
+  Baby, PartyPopper, Gem, ShieldCheck, Trophy,
+  MessageCircle, Mail, ArrowRight,
+} from 'lucide-react';
 import { CONCIERGE_SERVICES, type ConciergeServiceIcon } from '@/lib/concierge';
 
 const ICONS: Record<ConciergeServiceIcon, React.ComponentType<{ size?: number; className?: string }>> = {
-  grocery:  ShoppingBasket,
-  chef:     ChefHat,
-  transfer: Car,
-  cleaning: Sparkles,
-  boat:     Sailboat,
-  spa:      Flower2,
+  grocery:    ShoppingBasket,
+  chef:       ChefHat,
+  transfer:   Car,
+  cleaning:   Sparkles,
+  boat:       Sailboat,
+  spa:        Flower2,
+  family:     Baby,
+  events:     PartyPopper,
+  lifestyle:  Gem,
+  security:   ShieldCheck,
+  activities: Trophy,
 };
 
 export default async function ConciergePage({
@@ -47,6 +56,7 @@ export default async function ConciergePage({
             const title = isFr ? service.title_fr : service.title_en;
             const intro = isFr ? service.intro_fr : service.intro_en;
             const body = isFr ? service.body_fr : service.body_en;
+            const items = isFr ? service.items_fr : service.items_en;
             const pricingNote = isFr ? service.pricing_note_fr : service.pricing_note_en;
 
             return (
@@ -82,12 +92,34 @@ export default async function ConciergePage({
                   {intro}
                 </p>
 
-                {/* Body — paragraphes séparés par \n */}
-                <div className="space-y-4 text-night-500 font-light leading-relaxed max-w-3xl">
-                  {body.split('\n').filter(Boolean).map((para, idx) => (
-                    <p key={idx}>{para}</p>
-                  ))}
-                </div>
+                {/* Body — paragraphes séparés par \n (récit long) */}
+                {body && (
+                  <div className="space-y-4 text-night-500 font-light leading-relaxed max-w-3xl">
+                    {body.split('\n').filter(Boolean).map((para, idx) => (
+                      <p key={idx}>{para}</p>
+                    ))}
+                  </div>
+                )}
+
+                {/* Items — liste de prestations (bullets bronze) */}
+                {items && items.length > 0 && (
+                  <ul className="space-y-3 max-w-3xl">
+                    {items.map((item, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-start gap-3 text-night-500 font-light leading-relaxed"
+                      >
+                        <span
+                          className="text-bronze-400 mt-1 flex-shrink-0 font-medium"
+                          aria-hidden="true"
+                        >
+                          ›
+                        </span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
                 {/* Note tarifaire */}
                 {pricingNote && (
