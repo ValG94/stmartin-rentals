@@ -137,6 +137,16 @@ export default async function ConciergePage({
           })}
         </div>
 
+        {/* ── Mention tarifaire globale ─────────────────────── */}
+        <p className="mt-12 text-center text-sm text-night-400 italic leading-relaxed max-w-2xl mx-auto">
+          <span className="font-medium text-bronze-500 not-italic mr-2">
+            {isFr ? 'Tarifs :' : 'Pricing:'}
+          </span>
+          {isFr
+            ? "sauf mention contraire, l'ensemble de nos prestations sont proposées sur devis selon le prestataire et la complexité — toutes nos offres sont confirmées avant réservation."
+            : "unless otherwise stated, all our services are offered upon quote based on the provider and complexity — every offer is confirmed before booking."}
+        </p>
+
         {/* ── CTA Contact ─────────────────────────────────────── */}
         <section className="mt-24 border-y border-bronze-100 py-16 text-center">
           <p className="section-label mb-4">{isFr ? 'Une demande particulière ?' : 'A specific request?'}</p>

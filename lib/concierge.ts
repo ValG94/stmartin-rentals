@@ -37,11 +37,6 @@ export interface ConciergeService {
   pricing_note_en?: string;
 }
 
-const QUOTE_NOTE_FR =
-  "Sur devis selon la prestation et le prestataire — toutes nos offres sont confirmées avant réservation.";
-const QUOTE_NOTE_EN =
-  "Quote upon request based on the service and provider — every offer is confirmed before booking.";
-
 export const CONCIERGE_SERVICES: ConciergeService[] = [
   {
     slug: 'grocery-delivery',
@@ -84,8 +79,6 @@ To benefit from this service, all you need to do is send us in advance the exact
       "Buggy and quads to explore the island",
       "Helicopter and private jet for inter-island transfers",
     ],
-    pricing_note_fr: QUOTE_NOTE_FR,
-    pricing_note_en: QUOTE_NOTE_EN,
   },
   {
     slug: 'nautisme-mer',
@@ -108,8 +101,6 @@ To benefit from this service, all you need to do is send us in advance the exact
       "Deep-sea fishing excursions",
       "Scuba diving and guided snorkeling",
     ],
-    pricing_note_fr: QUOTE_NOTE_FR,
-    pricing_note_en: QUOTE_NOTE_EN,
   },
   {
     slug: 'gastronomie-boissons',
@@ -134,8 +125,6 @@ To benefit from this service, all you need to do is send us in advance the exact
       "Sommelier and wine tasting sessions",
       "Local and gourmet cooking classes",
     ],
-    pricing_note_fr: QUOTE_NOTE_FR,
-    pricing_note_en: QUOTE_NOTE_EN,
   },
   {
     slug: 'bien-etre-sante',
@@ -162,8 +151,6 @@ To benefit from this service, all you need to do is send us in advance the exact
       "In-villa hairdresser and barber",
       "Beauty treatments with an aesthetician",
     ],
-    pricing_note_fr: QUOTE_NOTE_FR,
-    pricing_note_en: QUOTE_NOTE_EN,
   },
   {
     slug: 'famille-enfants',
@@ -184,8 +171,6 @@ To benefit from this service, all you need to do is send us in advance the exact
       "Dedicated nanny for the duration of your stay",
       "Baby cots and childcare equipment provided",
     ],
-    pricing_note_fr: QUOTE_NOTE_FR,
-    pricing_note_en: QUOTE_NOTE_EN,
   },
   {
     slug: 'evenementiel',
@@ -208,8 +193,6 @@ To benefit from this service, all you need to do is send us in advance the exact
       "DJ for private parties",
       "Professional photographer",
     ],
-    pricing_note_fr: QUOTE_NOTE_FR,
-    pricing_note_en: QUOTE_NOTE_EN,
   },
   {
     slug: 'lifestyle-luxe',
@@ -230,8 +213,6 @@ To benefit from this service, all you need to do is send us in advance the exact
       "Champagne, caviar and exceptional products delivery",
       "Nightlife access and reservations",
     ],
-    pricing_note_fr: QUOTE_NOTE_FR,
-    pricing_note_en: QUOTE_NOTE_EN,
   },
   {
     slug: 'securite-protection',
@@ -254,8 +235,6 @@ To benefit from this service, all you need to do is send us in advance the exact
       "Secure driver for your transfers",
       "Patrols and complete discretion on the villa",
     ],
-    pricing_note_fr: QUOTE_NOTE_FR,
-    pricing_note_en: QUOTE_NOTE_EN,
   },
   {
     slug: 'activites-loisirs',
@@ -274,7 +253,5 @@ To benefit from this service, all you need to do is send us in advance the exact
       "Private golf, tennis and padel lessons",
       "Private guide for cultural and natural discoveries",
     ],
-    pricing_note_fr: QUOTE_NOTE_FR,
-    pricing_note_en: QUOTE_NOTE_EN,
   },
 ];
