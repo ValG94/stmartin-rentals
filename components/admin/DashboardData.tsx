@@ -121,12 +121,18 @@ async function getDashboardData() {
 
   const apartments: ApartmentRow[] = (apartmentsList ?? []) as ApartmentRow[];
 
-  // Bookings actives pour le planning (pas les cancelled/completed obsolètes)
-  const today = new Date().toISOString().split('T')[0];
+  // Bookings actives pour le planning (pas les cancelled/completed obsolètes).
+  // Cutoff = il y a 12 mois pour que la nav "mois précédent" affiche encore
+  // les séjours déjà terminés (ex : sync Airbnb d'un séjour passé visible en
+  // arrivant sur le mois en cours qui contient sa queue).
+  const cutoffDate = new Date();
+  cutoffDate.setMonth(cutoffDate.getMonth() - 12);
+  const cutoff = cutoffDate.toISOString().split('T')[0];
+
   const planningBookings: PlanningBooking[] = bookings
     .filter((b) =>
       ['confirmed', 'partially_paid', 'pending_bank_transfer', 'pending'].includes(b.booking_status)
-      && b.check_out >= today
+      && b.check_out >= cutoff
     )
     .map((b) => ({
       id: b.id,
@@ -145,7 +151,7 @@ async function getDashboardData() {
   const { data: blocksRaw } = await supabaseAdmin
     .from('availability_blocks')
     .select('id, apartment_id, start_date, end_date, label, source, block_type')
-    .gte('end_date', today);
+    .gte('end_date', cutoff);
 
   const planningBlocks: PlanningBlock[] = (blocksRaw ?? []) as PlanningBlock[];
 
