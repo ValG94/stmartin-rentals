@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, Play, Grid, Maximize2, ImageOff } from 'lucide-react';
 import type { ApartmentImage } from '@/types';
 
@@ -87,33 +87,89 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
   // Zoom au tap dans le lightbox : (active, origine X/Y en %)
-  // L'origine = point dans l'image qui reste fixe pendant le scale.
+  // L'origine = point dans l'image qui reste fixe lors du scale initial.
   const [zoom, setZoom] = useState<{ active: boolean; x: number; y: number }>({
     active: false, x: 50, y: 50,
   });
-  const resetZoom = useCallback(() => setZoom({ active: false, x: 50, y: 50 }), []);
+  // Pan : décalage en px appliqué APRÈS le scale, pour déplacer l'image
+  // une fois zoomée (drag avec doigt ou souris).
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  // Drag actif : on désactive la transition CSS pour un suivi 1:1 du doigt.
+  const [isDragging, setIsDragging] = useState(false);
+  // Ref pour suivre la position de départ du drag + le pan initial,
+  // sans déclencher de re-render à chaque move.
+  const dragRef = useRef<{
+    startX: number; startY: number;
+    startPanX: number; startPanY: number;
+    moved: boolean;
+  } | null>(null);
+
+  const resetView = useCallback(() => {
+    setZoom({ active: false, x: 50, y: 50 });
+    setPan({ x: 0, y: 0 });
+  }, []);
 
   const closeLightbox = useCallback(() => {
-    resetZoom();
+    resetView();
     setLightboxIndex(null);
-  }, [resetZoom]);
+  }, [resetView]);
   const prev = useCallback(() => {
-    resetZoom();
+    resetView();
     setLightboxIndex((i) => (i !== null ? (i - 1 + mediaItems.length) % mediaItems.length : 0));
-  }, [mediaItems.length, resetZoom]);
+  }, [mediaItems.length, resetView]);
   const next = useCallback(() => {
-    resetZoom();
+    resetView();
     setLightboxIndex((i) => (i !== null ? (i + 1) % mediaItems.length : 0));
-  }, [mediaItems.length, resetZoom]);
+  }, [mediaItems.length, resetView]);
 
-  // Toggle zoom : tap n°1 zoom centré sur le point tapé, tap n°2 dézoome
-  const toggleZoom = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (zoom.active) { resetZoom(); return; }
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setZoom({ active: true, x, y });
-  }, [zoom.active, resetZoom]);
+  // ── Pointer events : drag pour pan + tap pour toggle zoom ────────────────
+  // Pointer events unifient souris + tactile. setPointerCapture permet de
+  // continuer à recevoir les moves même quand le doigt sort de l'élément.
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      startPanX: pan.x,
+      startPanY: pan.y,
+      moved: false,
+    };
+  }, [pan.x, pan.y]);
+
+  const onPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    if (!dragRef.current.moved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+      dragRef.current.moved = true;
+      setIsDragging(true);
+    }
+    if (dragRef.current.moved && zoom.active) {
+      setPan({
+        x: dragRef.current.startPanX + dx,
+        y: dragRef.current.startPanY + dy,
+      });
+    }
+  }, [zoom.active]);
+
+  const onPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    dragRef.current = null;
+    setIsDragging(false);
+    if (!drag) return;
+    // Si pas de mouvement → tap simple → toggle zoom
+    if (!drag.moved) {
+      if (zoom.active) {
+        resetView();
+      } else {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        setZoom({ active: true, x, y });
+        setPan({ x: 0, y: 0 });
+      }
+    }
+  }, [zoom.active, resetView]);
 
   useEffect(() => {
     if (lightboxIndex === null) return;
@@ -304,25 +360,42 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
               </div>
             ) : (
               <div
-                className={`relative w-full flex items-center justify-center overflow-hidden select-none ${zoom.active ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
+                className={`relative w-full flex items-center justify-center overflow-hidden select-none touch-none ${
+                  zoom.active
+                    ? (isDragging ? 'cursor-grabbing' : 'cursor-grab')
+                    : 'cursor-zoom-in'
+                }`}
                 style={{ height: '80vh' }}
-                onClick={toggleZoom}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerCancel={onPointerUp}
               >
                 <SafeImg
                   src={current.url}
                   alt={getAlt(current, lightboxIndex)}
-                  className="!object-contain max-h-full"
+                  className="!object-contain max-h-full pointer-events-none"
                   priority
                   style={{
-                    transform: zoom.active ? 'scale(2.2)' : 'scale(1)',
+                    transform: zoom.active
+                      ? `translate(${pan.x}px, ${pan.y}px) scale(2.2)`
+                      : 'scale(1)',
                     transformOrigin: `${zoom.x}% ${zoom.y}%`,
-                    transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
+                    transition: isDragging
+                      ? 'none'
+                      : 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 />
-                {/* Hint discret tap-to-zoom (caché quand zoomé) */}
+                {/* Hint discret (caché quand zoomé) */}
                 {!zoom.active && (
                   <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm text-white/80 text-[11px] px-3 py-1.5 rounded-full pointer-events-none">
                     {locale === 'fr' ? 'Tapez pour zoomer' : 'Tap to zoom'}
+                  </div>
+                )}
+                {/* Hint pan une fois zoomé */}
+                {zoom.active && !isDragging && (
+                  <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm text-white/80 text-[11px] px-3 py-1.5 rounded-full pointer-events-none">
+                    {locale === 'fr' ? 'Glissez pour déplacer · tapez pour dézoomer' : 'Drag to move · tap to zoom out'}
                   </div>
                 )}
               </div>
