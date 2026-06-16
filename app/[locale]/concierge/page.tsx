@@ -168,7 +168,7 @@ export default async function ConciergePage({
               style={{ letterSpacing: '0.15em' }}
             >
               <MessageCircle size={16} />
-              WhatsApp
+              <span>WhatsApp · +1 (514) 947-6100</span>
               <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
             </a>
             <Link
