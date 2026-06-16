@@ -175,16 +175,18 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="relative">
               {destinationMedia.length > 0 ? (
-                // Élévation discrète pour donner au slider une présence
-                // éditoriale "encadrée" sans cassure du fond cream-100.
-                <div className="relative h-[480px] md:h-[520px] overflow-hidden shadow-[0_30px_60px_-30px_rgba(13,27,42,0.28)]">
+                // Hauteur poussée à 620px desktop pour aligner le bas du slider
+                // avec le bas du bouton "Book your villa" côté texte.
+                // Élévation discrète pour donner une présence éditoriale
+                // "encadrée" sans cassure du fond cream-100.
+                <div className="relative h-[480px] md:h-[580px] lg:h-[620px] overflow-hidden shadow-[0_30px_60px_-30px_rgba(13,27,42,0.28)]">
                   <DestinationMediaSlider media={destinationMedia} locale={locale} />
                 </div>
               ) : (
                 // Fallback gracieux si aucun média n'a encore été uploadé
                 // depuis l'admin — évite un trou visuel à la première mise
                 // en ligne.
-                <div className="relative h-[480px] md:h-[520px] overflow-hidden shadow-[0_30px_60px_-30px_rgba(13,27,42,0.28)]">
+                <div className="relative h-[480px] md:h-[580px] lg:h-[620px] overflow-hidden shadow-[0_30px_60px_-30px_rgba(13,27,42,0.28)]">
                   <Image src="/images/destination beach.jpg" alt="Saint-Martin beach" fill className="object-cover" />
                 </div>
               )}

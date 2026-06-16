@@ -128,29 +128,34 @@ export default function DestinationMediaSlider({
         </button>
       )}
 
-      {/* Caption éditoriale : label bronze + hairline + serif italic */}
+      {/* Caption éditoriale : pastille night + serif italic
+          Le label devient une chip night-600/80 avec backdrop-blur — toujours
+          lisible peu importe le contraste de la photo (clair, sombre, vidéo
+          qui change). Accent bronze conservé via un mini-point. */}
       {hasCaption && (
         <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none">
           {/* Gradient doux — night plutôt que black pur, plus aligné brand */}
-          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-night-600/65 via-night-600/15 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-night-600/55 via-night-600/10 to-transparent" />
 
           <div className="relative p-7 md:p-10 max-w-lg">
             {(isFr ? current.title_fr : current.title_en) && (
-              <p
-                className="font-sans text-[10px] md:text-[11px] uppercase font-medium text-bronze-300 mb-3"
-                style={{ letterSpacing: '0.25em' }}
-              >
-                {isFr ? current.title_fr : current.title_en}
-              </p>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 mb-4 rounded-full bg-night-600/80 backdrop-blur-md">
+                <span className="w-1 h-1 rounded-full bg-bronze-300 flex-shrink-0" aria-hidden="true" />
+                <span
+                  className="font-sans text-[10px] md:text-[11px] uppercase font-medium text-cream-100"
+                  style={{ letterSpacing: '0.22em' }}
+                >
+                  {isFr ? current.title_fr : current.title_en}
+                </span>
+              </div>
             )}
-            {(isFr ? current.title_fr : current.title_en) &&
-              (isFr ? current.caption_fr : current.caption_en) && (
-                <div className="w-8 h-px bg-bronze-300/85 mb-4" />
-              )}
             {(isFr ? current.caption_fr : current.caption_en) && (
               <p
-                className="font-serif text-lg md:text-xl italic font-light text-cream-100 leading-snug drop-shadow-sm"
-                style={{ letterSpacing: '-0.005em' }}
+                className="font-serif text-lg md:text-xl italic font-light text-cream-100 leading-snug"
+                style={{
+                  letterSpacing: '-0.005em',
+                  textShadow: '0 1px 12px rgba(13,27,42,0.45), 0 1px 2px rgba(13,27,42,0.35)',
+                }}
               >
                 {isFr ? current.caption_fr : current.caption_en}
               </p>
