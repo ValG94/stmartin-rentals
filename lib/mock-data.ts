@@ -650,5 +650,5 @@ export const MOCK_SITE_SETTINGS: SiteSettings = {
   site_name_fr: 'StMartin Rentals',
   site_name_en: 'StMartin Rentals',
   meta_description_fr: 'Locations saisonnières de luxe à Saint-Martin, Côté Hollandais',
-  meta_description_en: 'Luxury vacation rentals in Saint-Martin, Deutch Side',
+  meta_description_en: 'Luxury vacation rentals in Saint-Martin, Dutch Side',
 };
