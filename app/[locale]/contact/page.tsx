@@ -50,7 +50,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">{t('email')}</div>
-                    <div className="text-gray-600">petrillis@bell.net</div>
+                    <div className="text-gray-600">contact@islandlivingsxm.com</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm">

@@ -6,7 +6,7 @@
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = process.env.EMAIL_FROM || 'Island Living SXM <onboarding@resend.dev>';
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'petrillis@bell.net';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'contact@islandlivingsxm.com';
 
 export type Locale = 'fr' | 'en';
 
@@ -187,7 +187,7 @@ function cancellationPolicyHtml(locale: Locale): string {
 function footerHtml(locale: Locale): string {
   const questionsFn = t('questions', locale) as (m: string) => string;
   return `
-    <p>${questionsFn('petrillis@bell.net')}</p>
+    <p>${questionsFn('contact@islandlivingsxm.com')}</p>
     <p style="color:#888;font-size:12px;margin-top:32px;">${t('signature', locale)}</p>
   `;
 }

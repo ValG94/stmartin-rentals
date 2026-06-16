@@ -175,7 +175,7 @@ export default function ExploreSection({ locale }: ExploreSectionProps) {
               WhatsApp
             </a>
             <a
-              href="mailto:petrillis@bell.net"
+              href="mailto:contact@islandlivingsxm.com"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl
                          bg-transparent border border-white/20 hover:border-bronze-400/50
                          text-white/80 hover:text-white font-medium text-sm
@@ -185,7 +185,7 @@ export default function ExploreSection({ locale }: ExploreSectionProps) {
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
               </svg>
-              petrillis@bell.net
+              contact@islandlivingsxm.com
             </a>
           </div>
         </div>

@@ -188,8 +188,8 @@ export default async function PayPalSuccessPage({ params, searchParams }: Props)
             {isFr ? 'Une question ?' : 'Need anything?'}
           </p>
           <div className="flex items-center justify-center gap-6 text-sm text-night-500">
-            <a href="mailto:petrillis@bell.net" className="inline-flex items-center gap-1.5 hover:text-bronze-500 transition-colors font-light">
-              <Mail size={13} /> petrillis@bell.net
+            <a href="mailto:contact@islandlivingsxm.com" className="inline-flex items-center gap-1.5 hover:text-bronze-500 transition-colors font-light">
+              <Mail size={13} /> contact@islandlivingsxm.com
             </a>
             <a href="https://wa.me/15149476100" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-bronze-500 transition-colors font-light">
               <Phone size={13} /> +1 (514) 947-6100
