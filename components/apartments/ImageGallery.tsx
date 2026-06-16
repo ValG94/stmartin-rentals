@@ -321,8 +321,8 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
             <X size={22} />
           </button>
 
-          {/* Précédent */}
-          {sorted.length > 1 && (
+          {/* Précédent (caché en mode zoom pour laisser place à la photo) */}
+          {sorted.length > 1 && !zoom.active && (
             <button
               className="absolute left-4 z-10 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors"
               onClick={(e) => { e.stopPropagation(); prev(); }}
@@ -332,9 +332,13 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
             </button>
           )}
 
-          {/* Contenu */}
+          {/* Contenu — en mode zoom : prend tout le viewport (full screen) */}
           <div
-            className="relative w-full max-w-5xl mx-20 flex items-center justify-center"
+            className={
+              zoom.active
+                ? 'absolute inset-0 flex items-center justify-center'
+                : 'relative w-full max-w-5xl mx-2 sm:mx-8 lg:mx-20 flex items-center justify-center'
+            }
             onClick={(e) => e.stopPropagation()}
           >
             {isHostedVideo(current.url) ? (
@@ -365,7 +369,10 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
                     ? (isDragging ? 'cursor-grabbing' : 'cursor-grab')
                     : 'cursor-zoom-in'
                 }`}
-                style={{ height: '80vh' }}
+                // 100dvh = viewport dynamique (compense la barre URL mobile
+                // qui se rétracte) → la photo zoomée prend vraiment tout
+                // l'écran sur iPhone/Android sans rogner sous la notch.
+                style={{ height: zoom.active ? '100dvh' : '80vh' }}
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
@@ -401,16 +408,16 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
               </div>
             )}
 
-            {/* Légende */}
-            {(locale === 'fr' ? current.alt_fr : current.alt_en) && (
+            {/* Légende (cachée quand zoomé pour ne pas couper la photo) */}
+            {!zoom.active && (locale === 'fr' ? current.alt_fr : current.alt_en) && (
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-white text-sm text-center rounded-b-xl">
                 {locale === 'fr' ? current.alt_fr : current.alt_en}
               </div>
             )}
           </div>
 
-          {/* Suivant */}
-          {sorted.length > 1 && (
+          {/* Suivant (caché en mode zoom) */}
+          {sorted.length > 1 && !zoom.active && (
             <button
               className="absolute right-4 z-10 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors"
               onClick={(e) => { e.stopPropagation(); next(); }}
@@ -420,7 +427,8 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
             </button>
           )}
 
-          {/* Compteur + miniatures */}
+          {/* Compteur + miniatures (cachés en mode zoom) */}
+          {!zoom.active && (
           <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-3">
             <span className="text-white/70 text-sm">{lightboxIndex + 1} / {sorted.length}</span>
             <div className="flex gap-1.5 overflow-x-auto max-w-lg px-4 pb-1">
@@ -467,6 +475,7 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
               })}
             </div>
           </div>
+          )}
         </div>
       )}
     </>

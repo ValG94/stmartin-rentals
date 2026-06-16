@@ -95,10 +95,10 @@ export default async function HomePage() {
                 {isFr ? <>Une expérience<br /><em className="italic">au-delà du séjour</em></> : <>An experience<br /><em className="italic">beyond the stay</em></>}
               </h2>
               <p className="font-sans text-night-400 leading-relaxed mb-6" style={{fontSize:'1.05rem'}}>
-                {isFr ? "Island Living SXM est né d'une passion pour Saint-Martin et d'une conviction : chaque séjour mérite d'être une expérience inoubliable. Nos villas ne sont pas de simples locations — elles sont des écrins de vie, pensés dans les moindres détails pour vous offrir le meilleur des Caraïbes." : "Island Living SXM was born from a passion for Sint Maarten and a conviction: every stay deserves to be an unforgettable experience. Our villas are not just rentals — they are living gems, designed in every detail to offer you the best of the Caribbean."}
+                {isFr ? "Island Living SXM est né d'une passion pour Saint-Martin et d'une conviction : chaque séjour mérite d'être une expérience inoubliable. Nos villas ne sont pas de simples locations elles sont des écrins de vie, pensés dans les moindres détails pour vous offrir le meilleur des Caraïbes." : "Island Living SXM was born from a passion for Sint Maarten and a conviction: every stay deserves to be an unforgettable experience. Our villas are not just rentals they are living gems, designed in every detail to offer you the best of the Caribbean."}
               </p>
               <p className="font-sans text-night-400 leading-relaxed" style={{fontSize:'1.05rem'}}>
-                {isFr ? "Piscine privée, vue mer, architecture soignée, accueil personnalisé — nous créons les conditions d'une évasion totale." : "Private pool, sea view, refined architecture, personalized welcome — we create the conditions for total escape."}
+                {isFr ? "Piscine privée, vue mer, architecture soignée, accueil personnalisé nous créons les conditions d'une évasion totale." : "Private pool, sea view, refined architecture, personalized welcome we create the conditions for total escape."}
               </p>
             </div>
             <div className="relative">
@@ -185,7 +185,7 @@ export default async function HomePage() {
                 {isFr ? <>Saint-Martin,<br /><em className="italic">l&apos;île aux deux visages</em></> : <>Saint-Martin,<br /><em className="italic">the island of two faces</em></>}
               </h2>
               <p className="font-sans text-night-400 leading-relaxed mb-6" style={{fontSize:'1.05rem'}}>
-                {isFr ? "Partagée entre la France et les Pays-Bas, Saint-Martin est une île unique aux Caraïbes. Plages de sable blanc, lagons turquoise, gastronomie raffinée, vie nocturne animée — elle réunit tous les ingrédients d'un séjour parfait." : "Shared between France and the Netherlands, Saint-Martin is a unique island in the Caribbean. White sand beaches, turquoise lagoons, refined gastronomy, vibrant nightlife — it brings together all the ingredients for a perfect stay."}
+                {isFr ? "Partagée entre la France et les Pays-Bas, Saint-Martin est une île unique aux Caraïbes. Plages de sable blanc, lagons turquoise, gastronomie raffinée, vie nocturne animée elle réunit tous les ingrédients d'un séjour parfait." : "Shared between France and the Netherlands, Saint-Martin is a unique island in the Caribbean. White sand beaches, turquoise lagoons, refined gastronomy, vibrant nightlife it brings together all the ingredients for a perfect stay."}
               </p>
               <p className="font-sans text-night-400 leading-relaxed mb-10" style={{fontSize:'1.05rem'}}>
                 {isFr ? "Depuis nos villas, vous êtes proches des plus belles plages : Baie Rouge, Simpson Bay, Orient Bay, Friar's Bay... et des meilleurs restaurants de l'île." : "From our villas, you are close to the most beautiful beaches: Baie Rouge, Simpson Bay, Orient Bay, Friar's Bay... and the best restaurants on the island."}
