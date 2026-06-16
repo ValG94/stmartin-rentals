@@ -7,30 +7,28 @@ import type { DestinationMedia } from '@/types';
 interface Props {
   media: DestinationMedia[];
   locale: string;
-  /** Hauteur desktop (la mosaïque actuelle utilise 450px) */
-  desktopHeightPx?: number;
   /** Délai entre slides en ms — 0 désactive l'autoplay */
   autoplayMs?: number;
 }
 
 /**
- * Slider premium pour la section "The Destination" de la homepage.
+ * Slider premium éditorial pour la section "The Destination" de la home.
  *
- * Caractéristiques :
- *  - Transition fade (rendu éditorial vs slide cheap)
- *  - Autoplay 6s par défaut, pause au hover/touch
- *  - Swipe horizontal sur mobile
- *  - Dots bronze subtils en bas à droite
- *  - Flèches discrètes au hover sur desktop (cachées sur mobile)
- *  - Vidéos : autoplay muté, looping, contrôle volume optionnel
- *  - Légende/titre overlay en bas-gauche si renseignés
- *  - Aucun contrôle si un seul média (pas de carrousel inutile)
+ * Direction visuelle : luxury hospitality, calm, refined.
+ * - Transition fade 1400ms (rendu magazine vs slide-cheap)
+ * - Autoplay 7s, pause au hover/touch
+ * - Swipe horizontal sur mobile
+ * - Frame : hairline cream interne + shadow d'élévation discrète
+ * - Caption éditoriale : label bronze uppercase + hairline + serif italic
+ * - Flèches : backdrop-blur, stroke fin 1.5, slide-in au hover (desktop only)
+ * - Dots : hairlines horizontales 1px (40px bronze actif / 12px cream inactif)
+ * - Compteur "01 / 03" discret en haut-gauche pour repère
+ * - Aucun contrôle si un seul média (pas de carrousel inutile)
  */
 export default function DestinationMediaSlider({
   media,
   locale,
-  desktopHeightPx = 450,
-  autoplayMs = 6000,
+  autoplayMs = 7000,
 }: Props) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -48,14 +46,14 @@ export default function DestinationMediaSlider({
   const next = useCallback(() => goTo(activeIdx + 1), [goTo, activeIdx]);
   const prev = useCallback(() => goTo(activeIdx - 1), [goTo, activeIdx]);
 
-  // Autoplay — pausé au hover / touch / si l'utilisateur a navigué récemment
+  // Autoplay — pausé au hover / touch
   useEffect(() => {
     if (!hasMultiple || autoplayMs <= 0 || paused) return;
     const timer = setTimeout(next, autoplayMs);
     return () => clearTimeout(timer);
   }, [activeIdx, paused, hasMultiple, autoplayMs, next]);
 
-  // Swipe handlers
+  // Swipe handlers (Pointer Events unifient souris + tactile)
   const onPointerDown = (e: React.PointerEvent) => {
     dragRef.current = { startX: e.clientX, moved: false };
   };
@@ -76,10 +74,14 @@ export default function DestinationMediaSlider({
 
   if (count === 0) return null;
 
+  const current = media[activeIdx];
+  const hasCaption =
+    Boolean(isFr ? current.title_fr : current.title_en) ||
+    Boolean(isFr ? current.caption_fr : current.caption_en);
+
   return (
     <div
-      className="relative w-full overflow-hidden group bg-night-100"
-      style={{ height: `${desktopHeightPx}px` }}
+      className="relative w-full h-full overflow-hidden group bg-night-100"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={() => setPaused(true)}
@@ -99,76 +101,105 @@ export default function DestinationMediaSlider({
         />
       ))}
 
-      {/* Overlay titre + légende sur le slide actif (si renseignés) */}
-      {hasCaption(media[activeIdx], isFr) && (
+      {/* Frame intérieur : hairline cream très discret pour effet "encadré" */}
+      <div className="absolute inset-0 z-30 pointer-events-none ring-1 ring-inset ring-cream-100/15" />
+
+      {/* Compteur 01/03 — haut-gauche, micro-typographique */}
+      {hasMultiple && (
         <div
-          key={`caption-${media[activeIdx].id}`}
-          className="absolute inset-x-0 bottom-0 z-10 pointer-events-none bg-gradient-to-t from-black/60 via-black/10 to-transparent p-6 md:p-8"
+          className="absolute top-5 left-5 md:top-6 md:left-6 z-20 font-sans text-[10px] md:text-[11px] uppercase text-cream-100/75 pointer-events-none"
+          style={{ letterSpacing: '0.25em' }}
         >
-          <div className="max-w-md text-white">
-            {(isFr ? media[activeIdx].title_fr : media[activeIdx].title_en) && (
-              <p className="font-serif text-lg md:text-xl font-light leading-tight mb-1 drop-shadow-md">
-                {isFr ? media[activeIdx].title_fr : media[activeIdx].title_en}
+          <span className="text-bronze-300 font-medium">{String(activeIdx + 1).padStart(2, '0')}</span>
+          <span className="mx-2 text-cream-100/40">/</span>
+          <span>{String(count).padStart(2, '0')}</span>
+        </div>
+      )}
+
+      {/* Bouton mute (vidéo uniquement) */}
+      {current.media_type === 'video' && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setMuted((m) => !m); }}
+          className="absolute top-5 right-5 md:top-6 md:right-6 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-night-600/25 backdrop-blur-md text-cream-100 hover:bg-night-600/45 transition-colors duration-500"
+          aria-label={muted ? (isFr ? 'Activer le son' : 'Unmute') : (isFr ? 'Couper le son' : 'Mute')}
+        >
+          {muted ? <VolumeX size={14} strokeWidth={1.75} /> : <Volume2 size={14} strokeWidth={1.75} />}
+        </button>
+      )}
+
+      {/* Caption éditoriale : label bronze + hairline + serif italic */}
+      {hasCaption && (
+        <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none">
+          {/* Gradient doux — night plutôt que black pur, plus aligné brand */}
+          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-night-600/65 via-night-600/15 to-transparent" />
+
+          <div className="relative p-7 md:p-10 max-w-lg">
+            {(isFr ? current.title_fr : current.title_en) && (
+              <p
+                className="font-sans text-[10px] md:text-[11px] uppercase font-medium text-bronze-300 mb-3"
+                style={{ letterSpacing: '0.25em' }}
+              >
+                {isFr ? current.title_fr : current.title_en}
               </p>
             )}
-            {(isFr ? media[activeIdx].caption_fr : media[activeIdx].caption_en) && (
-              <p className="font-sans text-xs md:text-sm font-light text-white/85 leading-relaxed drop-shadow-md">
-                {isFr ? media[activeIdx].caption_fr : media[activeIdx].caption_en}
+            {(isFr ? current.title_fr : current.title_en) &&
+              (isFr ? current.caption_fr : current.caption_en) && (
+                <div className="w-8 h-px bg-bronze-300/85 mb-4" />
+              )}
+            {(isFr ? current.caption_fr : current.caption_en) && (
+              <p
+                className="font-serif text-lg md:text-xl italic font-light text-cream-100 leading-snug drop-shadow-sm"
+                style={{ letterSpacing: '-0.005em' }}
+              >
+                {isFr ? current.caption_fr : current.caption_en}
               </p>
             )}
           </div>
         </div>
       )}
 
-      {/* Bouton mute si vidéo active */}
-      {media[activeIdx].media_type === 'video' && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); setMuted((m) => !m); }}
-          className="absolute top-4 right-4 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white/90 hover:bg-black/50 hover:text-white transition-colors"
-          aria-label={muted ? (isFr ? 'Activer le son' : 'Unmute') : (isFr ? 'Couper le son' : 'Mute')}
-        >
-          {muted ? <VolumeX size={15} /> : <Volume2 size={15} />}
-        </button>
-      )}
-
-      {/* Flèches navigation — visibles uniquement si plusieurs médias, au hover sur desktop */}
+      {/* Flèches navigation — backdrop blur subtil, slide-in au hover */}
       {hasMultiple && (
         <>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); prev(); }}
-            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-cream-100/85 backdrop-blur-sm text-night-600 opacity-0 group-hover:opacity-100 hover:bg-cream-100 transition-all duration-300"
+            className="hidden md:flex absolute left-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center rounded-full bg-night-600/25 backdrop-blur-md text-cream-100 opacity-0 group-hover:opacity-100 hover:bg-night-600/45 hover:-translate-x-0.5 transition-all duration-700 -translate-y-1/2"
             aria-label={isFr ? 'Précédent' : 'Previous'}
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={18} strokeWidth={1.5} />
           </button>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); next(); }}
-            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-cream-100/85 backdrop-blur-sm text-night-600 opacity-0 group-hover:opacity-100 hover:bg-cream-100 transition-all duration-300"
+            className="hidden md:flex absolute right-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center rounded-full bg-night-600/25 backdrop-blur-md text-cream-100 opacity-0 group-hover:opacity-100 hover:bg-night-600/45 hover:translate-x-0.5 transition-all duration-700 -translate-y-1/2"
             aria-label={isFr ? 'Suivant' : 'Next'}
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={18} strokeWidth={1.5} />
           </button>
         </>
       )}
 
-      {/* Dots discrets en bas à droite */}
+      {/* Dots : hairlines horizontales 1px, bronze active vs cream inactif */}
       {hasMultiple && (
-        <div className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5">
+        <div className="absolute bottom-5 right-5 md:bottom-6 md:right-6 z-20 flex items-center gap-3">
           {media.map((m, i) => (
             <button
               key={m.id}
               type="button"
               onClick={(e) => { e.stopPropagation(); goTo(i); }}
-              aria-label={`${isFr ? 'Slide' : 'Slide'} ${i + 1}`}
-              className={`h-1 rounded-full transition-all duration-500 ${
-                i === activeIdx
-                  ? 'w-6 bg-bronze-400'
-                  : 'w-1 bg-cream-100/70 hover:bg-cream-100'
-              }`}
-            />
+              aria-label={`${isFr ? 'Aller au slide' : 'Go to slide'} ${i + 1}`}
+              className="group/dot py-2 px-0.5"
+            >
+              <span
+                className={`block h-px transition-all duration-700 ease-out ${
+                  i === activeIdx
+                    ? 'w-10 bg-bronze-300'
+                    : 'w-3 bg-cream-100/40 group-hover/dot:bg-cream-100/75'
+                }`}
+              />
+            </button>
           ))}
         </div>
       )}
@@ -193,8 +224,8 @@ function Slide({
 
   return (
     <div
-      className={`absolute inset-0 transition-opacity duration-[1200ms] ease-out ${
-        isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      className={`absolute inset-0 transition-opacity ease-out ${
+        isActive ? 'opacity-100 duration-[1400ms]' : 'opacity-0 duration-[800ms] pointer-events-none'
       }`}
       aria-hidden={!isActive}
     >
@@ -219,10 +250,4 @@ function Slide({
       )}
     </div>
   );
-}
-
-function hasCaption(item: DestinationMedia, isFr: boolean): boolean {
-  const title = isFr ? item.title_fr : item.title_en;
-  const caption = isFr ? item.caption_fr : item.caption_en;
-  return Boolean(title || caption);
 }
