@@ -42,9 +42,10 @@ interface SafeImgProps {
   alt: string;
   className?: string;
   priority?: boolean;
+  style?: React.CSSProperties;
 }
 
-function SafeImg({ src, alt, className, priority }: SafeImgProps) {
+function SafeImg({ src, alt, className, priority, style }: SafeImgProps) {
   const [broken, setBroken] = useState(false);
 
   if (broken || !src) {
@@ -62,6 +63,7 @@ function SafeImg({ src, alt, className, priority }: SafeImgProps) {
       src={src}
       alt={alt}
       className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${className ?? ''}`}
+      style={style}
       onError={() => setBroken(true)}
       loading={priority ? 'eager' : 'lazy'}
     />
@@ -84,16 +86,34 @@ interface ImageGalleryProps {
 export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGalleryProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
+  // Zoom au tap dans le lightbox : (active, origine X/Y en %)
+  // L'origine = point dans l'image qui reste fixe pendant le scale.
+  const [zoom, setZoom] = useState<{ active: boolean; x: number; y: number }>({
+    active: false, x: 50, y: 50,
+  });
+  const resetZoom = useCallback(() => setZoom({ active: false, x: 50, y: 50 }), []);
 
-  const closeLightbox = useCallback(() => setLightboxIndex(null), []);
-  const prev = useCallback(() =>
-    setLightboxIndex((i) => (i !== null ? (i - 1 + mediaItems.length) % mediaItems.length : 0)),
-    [mediaItems.length]
-  );
-  const next = useCallback(() =>
-    setLightboxIndex((i) => (i !== null ? (i + 1) % mediaItems.length : 0)),
-    [mediaItems.length]
-  );
+  const closeLightbox = useCallback(() => {
+    resetZoom();
+    setLightboxIndex(null);
+  }, [resetZoom]);
+  const prev = useCallback(() => {
+    resetZoom();
+    setLightboxIndex((i) => (i !== null ? (i - 1 + mediaItems.length) % mediaItems.length : 0));
+  }, [mediaItems.length, resetZoom]);
+  const next = useCallback(() => {
+    resetZoom();
+    setLightboxIndex((i) => (i !== null ? (i + 1) % mediaItems.length : 0));
+  }, [mediaItems.length, resetZoom]);
+
+  // Toggle zoom : tap n°1 zoom centré sur le point tapé, tap n°2 dézoome
+  const toggleZoom = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (zoom.active) { resetZoom(); return; }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoom({ active: true, x, y });
+  }, [zoom.active, resetZoom]);
 
   useEffect(() => {
     if (lightboxIndex === null) return;
@@ -283,13 +303,28 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
                 />
               </div>
             ) : (
-              <div className="relative w-full flex items-center justify-center" style={{ height: '80vh' }}>
+              <div
+                className={`relative w-full flex items-center justify-center overflow-hidden select-none ${zoom.active ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
+                style={{ height: '80vh' }}
+                onClick={toggleZoom}
+              >
                 <SafeImg
                   src={current.url}
                   alt={getAlt(current, lightboxIndex)}
-                  className="!object-contain !scale-100 max-h-full"
+                  className="!object-contain max-h-full"
                   priority
+                  style={{
+                    transform: zoom.active ? 'scale(2.2)' : 'scale(1)',
+                    transformOrigin: `${zoom.x}% ${zoom.y}%`,
+                    transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
+                  }}
                 />
+                {/* Hint discret tap-to-zoom (caché quand zoomé) */}
+                {!zoom.active && (
+                  <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm text-white/80 text-[11px] px-3 py-1.5 rounded-full pointer-events-none">
+                    {locale === 'fr' ? 'Tapez pour zoomer' : 'Tap to zoom'}
+                  </div>
+                )}
               </div>
             )}
 
