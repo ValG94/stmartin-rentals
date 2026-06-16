@@ -5,6 +5,27 @@
 
 export type Locale = 'fr' | 'en';
 
+// --- Slider Destination (homepage) ---
+// Médias éditoriaux affichés dans la section "The Destination" de la home.
+// Géré entièrement depuis /admin/destination.
+export interface DestinationMedia {
+  id: string;
+  media_type: 'image' | 'video';
+  media_url: string;
+  storage_path: string | null;
+  thumbnail_url: string | null;
+  title_fr: string | null;
+  title_en: string | null;
+  caption_fr: string | null;
+  caption_en: string | null;
+  alt_fr: string | null;
+  alt_en: string | null;
+  display_order: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // --- Prix saisonnier ---
 export interface SeasonalPrice {
   id: string;

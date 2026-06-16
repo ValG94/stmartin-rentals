@@ -6,7 +6,7 @@ import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import {
   LayoutDashboard, Home, Calendar, LogOut, Menu, X,
-  ExternalLink, ChevronRight, BookOpen, KeyRound
+  ExternalLink, ChevronRight, BookOpen, KeyRound, MapPin
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -54,6 +54,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       href: `/${locale}/admin/guide`,
       icon: <BookOpen size={17} />,
       label: locale === 'fr' ? 'Guide digital' : 'Digital Guide',
+      exact: false,
+    },
+    {
+      href: `/${locale}/admin/destination`,
+      icon: <MapPin size={17} />,
+      label: locale === 'fr' ? 'Destination' : 'Destination',
       exact: false,
     },
     {

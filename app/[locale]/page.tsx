@@ -1,9 +1,11 @@
 import { getTranslations, getLocale } from 'next-intl/server';
 import VillaCard from '@/components/apartments/VillaCard';
 import VillaCardFallback from '@/components/apartments/VillaCardFallback';
+import DestinationMediaSlider from '@/components/home/DestinationMediaSlider';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getApartments } from '@/lib/api';
+import { getPublishedDestinationMedia } from '@/lib/services/homepage-media';
 import { MapPin, ArrowRight, Star, Shield, Phone, ChevronDown } from 'lucide-react';
 
 // Revalide la liste des villas toutes les 60 s côté CDN.
@@ -27,6 +29,7 @@ export default async function HomePage() {
   const t = await getTranslations('home');
   const res = await getApartments();
   const apartments = res.data ?? [];
+  const destinationMedia = await getPublishedDestinationMedia();
   const isFr = locale === 'fr';
   const villaCount = apartments.length;
   const villaCountWord = numberToWord(villaCount, isFr);
@@ -171,12 +174,18 @@ export default async function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="relative">
-              <div className="relative h-[450px] overflow-hidden">
-                <Image src="/images/destination beach.jpg" alt="Saint-Martin beach" fill className="object-cover" />
-              </div>
-              <div className="absolute -bottom-8 -right-8 w-48 h-48 overflow-hidden hidden lg:block border-4 border-cream-100">
-                <Image src="/images/villa-vanille/exterieur.jpg" alt="Villa extérieur" fill className="object-cover" />
-              </div>
+              {destinationMedia.length > 0 ? (
+                <div className="relative h-[450px] overflow-hidden">
+                  <DestinationMediaSlider media={destinationMedia} locale={locale} />
+                </div>
+              ) : (
+                // Fallback gracieux si aucun média n'a encore été uploadé
+                // depuis l'admin — évite un trou visuel à la première mise
+                // en ligne.
+                <div className="relative h-[450px] overflow-hidden">
+                  <Image src="/images/destination beach.jpg" alt="Saint-Martin beach" fill className="object-cover" />
+                </div>
+              )}
             </div>
             <div>
               <p className="section-label mb-6">{isFr ? 'La destination' : 'The destination'}</p>
