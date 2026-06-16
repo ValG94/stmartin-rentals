@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { Phone, Mail, MessageCircle, MapPin } from 'lucide-react';
 import { getApartments } from '@/lib/api';
+import EmailWithCopy from '@/components/ui/EmailWithCopy';
 
 export default async function Footer() {
   const t = await getTranslations('footer');
@@ -94,12 +95,13 @@ export default async function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={14} className="text-bronze-400 flex-shrink-0" />
-                <a
-                  href="mailto:contact@islandlivingsxm.com"
-                  className="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300"
-                >
-                  contact@islandlivingsxm.com
-                </a>
+                <EmailWithCopy
+                  email="contact@islandlivingsxm.com"
+                  locale={locale}
+                  linkClassName="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300"
+                  buttonClassName="text-cream-100/40 hover:text-bronze-300"
+                  feedbackClassName="text-bronze-300"
+                />
               </li>
               <li className="flex items-center gap-3">
                 <MessageCircle size={14} className="text-bronze-400 flex-shrink-0" />

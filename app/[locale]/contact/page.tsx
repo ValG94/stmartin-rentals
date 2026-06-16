@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Phone, Mail, MessageCircle, MapPin, Clock } from 'lucide-react';
+import EmailWithCopy from '@/components/ui/EmailWithCopy';
 
 export default function ContactPage() {
   const t = useTranslations('contact');
@@ -50,12 +51,13 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">{t('email')}</div>
-                    <a
-                      href="mailto:contact@islandlivingsxm.com"
-                      className="text-primary-600 hover:underline"
-                    >
-                      contact@islandlivingsxm.com
-                    </a>
+                    <EmailWithCopy
+                      email="contact@islandlivingsxm.com"
+                      locale={locale}
+                      linkClassName="text-primary-600 hover:underline"
+                      buttonClassName="text-gray-400 hover:text-primary-600"
+                      feedbackClassName="text-primary-600"
+                    />
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm">
