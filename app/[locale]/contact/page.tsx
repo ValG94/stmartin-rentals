@@ -50,7 +50,12 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">{t('email')}</div>
-                    <div className="text-gray-600">contact@islandlivingsxm.com</div>
+                    <a
+                      href="mailto:contact@islandlivingsxm.com"
+                      className="text-primary-600 hover:underline"
+                    >
+                      contact@islandlivingsxm.com
+                    </a>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm">

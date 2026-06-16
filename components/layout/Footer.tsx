@@ -94,7 +94,12 @@ export default async function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={14} className="text-bronze-400 flex-shrink-0" />
-                <span className="font-sans text-sm text-cream-100/60">contact@islandlivingsxm.com</span>
+                <a
+                  href="mailto:contact@islandlivingsxm.com"
+                  className="font-sans text-sm text-cream-100/60 hover:text-bronze-300 transition-colors duration-300"
+                >
+                  contact@islandlivingsxm.com
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <MessageCircle size={14} className="text-bronze-400 flex-shrink-0" />
