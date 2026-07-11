@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     if (error) throw new Error(`DB error: ${error.message}`);
 
     const bookingId = booking.id;
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://stmartin-rentals-seven.vercel.app';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://islandlivingsxm.com';
     const description = `${pricing.apartmentName} — ${pricing.nights} nights (${checkIn} → ${checkOut}) — ${paymentOption === 'full' ? 'Full payment' : '40% deposit'}`;
 
     const paypalOrderId = await createPayPalOrder({

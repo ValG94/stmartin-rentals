@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const mode: 'booking' | 'deposit' = body.mode === 'deposit' ? 'deposit' : 'booking';
 
-    const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://stmartin-rentals-seven.vercel.app').replace(/\/+$/, '');
+    const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://islandlivingsxm.com').replace(/\/+$/, '');
     const publicKey = process.env.FYGARO_PUBLIC_KEY;
     const secretKey = process.env.FYGARO_SECRET_KEY;
 

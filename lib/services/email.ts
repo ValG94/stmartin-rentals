@@ -288,7 +288,7 @@ async function sendAdminNotificationEmail(d: BookingEmailData, status: string): 
       <p><strong>Method:</strong> ${d.paymentMethod}</p>
       <p><strong>Booking ID:</strong> ${d.bookingId}</p>
       <hr/>
-      <p><a href="https://stmartin-rentals-seven.vercel.app/en/admin/bookings">View in admin dashboard →</a></p>
+      <p><a href="https://islandlivingsxm.com/en/admin/bookings">View in admin dashboard →</a></p>
     </div>
   `;
   await sendEmail(ADMIN_EMAIL, `[Island Living SXM] New Booking — ${d.guestName} — ${statusLabel}`, html);
