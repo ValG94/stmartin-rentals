@@ -19,10 +19,25 @@ interface BookingFormProps {
   seasonalPrices?: SeasonalPriceInput[];
 }
 
-type PaymentMethod = 'paypal' | 'bank_transfer';
+type PaymentMethod = 'paypal' | 'bank_transfer' | 'fygaro';
 type PaymentOption = 'full' | 'deposit_40';
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
+
+// ────────────────────────────────────────────────────────────────────
+// Feature flags — pilotent quelles méthodes de paiement sont exposées.
+// Toute la logique PayPal (SDK, handlers, provider) est conservée mais
+// masquée en attendant que la propriétaire réouvre un compte PayPal
+// compatible SXM. Pour réactiver : passer PAYPAL_UI_ENABLED à true.
+// ────────────────────────────────────────────────────────────────────
+const PAYPAL_UI_ENABLED = false;
+
+// Fygaro : activé via env var côté client (NEXT_PUBLIC_FYGARO_ENABLED).
+// - false / non défini → carré 'Bientôt disponible'
+// - 'true'             → option active, redirect vers Fygaro Payment Link
+// Cette approche permet de basculer sans redéploiement de code, juste
+// une modif env sur Vercel.
+const FYGARO_UI_ENABLED = process.env.NEXT_PUBLIC_FYGARO_ENABLED === 'true';
 
 export default function BookingForm({
   apartmentId,
@@ -44,7 +59,10 @@ export default function BookingForm({
   const [guestEmail, setGuestEmail] = useState('');
   const [message, setMessage] = useState('');
   const [paymentOption, setPaymentOption] = useState<PaymentOption>('full');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('paypal');
+  // Défaut = Fygaro si activé, sinon virement (fallback toujours disponible).
+  // PayPal n'est jamais choisi par défaut tant que PAYPAL_UI_ENABLED est false.
+  const defaultPaymentMethod: PaymentMethod = FYGARO_UI_ENABLED ? 'fygaro' : 'bank_transfer';
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(defaultPaymentMethod);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showCancellation, setShowCancellation] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -112,6 +130,43 @@ export default function BookingForm({
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : (isFr ? 'Une erreur est survenue' : 'An error occurred'));
     } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── Flow Fygaro (paiement CB via Payment Link hébergé) ─────────────────
+  // Le serveur recalcule le prix, crée la booking pending, signe le JWT
+  // et renvoie l'URL Fygaro. On redirige vers cette URL — Fygaro affiche
+  // le formulaire CB puis nous appelle en webhook + redirige vers la
+  // fygaro-success/cancel page côté client.
+  async function handleFygaro() {
+    if (!pricing || !termsAccepted) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/checkout/fygaro/create-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'booking',
+          apartmentId,
+          checkIn,
+          checkOut,
+          guests,
+          guestName,
+          guestEmail,
+          paymentOption,
+          locale,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.redirectUrl) {
+        throw new Error(data.error || (isFr ? 'Impossible de créer le lien de paiement' : 'Unable to create payment link'));
+      }
+      // Redirection full-page vers Fygaro
+      window.location.href = data.redirectUrl;
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : (isFr ? 'Une erreur est survenue' : 'An error occurred'));
       setLoading(false);
     }
   }
@@ -394,20 +449,44 @@ export default function BookingForm({
             <fieldset>
               <legend className="section-label mb-3">{isFr ? 'Mode de paiement' : 'Payment method'}</legend>
               <div className="space-y-2">
-                <PaymentRadio
-                  active={paymentMethod === 'paypal'}
-                  onClick={() => setPaymentMethod('paypal')}
-                  name="payment"
-                  value="paypal"
-                  title="PayPal"
-                  subtitle={isFr ? 'Paiement en ligne sécurisé' : 'Secure online payment'}
-                  icon={
-                    <svg viewBox="0 0 24 24" className="w-6 h-4" fill="none" aria-hidden="true">
-                      <path d="M19.5 7.5C19.5 10.5 17.5 13 14 13H12L11 18H8L10 7.5H14C17 7.5 19.5 7.5 19.5 7.5Z" fill="#003087"/>
-                      <path d="M21 5C21 8 19 10.5 15.5 10.5H13.5L12.5 15.5H9.5L11.5 5H15.5C18.5 5 21 5 21 5Z" fill="#009CDE"/>
-                    </svg>
-                  }
-                />
+
+                {/* Fygaro — Carte bancaire (via Payment Link hébergé) */}
+                {FYGARO_UI_ENABLED ? (
+                  <PaymentRadio
+                    active={paymentMethod === 'fygaro'}
+                    onClick={() => setPaymentMethod('fygaro')}
+                    name="payment"
+                    value="fygaro"
+                    title={isFr ? 'Carte bancaire' : 'Credit / Debit card'}
+                    subtitle={isFr ? 'Paiement immédiat sécurisé — Visa, Mastercard, Amex' : 'Instant secure payment — Visa, Mastercard, Amex'}
+                    icon={
+                      <svg className="w-6 h-4 text-bronze-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <rect x="2" y="6" width="20" height="14" rx="2" strokeWidth={1.5} />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2 10h20M6 15h4" />
+                      </svg>
+                    }
+                  />
+                ) : (
+                  // Placeholder "Bientôt disponible" tant que Fygaro n'est pas
+                  // activé (plan Free Trial ou env NEXT_PUBLIC_FYGARO_ENABLED absente)
+                  <div className="w-full p-4 rounded-md border border-bronze-100 bg-cream-50 flex items-center gap-3 opacity-50 cursor-not-allowed" aria-disabled="true">
+                    <div className="w-8 h-5 flex items-center justify-center">
+                      <svg className="w-6 h-4 text-night-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <rect x="2" y="6" width="20" height="14" rx="2" strokeWidth={1.5} />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2 10h20M6 15h4" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-night-300">{isFr ? 'Carte bancaire' : 'Credit / Debit card'}</div>
+                      <div className="text-xs text-night-300 font-light">{isFr ? 'Bientôt disponible' : 'Coming soon'}</div>
+                    </div>
+                    <span className="text-[10px] uppercase text-night-300 bg-bronze-50 px-2 py-1 rounded" style={{ letterSpacing: '0.15em' }}>
+                      {isFr ? 'Bientôt' : 'Soon'}
+                    </span>
+                  </div>
+                )}
+
+                {/* Virement bancaire — toujours dispo */}
                 <PaymentRadio
                   active={paymentMethod === 'bank_transfer'}
                   onClick={() => setPaymentMethod('bank_transfer')}
@@ -421,21 +500,24 @@ export default function BookingForm({
                     </svg>
                   }
                 />
-                {/* Stripe coming soon */}
-                <div className="w-full p-4 rounded-md border border-bronze-100 bg-cream-50 flex items-center gap-3 opacity-50 cursor-not-allowed">
-                  <div className="w-8 h-5 flex items-center justify-center">
-                    <svg viewBox="0 0 24 24" className="w-6 h-4" fill="#635BFF" aria-hidden="true">
-                      <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-night-300">Stripe</div>
-                    <div className="text-xs text-night-300 font-light">{isFr ? 'Bientôt disponible' : 'Coming soon'}</div>
-                  </div>
-                  <span className="text-[10px] uppercase text-night-300 bg-bronze-50 px-2 py-1 rounded" style={{ letterSpacing: '0.15em' }}>
-                    {isFr ? 'Bientôt' : 'Soon'}
-                  </span>
-                </div>
+
+                {/* PayPal — masqué en attendant la réouverture du compte */}
+                {PAYPAL_UI_ENABLED && (
+                  <PaymentRadio
+                    active={paymentMethod === 'paypal'}
+                    onClick={() => setPaymentMethod('paypal')}
+                    name="payment"
+                    value="paypal"
+                    title="PayPal"
+                    subtitle={isFr ? 'Paiement en ligne sécurisé' : 'Secure online payment'}
+                    icon={
+                      <svg viewBox="0 0 24 24" className="w-6 h-4" fill="none" aria-hidden="true">
+                        <path d="M19.5 7.5C19.5 10.5 17.5 13 14 13H12L11 18H8L10 7.5H14C17 7.5 19.5 7.5 19.5 7.5Z" fill="#003087"/>
+                        <path d="M21 5C21 8 19 10.5 15.5 10.5H13.5L12.5 15.5H9.5L11.5 5H15.5C18.5 5 21 5 21 5Z" fill="#009CDE"/>
+                      </svg>
+                    }
+                  />
+                )}
               </div>
             </fieldset>
           )}
@@ -506,7 +588,23 @@ export default function BookingForm({
                 )}
               </div>
 
-              {paymentMethod === 'paypal' && PAYPAL_CLIENT_ID ? (
+              {/* Bouton Fygaro : redirect vers Payment Link hébergé */}
+              {paymentMethod === 'fygaro' && FYGARO_UI_ENABLED && (
+                <button
+                  type="button"
+                  onClick={handleFygaro}
+                  disabled={loading}
+                  className="btn-primary w-full disabled:opacity-50 disabled:cursor-wait"
+                >
+                  {loading
+                    ? (isFr ? 'Redirection…' : 'Redirecting…')
+                    : (isFr ? 'Payer par carte' : 'Pay by card')}
+                </button>
+              )}
+
+              {/* PayPal — rendu conditionné au flag PAYPAL_UI_ENABLED
+                  (masqué en attendant la réouverture du compte Chenille) */}
+              {PAYPAL_UI_ENABLED && paymentMethod === 'paypal' && PAYPAL_CLIENT_ID ? (
                 <PayPalButtons
                   style={{ layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay' }}
                   createOrder={createPayPalOrder}
@@ -514,7 +612,7 @@ export default function BookingForm({
                   onCancel={cancelPendingBooking}
                   onError={(err) => { setError(String(err)); cancelPendingBooking(); }}
                 />
-              ) : paymentMethod === 'paypal' ? (
+              ) : PAYPAL_UI_ENABLED && paymentMethod === 'paypal' ? (
                 <div className="bg-bronze-50 border border-bronze-200 rounded-md p-3 text-sm text-bronze-600 text-center">
                   {isFr
                     ? 'PayPal n’est pas encore configuré. Veuillez utiliser le virement bancaire ou nous contacter.'
