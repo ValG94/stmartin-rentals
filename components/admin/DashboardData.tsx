@@ -165,7 +165,10 @@ async function getDashboardData() {
       totalRevenue,
       totalCollected,
     },
-    recentBookings: bookings.slice(0, 10),
+    // Toutes les bookings (le composant client paginé décide combien afficher
+    // par page). Sur un site 2 villas ça reste borné à quelques centaines
+    // sur plusieurs années, donc pas de risque perf à tout envoyer.
+    recentBookings: bookings,
     apartments,
     planningBookings,
     planningBlocks,
