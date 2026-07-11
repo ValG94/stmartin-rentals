@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Check, X, Clock, Mail, Building2, RefreshCw, Banknote,
-  AlertCircle, Calendar, Users, CreditCard,
+  AlertCircle, Calendar, Users, CreditCard, XCircle, Loader2,
 } from 'lucide-react';
 
 // La liste des bookings vient toujours du Server Component (initialBookings).
@@ -47,6 +47,14 @@ export default function BookingsClient({
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  // Modal d'annulation : demande une raison (optionnelle) avant de tirer
+  // sur la gâchette. La raison est envoyée dans l'email au voyageur.
+  const [cancelModal, setCancelModal] = useState<{
+    open: boolean;
+    booking?: Booking;
+  }>({ open: false });
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   const bookings = initialBookings;
   const pendingTransfers = bookings.filter(b => b.booking_status === 'pending_bank_transfer');
@@ -77,6 +85,44 @@ export default function BookingsClient({
       setErrorMsg(e instanceof Error ? e.message : 'Error');
     } finally {
       setActionLoading(null);
+    }
+  }
+
+  // Ouvre le modal d'annulation avec email (le vrai gate qu'utilisera la
+  // propriétaire quand il y a un conflit sur des dates).
+  function openCancelModal(booking: Booking) {
+    setCancelReason('');
+    setErrorMsg('');
+    setCancelModal({ open: true, booking });
+  }
+
+  async function confirmCancelWithEmail() {
+    if (!cancelModal.booking) return;
+    setCancelLoading(true);
+    setErrorMsg('');
+    try {
+      const res = await fetch('/api/admin/bookings/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          bookingId: cancelModal.booking.id,
+          reason: cancelReason.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Cancel failed');
+      setSuccessMsg(isFr
+        ? `Réservation annulée${data.emailSent ? ' et voyageur notifié par email' : ''}. Dates libérées.`
+        : `Booking cancelled${data.emailSent ? ' and guest notified by email' : ''}. Dates released.`);
+      setTimeout(() => setSuccessMsg(''), 5000);
+      setCancelModal({ open: false });
+      setCancelReason('');
+      refresh();
+    } catch (e: unknown) {
+      setErrorMsg(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setCancelLoading(false);
     }
   }
 
@@ -234,8 +280,93 @@ export default function BookingsClient({
               onConfirm={() => updateStatus(b.id, 'confirmed')}
               onCancel={() => updateStatus(b.id, 'cancelled')}
               onComplete={() => updateStatus(b.id, 'completed')}
+              onCancelWithEmail={() => openCancelModal(b)}
             />
           ))}
+        </div>
+      )}
+
+      {/* Modal d'annulation avec email */}
+      {cancelModal.open && cancelModal.booking && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4"
+          onClick={() => !cancelLoading && setCancelModal({ open: false })}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-5">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                <XCircle size={20} className="text-red-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-serif text-xl text-night-600 leading-tight">
+                  {isFr ? 'Annuler la réservation' : 'Cancel booking'}
+                </h3>
+                <p className="text-sm text-night-400 mt-1">
+                  {isFr
+                    ? 'Cette action annule la réservation, libère les dates et envoie un email au voyageur.'
+                    : 'This action cancels the booking, releases the dates and emails the guest.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Récap */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4 text-sm">
+              <p className="font-medium text-night-600">{cancelModal.booking.guest_name}</p>
+              <p className="text-night-400 text-xs mt-1">
+                {cancelModal.booking.guest_email}
+              </p>
+              <p className="text-night-500 text-xs mt-2">
+                {cancelModal.booking.apartments?.title_fr || cancelModal.booking.apartments?.title_en} · {cancelModal.booking.check_in} → {cancelModal.booking.check_out}
+              </p>
+            </div>
+
+            {/* Raison */}
+            <label className="block mb-4">
+              <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                {isFr ? 'Motif de l\'annulation' : 'Cancellation reason'} <span className="text-gray-300 normal-case font-normal">— {isFr ? 'optionnel, inclus dans l\'email' : 'optional, included in the email'}</span>
+              </span>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder={isFr
+                  ? 'ex : Un conflit sur les dates est apparu avec une réservation Airbnb existante. Nous vous prions de nous en excuser.'
+                  : 'e.g. A date conflict has arisen with an existing Airbnb booking. Our sincere apologies.'}
+                rows={4}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-300 resize-none"
+                disabled={cancelLoading}
+              />
+            </label>
+
+            {errorMsg && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg mb-4 text-sm">
+                {errorMsg}
+              </div>
+            )}
+
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setCancelModal({ open: false })}
+                disabled={cancelLoading}
+                className="px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                {isFr ? 'Retour' : 'Back'}
+              </button>
+              <button
+                type="button"
+                onClick={confirmCancelWithEmail}
+                disabled={cancelLoading}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-60"
+              >
+                {cancelLoading
+                  ? <><Loader2 size={14} className="animate-spin" /> {isFr ? 'Annulation…' : 'Cancelling…'}</>
+                  : <><XCircle size={14} /> {isFr ? 'Confirmer l\'annulation' : 'Confirm cancellation'}</>}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -295,7 +426,7 @@ function PendingTransferCard({
 
 function BookingCard({
   booking, villaName, amount, isFr,
-  actionLoading, onMarkTransfer, onConfirm, onCancel, onComplete,
+  actionLoading, onMarkTransfer, onConfirm, onCancel, onComplete, onCancelWithEmail,
 }: {
   booking: Booking;
   villaName: string;
@@ -306,6 +437,7 @@ function BookingCard({
   onConfirm: () => void;
   onCancel: () => void;
   onComplete: () => void;
+  onCancelWithEmail: () => void;
 }) {
   const statusConfig: Record<string, { label: string; classes: string; icon: React.ReactNode }> = {
     confirmed:             { label: isFr ? 'Confirmée' : 'Confirmed',                   classes: 'bg-green-50 text-green-700 border-green-200',     icon: <Check size={11} /> },
@@ -414,6 +546,21 @@ function BookingCard({
                 style={{ letterSpacing: '0.1em' }}
               >
                 {isFr ? 'Marquer terminée' : 'Mark completed'}
+              </button>
+            )}
+            {/* Bouton 'Annuler + email' — pour les statuts actifs uniquement.
+                Ouvre un modal pour saisir la raison, notifie le voyageur et
+                libère les dates dans le calendrier. */}
+            {['pending_bank_transfer', 'confirmed', 'pending'].includes(booking.booking_status) && (
+              <button
+                onClick={onCancelWithEmail}
+                disabled={actionLoading}
+                className="inline-flex items-center gap-1.5 px-3 py-2 border border-red-200 text-red-600 hover:bg-red-50 transition-colors text-[11px] uppercase font-medium rounded disabled:opacity-50"
+                style={{ letterSpacing: '0.1em' }}
+                title={isFr ? 'Annuler la réservation et notifier le voyageur' : 'Cancel booking and notify guest'}
+              >
+                <XCircle size={12} />
+                {isFr ? 'Annuler + email' : 'Cancel + email'}
               </button>
             )}
           </div>

@@ -98,6 +98,17 @@ const TR = {
   // Email subjects
   subjectConfirmed: { fr: (villa: string) => `Réservation confirmée — ${villa} | Island Living SXM`, en: (villa: string) => `Booking Confirmed — ${villa} | Island Living SXM` },
   subjectPending:   { fr: (villa: string) => `Demande de réservation — ${villa} | En attente du virement`, en: (villa: string) => `Booking Request — ${villa} | Awaiting Bank Transfer` },
+  subjectCancelled: { fr: (villa: string) => `Réservation annulée — ${villa} | Island Living SXM`, en: (villa: string) => `Booking Cancelled — ${villa} | Island Living SXM` },
+  // Cancellation email content
+  cancelledTitle:   { fr: 'Réservation annulée',                            en: 'Booking Cancelled' },
+  cancelledIntro:   { fr: (villa: string) => `Nous vous informons que votre réservation pour <strong>${villa}</strong> a été annulée.`, en: (villa: string) => `We are writing to inform you that your booking for <strong>${villa}</strong> has been cancelled.` },
+  cancelledReason:  { fr: 'Motif de l\'annulation',                          en: 'Reason for cancellation' },
+  cancelledRefund:  { fr: 'Remboursement',                                   en: 'Refund' },
+  cancelledRefundBody: {
+    fr: 'Si un paiement a déjà été reçu, nous procéderons au remboursement selon nos conditions d\'annulation (voir ci-dessous). En cas de virement bancaire, le remboursement peut nécessiter des frais bancaires internationaux — nous vous tiendrons informé.',
+    en: 'If a payment has already been received, we will proceed with the refund according to our cancellation policy (see below). For bank transfers, refund may incur international banking fees — we will keep you informed.',
+  },
+  cancelledContact: { fr: 'N\'hésitez pas à nous contacter pour toute question ou pour reprogrammer votre séjour.', en: 'Please feel free to contact us with any questions or to reschedule your stay.' },
 };
 
 function t<K extends keyof typeof TR>(key: K, locale: Locale): typeof TR[K]['en'] {
@@ -292,4 +303,56 @@ async function sendAdminNotificationEmail(d: BookingEmailData, status: string): 
     </div>
   `;
   await sendEmail(ADMIN_EMAIL, `[Island Living SXM] New Booking — ${d.guestName} — ${statusLabel}`, html);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Email 4 : Notification d'annulation (envoyée manuellement depuis l'admin)
+// ─────────────────────────────────────────────────────────────
+interface CancellationEmailData {
+  guestName: string;
+  guestEmail: string;
+  villaName: string;
+  checkIn: string;
+  checkOut: string;
+  bookingId: string;
+  reason?: string;       // motif renseigné par l'admin (optionnel)
+  locale?: Locale;
+}
+
+export async function sendBookingCancellationEmail(d: CancellationEmailData): Promise<void> {
+  const locale: Locale = d.locale === 'fr' ? 'fr' : 'en';
+  const subjectFn = t('subjectCancelled', locale) as (v: string) => string;
+  const introFn = t('cancelledIntro', locale) as (v: string) => string;
+
+  const reasonBlock = d.reason
+    ? `
+      <div style="background:#fff3cd;border-left:3px solid #c9a96e;padding:12px 16px;margin:16px 0;font-size:13px;color:#555;">
+        <strong>${t('cancelledReason', locale)} :</strong><br/>
+        ${d.reason.replace(/\n/g, '<br/>')}
+      </div>
+    `
+    : '';
+
+  const html = `
+    <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#333;">
+      ${headerHtml(locale)}
+      <div style="padding:32px 24px;">
+        <h2 style="color:#0a0a0a;font-size:18px;">${t('cancelledTitle', locale)}</h2>
+        <p>${t('dear', locale)} ${d.guestName},</p>
+        <p>${introFn(d.villaName)}</p>
+        <div style="background:#f8f8f6;padding:16px;border-radius:4px;margin:20px 0;">
+          <p style="margin:4px 0;"><strong>${t('checkInLbl', locale)}</strong> ${d.checkIn}</p>
+          <p style="margin:4px 0;"><strong>${t('checkOutLbl', locale)}</strong> ${d.checkOut}</p>
+          <p style="margin:4px 0;"><strong>${t('bookingRefLbl', locale)}</strong> ${d.bookingId}</p>
+        </div>
+        ${reasonBlock}
+        <h3 style="font-size:15px;color:#0a0a0a;margin-top:24px;">${t('cancelledRefund', locale)}</h3>
+        <p style="font-size:13px;color:#555;">${t('cancelledRefundBody', locale)}</p>
+        <p style="margin-top:24px;">${t('cancelledContact', locale)}</p>
+        ${cancellationPolicyHtml(locale)}
+        ${footerHtml(locale)}
+      </div>
+    </div>
+  `;
+  await sendEmail(d.guestEmail, subjectFn(d.villaName), html);
 }
