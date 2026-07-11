@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Home, Calendar, TrendingUp, DollarSign, Clock, ChevronDown, Wallet } from 'lucide-react';
 
 interface BookingRow {
@@ -140,15 +141,39 @@ export default function DashboardClient({
   const fmtMoney = (n: number) =>
     isFr ? `${n.toLocaleString('fr-FR')} $` : `$${n.toLocaleString('en-US')}`;
 
-  const kpis = [
-    { label: isFr ? 'Appartements' : 'Apartments', value: stats.apartments, icon: <Home size={22} />, color: 'bg-blue-500' },
-    { label: isFr ? 'Réservations' : 'Bookings',   value: stats.totalBookings, icon: <Calendar size={22} />, color: 'bg-green-500' },
+  // Chaque KPI card est un raccourci cliquable vers la page pertinente.
+  // Les 3 cards liées aux résas confirmées (Confirmed, Confirmed revenue,
+  // Collected) pointent vers /admin/bookings avec le filtre correspondant
+  // pré-appliqué via query param.
+  const kpis: Array<{
+    label: string;
+    value: string | number;
+    icon: React.ReactNode;
+    color: string;
+    sub?: string;
+    href: string;
+  }> = [
+    {
+      label: isFr ? 'Appartements' : 'Apartments',
+      value: stats.apartments,
+      icon: <Home size={22} />,
+      color: 'bg-blue-500',
+      href: `/${locale}/admin/apartments`,
+    },
+    {
+      label: isFr ? 'Réservations' : 'Bookings',
+      value: stats.totalBookings,
+      icon: <Calendar size={22} />,
+      color: 'bg-green-500',
+      href: `/${locale}/admin/bookings`,
+    },
     {
       label: isFr ? 'Confirmées' : 'Confirmed',
       value: stats.confirmedBookings,
       icon: <TrendingUp size={22} />,
       color: 'bg-[#B08B52]',
       sub: stats.pendingBookings > 0 ? `${stats.pendingBookings} ${isFr ? 'en attente' : 'pending'}` : undefined,
+      href: `/${locale}/admin/bookings?status=confirmed`,
     },
     {
       label: isFr ? 'CA confirmé ($)' : 'Confirmed revenue ($)',
@@ -156,6 +181,7 @@ export default function DashboardClient({
       icon: <DollarSign size={22} />,
       color: 'bg-amber-500',
       sub: isFr ? 'total des séjours confirmés' : 'total of confirmed stays',
+      href: `/${locale}/admin/bookings?status=confirmed`,
     },
     {
       label: isFr ? 'Encaissé ($)' : 'Collected ($)',
@@ -165,6 +191,7 @@ export default function DashboardClient({
       sub: stats.totalRevenue > 0
         ? `${Math.round((stats.totalCollected / stats.totalRevenue) * 100)}% ${isFr ? 'du CA' : 'of revenue'}`
         : (isFr ? 'paiements reçus' : 'payments received'),
+      href: `/${locale}/admin/bookings`,
     },
   ];
 
@@ -176,17 +203,21 @@ export default function DashboardClient({
         </h1>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs — chaque card est un raccourci cliquable vers sa page */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         {kpis.map((kpi, i) => (
-          <div key={i} className="bg-white rounded-2xl p-5 shadow-sm">
-            <div className={`w-10 h-10 ${kpi.color} rounded-xl flex items-center justify-center text-white mb-3`}>
+          <Link
+            key={i}
+            href={kpi.href}
+            className="group bg-white rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#B08B52]/40"
+          >
+            <div className={`w-10 h-10 ${kpi.color} rounded-xl flex items-center justify-center text-white mb-3 group-hover:scale-105 transition-transform`}>
               {kpi.icon}
             </div>
             <div className="text-2xl font-bold text-gray-900">{kpi.value}</div>
             <div className="text-sm text-gray-500 mt-1">{kpi.label}</div>
             {kpi.sub && <div className="text-xs text-gray-400 mt-0.5">{kpi.sub}</div>}
-          </div>
+          </Link>
         ))}
       </div>
 

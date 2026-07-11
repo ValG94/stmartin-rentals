@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Check, X, Clock, Mail, Building2, RefreshCw, Banknote,
   AlertCircle, Calendar, Users, CreditCard, XCircle, Loader2,
@@ -42,8 +42,19 @@ export default function BookingsClient({
 }) {
   const isFr = locale === 'fr';
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [refreshing, startRefresh] = useTransition();
-  const [filter, setFilter] = useState<'all' | 'pending_bank_transfer' | 'confirmed' | 'pending' | 'cancelled' | 'completed'>('all');
+
+  // Filtre initial lu depuis ?status=xxx (raccourci depuis le dashboard).
+  // Valeurs autorisées : whitelisées pour éviter les états invalides.
+  const initialFilter = (() => {
+    const s = searchParams.get('status');
+    if (s && ['pending_bank_transfer', 'confirmed', 'pending', 'cancelled', 'completed'].includes(s)) {
+      return s as 'pending_bank_transfer' | 'confirmed' | 'pending' | 'cancelled' | 'completed';
+    }
+    return 'all' as const;
+  })();
+  const [filter, setFilter] = useState<'all' | 'pending_bank_transfer' | 'confirmed' | 'pending' | 'cancelled' | 'completed'>(initialFilter);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
