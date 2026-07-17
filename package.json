@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "doc:update": "node scripts/update-technical-doc.mjs",
+    "hooks:install": "git config core.hooksPath .githooks && echo Hooks installed (core.hooksPath = .githooks)"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

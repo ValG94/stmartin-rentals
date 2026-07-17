@@ -1,0 +1,33 @@
+#!/bin/sh
+# ============================================================
+# .githooks/pre-commit
+# ============================================================
+# Regénère les blocs auto de TECHNICAL.md et re-stage le fichier
+# pour qu'il soit inclus dans le commit en cours.
+#
+# Activation locale (une fois par clone) :
+#   git config core.hooksPath .githooks
+# ou via le script pnpm :
+#   pnpm hooks:install
+# ============================================================
+
+set -e
+
+# Skip si Node absent (agents CI, hooks bypassés, etc.)
+if ! command -v node >/dev/null 2>&1; then
+  exit 0
+fi
+
+# Skip si TECHNICAL.md n'existe pas
+if [ ! -f TECHNICAL.md ]; then
+  exit 0
+fi
+
+node scripts/update-technical-doc.mjs
+
+# Re-stage le fichier s'il a été modifié
+if ! git diff --quiet -- TECHNICAL.md 2>/dev/null; then
+  git add TECHNICAL.md
+fi
+
+exit 0
