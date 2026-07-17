@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Check, X, Clock, Mail, Building2, RefreshCw, Banknote,
   AlertCircle, Calendar, Users, CreditCard, XCircle, Loader2,
+  ShieldCheck, ShieldAlert,
 } from 'lucide-react';
 
 // La liste des bookings vient toujours du Server Component (initialBookings).
@@ -30,6 +31,10 @@ export interface Booking {
   total_amount: number;
   currency: string;
   created_at: string;
+  security_deposit_amount?: number;
+  deposit_authorization_id?: string | null;
+  deposit_authorization_status?: 'authorized' | 'captured' | 'voided' | 'expired' | null;
+  deposit_authorized_at?: string | null;
   apartments?: { title_fr?: string; title_en?: string; slug?: string } | null;
 }
 
@@ -487,6 +492,42 @@ function BookingCard({
                   ? (isFr ? 'Carte' : 'Card')
                   : 'PayPal'}
             </span>
+            {/* Badge caution — affiché uniquement pour les bookings avec caution
+                > 0 (config villa). Vert si autorisée, orange si capturée (dégât),
+                gris si voidée/expirée, rouge/warning si en attente. */}
+            {(booking.security_deposit_amount ?? 0) > 0 && (() => {
+              const st = booking.deposit_authorization_status;
+              if (st === 'authorized') {
+                return (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 border border-green-200 text-green-700 rounded text-[10px] uppercase font-medium" style={{ letterSpacing: '0.1em' }} title={isFr ? 'Empreinte CB active' : 'Card imprint active'}>
+                    <ShieldCheck size={10} />
+                    {isFr ? 'Caution OK' : 'Deposit OK'}
+                  </span>
+                );
+              }
+              if (st === 'captured') {
+                return (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-50 border border-orange-200 text-orange-700 rounded text-[10px] uppercase font-medium" style={{ letterSpacing: '0.1em' }} title={isFr ? 'Caution capturée (dégât)' : 'Deposit captured (damage)'}>
+                    <ShieldAlert size={10} />
+                    {isFr ? 'Caution capturée' : 'Deposit captured'}
+                  </span>
+                );
+              }
+              if (st === 'voided' || st === 'expired') {
+                return (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-50 border border-gray-200 text-gray-500 rounded text-[10px] uppercase font-medium" style={{ letterSpacing: '0.1em' }} title={isFr ? 'Caution libérée' : 'Deposit released'}>
+                    <ShieldCheck size={10} />
+                    {isFr ? 'Caution libérée' : 'Deposit released'}
+                  </span>
+                );
+              }
+              return (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-300 text-amber-700 rounded text-[10px] uppercase font-medium" style={{ letterSpacing: '0.1em' }} title={isFr ? 'Empreinte CB non enregistrée' : 'Card imprint not on file'}>
+                  <ShieldAlert size={10} />
+                  {isFr ? 'Caution en attente' : 'Deposit pending'}
+                </span>
+              );
+            })()}
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-3">

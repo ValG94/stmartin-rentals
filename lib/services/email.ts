@@ -356,3 +356,73 @@ export async function sendBookingCancellationEmail(d: CancellationEmailData): Pr
   `;
   await sendEmail(d.guestEmail, subjectFn(d.villaName), html);
 }
+
+// ─────────────────────────────────────────────────────────────
+// Email 5 : Confirmation empreinte caution (Manual Capture Fygaro)
+// ─────────────────────────────────────────────────────────────
+interface DepositAuthorizedEmailData {
+  guestName: string;
+  guestEmail: string;
+  villaName: string;
+  checkIn: string;
+  checkOut: string;
+  securityDepositAmount: number;
+  bookingId: string;
+  locale?: Locale;
+}
+
+export async function sendDepositAuthorizedEmail(d: DepositAuthorizedEmailData): Promise<void> {
+  const locale: Locale = d.locale === 'fr' ? 'fr' : 'en';
+  const subject = locale === 'fr'
+    ? `Votre caution est sécurisée — ${d.villaName}`
+    : `Your security deposit is secured — ${d.villaName}`;
+
+  const intro = locale === 'fr'
+    ? `Nous confirmons que l'empreinte de votre carte a bien été enregistrée en garantie pour votre séjour à <strong>${d.villaName}</strong>.`
+    : `We confirm that your card imprint has been secured as a guarantee for your stay at <strong>${d.villaName}</strong>.`;
+
+  const noDebitTitle = locale === 'fr' ? 'Aucun débit effectué' : 'No debit charged';
+  const noDebitBody = locale === 'fr'
+    ? "Le montant de votre caution est simplement pré-autorisé sur votre carte — aucune somme n'est prélevée. La pré-autorisation est visible sur votre relevé mais ne réduit pas votre solde disponible de manière définitive."
+    : "Your deposit amount is simply pre-authorized on your card — no amount is charged. The pre-authorization may show on your statement but does not permanently reduce your available balance.";
+
+  const releaseTitle = locale === 'fr' ? 'Libération automatique' : 'Automatic release';
+  const releaseBody = locale === 'fr'
+    ? `L'empreinte sera libérée automatiquement après votre départ du <strong>${d.checkOut}</strong>, sous réserve qu'aucun dégât ne soit constaté lors du check-out. En cas de sinistre, le montant correspondant pourra être capturé par la propriétaire.`
+    : `The imprint will be released automatically after your departure on <strong>${d.checkOut}</strong>, provided no damage is found at check-out. In case of an issue, the corresponding amount may be captured by the owner.`;
+
+  const summaryTitle = locale === 'fr' ? 'Récapitulatif' : 'Summary';
+  const amountLabel = locale === 'fr' ? 'Montant pré-autorisé' : 'Pre-authorized amount';
+  const villaLabel = locale === 'fr' ? 'Villa' : 'Villa';
+  const checkInLabel = locale === 'fr' ? 'Arrivée' : 'Check-in';
+  const checkOutLabel = locale === 'fr' ? 'Départ' : 'Check-out';
+  const refLabel = locale === 'fr' ? 'Référence' : 'Reference';
+
+  const html = `
+    <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#333;">
+      ${headerHtml(locale)}
+      <div style="padding:32px 24px;">
+        <h2 style="color:#0a0a0a;font-size:18px;">${locale === 'fr' ? 'Empreinte enregistrée ✓' : 'Card imprint on file ✓'}</h2>
+        <p>${t('dear', locale)} ${d.guestName},</p>
+        <p>${intro}</p>
+
+        <div style="background:#f8f8f6;padding:16px;border-radius:4px;margin:20px 0;font-size:14px;">
+          <p style="margin:4px 0;"><strong>${villaLabel} :</strong> ${d.villaName}</p>
+          <p style="margin:4px 0;"><strong>${checkInLabel} :</strong> ${d.checkIn}</p>
+          <p style="margin:4px 0;"><strong>${checkOutLabel} :</strong> ${d.checkOut}</p>
+          <p style="margin:12px 0 4px;"><strong>${amountLabel} :</strong> ${formatUSD(d.securityDepositAmount)}</p>
+          <p style="margin:4px 0;color:#666;font-size:12px;"><strong>${refLabel} :</strong> ${d.bookingId}</p>
+        </div>
+
+        <h3 style="font-size:15px;color:#0a0a0a;margin-top:24px;">${noDebitTitle}</h3>
+        <p style="font-size:13px;color:#555;">${noDebitBody}</p>
+
+        <h3 style="font-size:15px;color:#0a0a0a;margin-top:20px;">${releaseTitle}</h3>
+        <p style="font-size:13px;color:#555;">${releaseBody}</p>
+
+        ${footerHtml(locale)}
+      </div>
+    </div>
+  `;
+  await sendEmail(d.guestEmail, subject, html);
+}

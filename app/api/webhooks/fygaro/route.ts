@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { verifyFygaroWebhookSignature, type FygaroWebhookPayload } from '@/lib/services/fygaro';
-import { sendBookingConfirmationEmail } from '@/lib/services/email';
+import { sendBookingConfirmationEmail, sendDepositAuthorizedEmail } from '@/lib/services/email';
 import { getServerSupabase } from '@/lib/services/server-pricing';
 
 // Node runtime nécessaire pour crypto.createHmac
@@ -200,7 +200,11 @@ async function handleDepositAuthorization(
 ) {
   const { data: booking, error } = await supabase
     .from('bookings')
-    .select('id, security_deposit_amount, deposit_authorization_id')
+    .select(`
+      id, guest_name, guest_email, check_in, check_out, locale,
+      security_deposit_amount, deposit_authorization_id,
+      apartments:apartment_id (title_fr, title_en)
+    `)
     .eq('id', bookingId)
     .single();
 
@@ -240,6 +244,35 @@ async function handleDepositAuthorization(
       deposit_authorized_at: new Date().toISOString(),
     })
     .eq('id', bookingId);
+
+  // Email de confirmation empreinte au client — uniquement au premier
+  // event 'authorized' (les callbacks ultérieurs de capture/void n'envoient
+  // pas de nouveau mail, ils sont visibles côté admin dashboard).
+  if (normalizedStatus === 'authorized') {
+    const locale: 'fr' | 'en' = (booking as { locale?: string }).locale === 'fr' ? 'fr' : 'en';
+    type ApartmentInfo = { title_fr?: string; title_en?: string };
+    const apartmentsRaw = (booking as { apartments?: ApartmentInfo | ApartmentInfo[] }).apartments;
+    const apartments = Array.isArray(apartmentsRaw) ? apartmentsRaw[0] : apartmentsRaw;
+    const villaName = locale === 'fr'
+      ? (apartments?.title_fr || apartments?.title_en || 'Villa')
+      : (apartments?.title_en || 'Villa');
+
+    try {
+      await sendDepositAuthorizedEmail({
+        guestName: (booking as { guest_name: string }).guest_name,
+        guestEmail: (booking as { guest_email: string }).guest_email,
+        villaName,
+        checkIn: (booking as { check_in: string }).check_in,
+        checkOut: (booking as { check_out: string }).check_out,
+        securityDepositAmount: Number((booking as { security_deposit_amount: number }).security_deposit_amount) || 0,
+        bookingId,
+        locale,
+      });
+    } catch (emailErr) {
+      // On ne plante pas le webhook si l'email échoue — la caution est enregistrée
+      console.error('[Fygaro webhook] deposit email failed:', emailErr);
+    }
+  }
 
   return NextResponse.json({ success: true, bookingId, status: normalizedStatus });
 }
