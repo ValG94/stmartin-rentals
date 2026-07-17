@@ -10,9 +10,22 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://islandlivingsxm.com';
+
+// Metadata bilingue par défaut — chaque page peut override title/description
+// via son propre generateMetadata (voir /apartments/[slug]).
+// L'objet `alternates` cible la racine locale (/en, /fr) ; les pages
+// intérieures ré-définissent leurs alternates pour cibler leur URL propre.
 export const metadata: Metadata = {
   title: 'Island Living SXM — Luxury Vacation Rentals in Sint Maarten',
   description: 'Luxury vacation rentals in Sint Maarten. Discover our exceptional villas with private pool and sea view.',
+  alternates: {
+    canonical: `${SITE_URL}/en`,
+    languages: {
+      en: `${SITE_URL}/en`,
+      fr: `${SITE_URL}/fr`,
+    },
+  },
 };
 
 export default async function LocaleLayout({

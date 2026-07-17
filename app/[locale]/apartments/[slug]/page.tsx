@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -8,6 +9,70 @@ import ImageGallery from '@/components/apartments/ImageGallery';
 import BookingForm from '@/components/booking/BookingForm';
 import { AMENITIES_MAP } from '@/components/apartments/AmenityIcon';
 import { sanitizeRichHtml } from '@/lib/services/sanitize';
+
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://islandlivingsxm.com').replace(/\/+$/, '');
+
+/**
+ * generateMetadata — SEO par villa :
+ *  - title/description bilingues extraits de la DB
+ *  - OG image = image de couverture de la villa (au lieu du hero générique)
+ *  - canonical + hreflang alternates (fr ↔ en)
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const res = await getApartmentBySlug(slug);
+  if (!res.data) return {};
+  const apt = res.data;
+  const isFr = locale === 'fr';
+  const name = isFr ? apt.title_fr : apt.title_en;
+  const rawDesc = isFr ? apt.description_fr : apt.description_en;
+  // La description peut contenir du HTML riche (formatting admin) — on strip
+  // les balises et on coupe à ~155 chars pour rester dans les limites SEO.
+  const plainDesc = (rawDesc || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const description = plainDesc.length > 155 ? plainDesc.slice(0, 152) + '…' : plainDesc;
+
+  const cover = apt.images?.find((im) => im.is_cover) || apt.images?.[0];
+  const coverUrl = cover?.url;
+
+  const canonicalPath = `/${locale}/apartments/${slug}`;
+
+  return {
+    title: name,
+    description,
+    alternates: {
+      canonical: canonicalPath,
+      languages: {
+        en: `/en/apartments/${slug}`,
+        fr: `/fr/apartments/${slug}`,
+      },
+    },
+    openGraph: {
+      title: `${name} — Island Living SXM`,
+      description,
+      url: `${SITE_URL}${canonicalPath}`,
+      siteName: 'Island Living SXM',
+      type: 'website',
+      locale: isFr ? 'fr_FR' : 'en_US',
+      alternateLocale: isFr ? 'en_US' : 'fr_FR',
+      images: coverUrl ? [{
+        url: coverUrl,
+        width: 1200,
+        height: 800,
+        alt: name,
+      }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${name} — Island Living SXM`,
+      description,
+      images: coverUrl ? [coverUrl] : undefined,
+    },
+  };
+}
 
 // Revalide la fiche villa toutes les 60 s côté CDN. Les nouvelles villas
 // pas pré-rendues au build seront générées à la première requête (dynamicParams
@@ -48,8 +113,50 @@ export default async function ApartmentDetailPage({
   const name = locale === 'fr' ? apartment.title_fr : apartment.title_en;
   const description = locale === 'fr' ? apartment.description_fr : apartment.description_en;
 
+  // ── JSON-LD structured data (LodgingBusiness) — indexation Google ──
+  // Rich results possibles : nom, image, adresse, rating, prix. Injecté
+  // en <script type="application/ld+json"> juste avant le contenu HTML.
+  const coverImg = apartment.images?.find((im) => im.is_cover) || apartment.images?.[0];
+  const canonicalUrl = `${SITE_URL}/${locale}/apartments/${apartment.slug}`;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LodgingBusiness',
+    '@id': canonicalUrl,
+    name,
+    description: (description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300),
+    url: canonicalUrl,
+    image: coverImg?.url ? [coverImg.url] : undefined,
+    telephone: '+1-514-947-6100',
+    priceRange: '$$$$',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: apartment.location || 'Sint Maarten',
+      addressCountry: 'SX',
+    },
+    numberOfRooms: apartment.bedrooms,
+    petsAllowed: false,
+    checkinTime: '16:00',
+    checkoutTime: '10:00',
+    amenityFeature: (apartment.amenities || []).slice(0, 12).map((a: string) => ({
+      '@type': 'LocationFeatureSpecification',
+      name: a,
+      value: true,
+    })),
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'USD',
+      price: activePriceUsd,
+      availability: 'https://schema.org/InStock',
+      url: canonicalUrl,
+    },
+  };
+
   return (
     <div className="bg-cream-100">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
 
         {/* ── Breadcrumb ─────────────────────────────────────────── */}
