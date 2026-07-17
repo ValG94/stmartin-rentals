@@ -26,14 +26,10 @@ export interface FygaroPaymentPayload {
   amount: number;
   currency?: string;               // 'USD' par défaut
   reference: string;               // notre bookingId, retourné dans le webhook
-  returnUrl?: string;              // override du return_url du bouton
-  cancelUrl?: string;              // override du cancel_url
-  client?: {
-    email?: string;
-    first_name?: string;
-    last_name?: string;
-    phone?: string;
-  };
+  // Le return_url se configure directement dans le Payment Button
+  // (Plugins tab côté Fygaro). Les infos client (email/nom/téléphone) sont
+  // saisies par le client sur la page de paiement hébergée Fygaro — pas
+  // besoin de les pré-remplir via le JWT.
 }
 
 /**
@@ -111,20 +107,26 @@ export function buildFygaroPaymentUrl(
 
   const now = Math.floor(Date.now() / 1000);
 
-  // Payload JWT — les claims custom_* sont interprétés par Fygaro et
-  // priment sur les valeurs par défaut du Payment Button.
+  // Payload JWT — les 3 claims override du bouton Fygaro sont EXACTEMENT :
+  //   - amount (string, 2 décimales) : override le montant statique du bouton
+  //   - currency (string)            : override la devise
+  //   - custom_reference (string)    : notre bookingId, retourné dans webhook + return URL
+  //
+  // Les autres champs (return_url, client, etc.) ne sont PAS gérés par le JWT.
+  // Ils se configurent côté Payment Button (Return URL dans Plugins tab)
+  // ou sont saisis par le client sur la page de paiement Fygaro (email, nom).
+  //
+  // iss / aud / iat / exp / nbf sont supportés — on garde exp (1h) comme
+  // fenêtre de validité de l'URL signée pour éviter les URLs replay-ables.
   const jwtPayload: Record<string, unknown> = {
     iss: publicKey,
     aud: buttonId,
     iat: now,
     exp: now + 60 * 60,                          // 1h pour compléter le paiement
-    custom_amount: Number(payload.amount.toFixed(2)),
-    custom_currency: payload.currency || 'USD',
-    custom_reference: payload.reference,
+    amount: payload.amount.toFixed(2),           // string 2 décimales (doc Fygaro)
+    currency: payload.currency || 'USD',
+    custom_reference: payload.reference,         // ex : "booking:<uuid>" ou "deposit:<uuid>"
   };
-  if (payload.returnUrl) jwtPayload.custom_return_url = payload.returnUrl;
-  if (payload.cancelUrl) jwtPayload.custom_cancel_url = payload.cancelUrl;
-  if (payload.client)    jwtPayload.custom_client = payload.client;
 
   const jwt = signHS256(jwtPayload, secretKey, publicKey);
 
@@ -153,8 +155,13 @@ export function verifyFygaroWebhookSignature(
   signatureHeader: string | null,
   toleranceSec = 5 * 60,           // 5 min de tolérance sur la clock skew
 ): FygaroWebhookVerification {
-  const secret = process.env.FYGARO_WEBHOOK_SECRET;
-  if (!secret) return { valid: false, reason: 'FYGARO_WEBHOOK_SECRET non configuré' };
+  // Fygaro signe les webhooks avec la Secret Key API du compte
+  // (Settings → API Credentials). Doc :
+  // https://help.fygaro.com/en-us/article/payment-button-hook-1wkui1k/
+  // On garde WEBHOOK_SECRET en env optionnel pour supporter une éventuelle
+  // rotation de clé future sans redéploiement, mais par défaut = SECRET_KEY.
+  const secret = process.env.FYGARO_WEBHOOK_SECRET || process.env.FYGARO_SECRET_KEY;
+  if (!secret) return { valid: false, reason: 'Aucune clé Fygaro configurée (SECRET_KEY ou WEBHOOK_SECRET)' };
   if (!signatureHeader) return { valid: false, reason: 'Header Fygaro-Signature manquant' };
 
   // Parse le header

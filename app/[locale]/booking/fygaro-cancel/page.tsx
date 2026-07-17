@@ -3,7 +3,12 @@ import { XCircle, Mail, Phone } from 'lucide-react';
 
 interface Props {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ bookingId?: string; mode?: string }>;
+  searchParams: Promise<{
+    bookingId?: string;
+    mode?: string;
+    reference?: string;
+    customReference?: string;
+  }>;
 }
 
 /**
@@ -14,7 +19,13 @@ interface Props {
  */
 export default async function FygaroCancelPage({ params, searchParams }: Props) {
   const { locale } = await params;
-  const { mode = 'booking' } = await searchParams;
+  const sp = await searchParams;
+  // Même parsing customReference que la page success (voir doc là-bas)
+  let mode = sp.mode || 'booking';
+  if (sp.customReference) {
+    const [refType] = sp.customReference.split(':');
+    if (refType) mode = refType;
+  }
   const isFr = locale === 'fr';
   const isDepositMode = mode === 'deposit';
 

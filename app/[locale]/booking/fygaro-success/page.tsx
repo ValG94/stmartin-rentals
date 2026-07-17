@@ -5,20 +5,42 @@ import { formatUSD } from '@/lib/services/pricing';
 
 interface Props {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ bookingId?: string; mode?: string }>;
+  searchParams: Promise<{
+    bookingId?: string;
+    mode?: string;
+    // Fygaro append ces 2 params quand il redirige vers la Return URL :
+    // ?reference=<transactionId>&customReference=<notre custom_reference JWT>
+    // On parse customReference ("booking:<uuid>" ou "deposit:<uuid>") pour
+    // extraire mode + bookingId.
+    reference?: string;
+    customReference?: string;
+  }>;
 }
 
 /**
  * Page de retour après paiement Fygaro (mode=booking ou mode=deposit).
  *
- * - mode=booking : confirmation du paiement séjour (webhook a mis
- *   payment_status en paid/partially_paid + booking_status confirmed)
- * - mode=deposit : confirmation de l'empreinte CB caution (webhook a
- *   posé deposit_authorization_id + status='authorized'). Pas de débit.
+ * Reçoit soit :
+ *  - `customReference=booking:<uuid>` OU `customReference=deposit:<uuid>`
+ *    quand Fygaro nous renvoie directement depuis leur Return URL
+ *  - `bookingId=<uuid>&mode=booking|deposit` quand on redirige nous-mêmes
+ *    (fallback interne, pratique pour des tests manuels)
  */
 export default async function FygaroSuccessPage({ params, searchParams }: Props) {
   const { locale } = await params;
-  const { bookingId = '', mode = 'booking' } = await searchParams;
+  const sp = await searchParams;
+
+  // Priorité au customReference envoyé par Fygaro (source de vérité webhook)
+  let bookingId = sp.bookingId || '';
+  let mode = sp.mode || 'booking';
+  if (sp.customReference) {
+    const [refType, refId] = sp.customReference.split(':');
+    if (refType && refId) {
+      mode = refType;               // 'booking' ou 'deposit'
+      bookingId = refId;
+    }
+  }
+
   const isFr = locale === 'fr';
   const isDepositMode = mode === 'deposit';
 

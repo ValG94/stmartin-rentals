@@ -101,20 +101,13 @@ export async function POST(req: NextRequest) {
       if (error) throw new Error(`DB error: ${error.message}`);
       const bookingId = booking.id;
 
-      const [firstName, ...rest] = String(booking.guest_name).split(/\s+/);
-      const lastName = rest.join(' ') || undefined;
-
+      // Le return_url et les infos client sont configurés côté Payment Button
+      // Fygaro (Plugins tab). On n'injecte que amount + currency + reference
+      // dans le JWT (les 3 champs override supportés par Fygaro).
       const redirectUrl = buildFygaroPaymentUrl(bookingButton, {
         amount: pricing.amountDue,
         currency: 'USD',
         reference: `booking:${bookingId}`,
-        returnUrl: `${baseUrl}/${locale}/booking/fygaro-success?bookingId=${bookingId}&mode=booking`,
-        cancelUrl: `${baseUrl}/${locale}/booking/fygaro-cancel?bookingId=${bookingId}`,
-        client: {
-          email: booking.guest_email,
-          first_name: firstName,
-          ...(lastName ? { last_name: lastName } : {}),
-        },
       });
 
       return NextResponse.json({ redirectUrl, bookingId });
@@ -150,21 +143,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Aucun montant de caution défini pour cette booking' }, { status: 400 });
     }
 
-    const locale = (booking.locale === 'fr' ? 'fr' : 'en') as 'fr' | 'en';
-    const [firstName, ...rest] = String(booking.guest_name || '').split(/\s+/);
-    const lastName = rest.join(' ') || undefined;
-
     const redirectUrl = buildFygaroPaymentUrl(depositButton, {
       amount: depositAmount,
       currency: 'USD',
       reference: `deposit:${bookingId}`,
-      returnUrl: `${baseUrl}/${locale}/booking/fygaro-success?bookingId=${bookingId}&mode=deposit`,
-      cancelUrl: `${baseUrl}/${locale}/booking/fygaro-cancel?bookingId=${bookingId}&mode=deposit`,
-      client: {
-        email: booking.guest_email,
-        first_name: firstName,
-        ...(lastName ? { last_name: lastName } : {}),
-      },
     });
 
     return NextResponse.json({ redirectUrl, bookingId });
