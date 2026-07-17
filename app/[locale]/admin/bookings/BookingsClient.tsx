@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Check, X, Clock, Mail, Building2, RefreshCw, Banknote,
   AlertCircle, Calendar, Users, CreditCard, XCircle, Loader2,
-  ShieldCheck, ShieldAlert, Send,
+  ShieldCheck, ShieldAlert, Send, ExternalLink,
 } from 'lucide-react';
 
 // La liste des bookings vient toujours du Server Component (initialBookings).
@@ -659,6 +659,27 @@ function BookingCard({
               >
                 {isFr ? 'Marquer terminée' : 'Mark completed'}
               </button>
+            )}
+            {/* Raccourci "Gérer sur Fygaro" — visible si l'empreinte caution
+                est active (authorized). Ouvre le dashboard Fygaro dans un
+                nouvel onglet ; Sonia y trouve le bouton Capture (dégât) ou
+                Void (libération manuelle). L'ID transaction est en tooltip
+                pour copier-coller si besoin de search. */}
+            {booking.deposit_authorization_status === 'authorized' && booking.deposit_authorization_id && (
+              <a
+                href="https://www.fygaro.com/en/dashboard/transactions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 border border-bronze-300 text-bronze-600 hover:bg-bronze-50 transition-colors text-[11px] uppercase font-medium rounded"
+                style={{ letterSpacing: '0.1em' }}
+                title={isFr
+                  ? `Prélever (dégât) ou libérer l'empreinte. ID transaction : ${booking.deposit_authorization_id}`
+                  : `Capture (damage) or release the imprint. Transaction ID: ${booking.deposit_authorization_id}`}
+              >
+                <ShieldCheck size={12} />
+                {isFr ? 'Gérer caution' : 'Manage deposit'}
+                <ExternalLink size={10} />
+              </a>
             )}
             {/* Bouton rappel de solde — uniquement pour bookings actives en 40%
                 acompte avec solde restant. On affiche l'info "déjà relancée"

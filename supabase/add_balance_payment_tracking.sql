@@ -17,7 +17,10 @@
 ALTER TABLE bookings
   ADD COLUMN IF NOT EXISTS balance_transaction_id TEXT,
   ADD COLUMN IF NOT EXISTS balance_paid_at TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS balance_reminded_at TIMESTAMPTZ;
+  ADD COLUMN IF NOT EXISTS balance_reminded_at TIMESTAMPTZ,
+  -- Colonne utilisée par le cron /api/cron/deposit-reminders pour ne pas
+  -- envoyer plusieurs mails de rappel d'empreinte au même client.
+  ADD COLUMN IF NOT EXISTS deposit_reminded_at TIMESTAMPTZ;
 
 -- Vérification : liste les bookings avec un solde et leur statut de suivi.
 SELECT id, guest_name, check_in, remaining_balance, payment_status,

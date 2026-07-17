@@ -531,6 +531,62 @@ export async function sendBalancePaidEmail(d: BalancePaidEmailData): Promise<voi
 }
 
 // ─────────────────────────────────────────────────────────────
+// Email 4d : Rappel d'empreinte CB si non posée avant l'arrivée
+// ─────────────────────────────────────────────────────────────
+interface DepositReminderEmailData {
+  guestName: string;
+  guestEmail: string;
+  villaName: string;
+  checkIn: string;
+  securityDepositAmount: number;
+  bookingId: string;
+  authorizeUrl: string;
+  locale?: Locale;
+}
+
+export async function sendDepositReminderEmail(d: DepositReminderEmailData): Promise<void> {
+  const locale: Locale = d.locale === 'fr' ? 'fr' : 'en';
+  const subject = locale === 'fr'
+    ? `Rappel : autorisation de caution pour ${d.villaName}`
+    : `Reminder: deposit authorization for ${d.villaName}`;
+
+  const intro = locale === 'fr'
+    ? `Votre arrivée à <strong>${d.villaName}</strong> est prévue le ${d.checkIn}. Pour finaliser votre séjour, il ne reste qu'à autoriser l'empreinte CB de garantie — c'est instantané et sans débit.`
+    : `Your arrival at <strong>${d.villaName}</strong> is scheduled for ${d.checkIn}. To finalize your stay, only the security deposit imprint remains to be authorized — instant and without debit.`;
+
+  const ctaLabel = locale === 'fr' ? 'Autoriser mon empreinte CB' : 'Authorize my card imprint';
+  const amountLine = locale === 'fr'
+    ? `Montant pré-autorisé : <strong>${formatUSD(d.securityDepositAmount)}</strong>`
+    : `Pre-authorized amount: <strong>${formatUSD(d.securityDepositAmount)}</strong>`;
+  const noDebitNote = locale === 'fr'
+    ? "Aucun débit ne sera effectué. L'empreinte est libérée automatiquement après votre départ, sauf en cas de dégât constaté."
+    : 'No debit will be charged. The imprint is released automatically after your departure, unless damage is found.';
+
+  const html = `
+    <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#333;">
+      ${headerHtml(locale)}
+      <div style="padding:32px 24px;">
+        <h2 style="color:#0a0a0a;font-size:18px;">${locale === 'fr' ? 'Autorisez votre caution' : 'Authorize your deposit'}</h2>
+        <p>${t('dear', locale)} ${d.guestName},</p>
+        <p>${intro}</p>
+        <p style="text-align:center;font-size:15px;margin:20px 0;">${amountLine}</p>
+
+        <div style="text-align:center;margin:28px 0 8px;">
+          <a href="${d.authorizeUrl}" style="display:inline-block;padding:14px 32px;background:#c9a96e;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;border-radius:4px;">
+            ${ctaLabel}
+          </a>
+        </div>
+
+        <p style="font-size:12px;color:#888;text-align:center;margin-top:12px;">${noDebitNote}</p>
+
+        ${footerHtml(locale)}
+      </div>
+    </div>
+  `;
+  await sendEmail(d.guestEmail, subject, html);
+}
+
+// ─────────────────────────────────────────────────────────────
 // Email 5 : Confirmation empreinte caution (Manual Capture Fygaro)
 // ─────────────────────────────────────────────────────────────
 interface DepositAuthorizedEmailData {
