@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CheckCircle2, Calendar, MapPin, Users, Mail, Phone, ShieldCheck } from 'lucide-react';
 import { getServerSupabase } from '@/lib/services/server-pricing';
 import { formatUSD } from '@/lib/services/pricing';
+import AuthorizeDepositButton from '@/components/booking/AuthorizeDepositButton';
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -189,6 +190,46 @@ export default async function FygaroSuccessPage({ params, searchParams }: Props)
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* CTA caution — visible uniquement après le paiement séjour, si la
+            caution n'a pas déjà été autorisée. La caution est prise sur un
+            Payment Button Fygaro dédié avec Manual Capture (pré-autorisation
+            sans débit immédiat). */}
+        {!isDepositMode && booking && bookingId
+          && booking.security_deposit_amount > 0
+          && booking.deposit_authorization_status !== 'authorized' && (
+          <div className="bg-cream-50 border-2 border-bronze-400 rounded-2xl p-8 mb-8">
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-12 h-12 bg-bronze-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-6 h-6 text-bronze-500" strokeWidth={1.5} />
+              </div>
+              <div className="flex-1">
+                <p className="section-label mb-2 text-bronze-500">
+                  {isFr ? 'Étape 2 sur 2' : 'Step 2 of 2'}
+                </p>
+                <h3 className="font-serif text-xl text-night-600 mb-2">
+                  {isFr ? 'Autorisez votre caution' : 'Authorize your security deposit'}
+                </h3>
+                <p className="text-sm text-night-500 font-light leading-relaxed">
+                  {isFr
+                    ? <>Pour finaliser votre réservation, autorisez une empreinte CB de <strong>{formatUSD(booking.security_deposit_amount)}</strong> en garantie. <strong>Aucun débit</strong> n&apos;est effectué — le montant est simplement pré-autorisé sur votre carte et sera libéré après votre départ, sauf en cas de dégât.</>
+                    : <>To finalize your reservation, authorize a card imprint of <strong>{formatUSD(booking.security_deposit_amount)}</strong> as a guarantee. <strong>No debit</strong> is charged — the amount is simply pre-authorized on your card and released after your departure, unless damage is found.</>}
+                </p>
+              </div>
+            </div>
+            <AuthorizeDepositButton
+              bookingId={bookingId}
+              label={isFr ? `Autoriser la caution — ${formatUSD(booking.security_deposit_amount)}` : `Authorize deposit — ${formatUSD(booking.security_deposit_amount)}`}
+              loadingLabel={isFr ? 'Redirection…' : 'Redirecting…'}
+              errorPrefix={isFr ? 'Erreur :' : 'Error:'}
+            />
+            <p className="text-[11px] text-night-400 mt-4 text-center font-light">
+              {isFr
+                ? "Étape obligatoire pour finaliser votre séjour."
+                : 'Required step to finalize your stay.'}
+            </p>
           </div>
         )}
 
