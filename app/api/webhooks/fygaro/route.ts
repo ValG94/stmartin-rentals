@@ -96,10 +96,15 @@ async function handleBookingPayment(
     return NextResponse.json({ success: true, alreadyProcessed: true });
   }
 
-  // Validation du montant (tolérance 0.01 USD)
+  // Validation du montant (tolérance 0.01 USD). En TEST MODE (env
+  // FYGARO_TEST_AMOUNT défini), on skip cette vérif puisque Fygaro reçoit
+  // le montant override et le renvoie tel quel — c'est attendu qu'il ne
+  // matche pas le vrai booking.total_amount stocké en DB.
+  const testAmountRaw = process.env.FYGARO_TEST_AMOUNT;
+  const isTestMode = testAmountRaw && Number(testAmountRaw) > 0;
   const expectedAmount = Number(booking.total_amount);
   const capturedAmount = Number(payload.amount);
-  if (!Number.isFinite(capturedAmount) || Math.abs(capturedAmount - expectedAmount) > 0.01) {
+  if (!isTestMode && (!Number.isFinite(capturedAmount) || Math.abs(capturedAmount - expectedAmount) > 0.01)) {
     console.error('[Fygaro webhook] amount mismatch', {
       bookingId, expected: expectedAmount, received: capturedAmount,
     });
@@ -111,6 +116,9 @@ async function handleBookingPayment(
       })
       .eq('id', bookingId);
     return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 });
+  }
+  if (isTestMode) {
+    console.warn(`[Fygaro webhook] TEST MODE — skipping amount check (got $${capturedAmount}, real $${expectedAmount})`);
   }
 
   // Validation devise
@@ -200,10 +208,12 @@ async function handleDepositAuthorization(
     return NextResponse.json({ success: true, alreadyProcessed: true });
   }
 
-  // Validation du montant (tolérance 0.01 USD)
+  // Validation du montant (tolérance 0.01 USD). Skippée en TEST MODE, cf. handleBookingPayment.
+  const testAmountRaw = process.env.FYGARO_TEST_AMOUNT;
+  const isTestMode = testAmountRaw && Number(testAmountRaw) > 0;
   const expectedAmount = Number(booking.security_deposit_amount) || 0;
   const authAmount = Number(payload.amount);
-  if (!Number.isFinite(authAmount) || Math.abs(authAmount - expectedAmount) > 0.01) {
+  if (!isTestMode && (!Number.isFinite(authAmount) || Math.abs(authAmount - expectedAmount) > 0.01)) {
     console.error('[Fygaro webhook] deposit amount mismatch', {
       bookingId, expected: expectedAmount, received: authAmount,
     });

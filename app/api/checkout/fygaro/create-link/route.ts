@@ -36,6 +36,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'FYGARO non configuré (clés manquantes)' }, { status: 500 });
     }
 
+    // ── Mode test — override du montant pour les tests bout-en-bout ─────────
+    // Si FYGARO_TEST_AMOUNT est défini côté Vercel (ex : "1" ou "0.01"), le
+    // montant réel de la booking est ignoré et remplacé par cette valeur au
+    // moment de signer le JWT Fygaro. La booking est quand même créée avec
+    // les vrais montants en DB (pour tester la logique de statut + email).
+    // Pour repasser en prod réelle : supprimer l'env var, redéployer.
+    const testAmountRaw = process.env.FYGARO_TEST_AMOUNT;
+    const testAmount = testAmountRaw ? Number(testAmountRaw) : null;
+    const useTestAmount = testAmount !== null && Number.isFinite(testAmount) && testAmount > 0;
+    if (useTestAmount) {
+      console.warn(`[Fygaro] TEST MODE actif — amount override = $${testAmount}`);
+    }
+
     // ── MODE 1 : paiement séjour ─────────────────────────────────────────────
     if (mode === 'booking') {
       const bookingButton = process.env.FYGARO_PAYMENT_URL_BOOKING;
@@ -105,12 +118,12 @@ export async function POST(req: NextRequest) {
       // Fygaro (Plugins tab). On n'injecte que amount + currency + reference
       // dans le JWT (les 3 champs override supportés par Fygaro).
       const redirectUrl = buildFygaroPaymentUrl(bookingButton, {
-        amount: pricing.amountDue,
+        amount: useTestAmount ? testAmount! : pricing.amountDue,
         currency: 'USD',
         reference: `booking:${bookingId}`,
       });
 
-      return NextResponse.json({ redirectUrl, bookingId });
+      return NextResponse.json({ redirectUrl, bookingId, testMode: useTestAmount || undefined });
     }
 
     // ── MODE 2 : empreinte CB caution ────────────────────────────────────────
@@ -144,12 +157,12 @@ export async function POST(req: NextRequest) {
     }
 
     const redirectUrl = buildFygaroPaymentUrl(depositButton, {
-      amount: depositAmount,
+      amount: useTestAmount ? testAmount! : depositAmount,
       currency: 'USD',
       reference: `deposit:${bookingId}`,
     });
 
-    return NextResponse.json({ redirectUrl, bookingId });
+    return NextResponse.json({ redirectUrl, bookingId, testMode: useTestAmount || undefined });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     const code = (err as { code?: string }).code;

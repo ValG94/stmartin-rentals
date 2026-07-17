@@ -111,6 +111,14 @@ function MonthCalendar({
 
   const endDisplay = hoveredDate && !checkOut ? hoveredDate : checkOut;
 
+  // Si l'utilisateur est en train de survoler une date après checkIn (pas
+  // encore de checkOut choisi), on vérifie une seule fois si la plage
+  // hypothétique contient un blocage. Sert à colorer TOUTE la plage en rouge
+  // pour signaler l'invalidité au lieu du bronze normal.
+  const hoverRangeInvalid =
+    !!(checkIn && !checkOut && hoveredDate && hoveredDate > checkIn &&
+       isRangeContainsBlocked(checkIn, hoveredDate, blockedRanges));
+
   return (
     <div className="select-none">
       <div className="text-center font-serif font-light text-night-600 mb-3 text-base">
@@ -149,10 +157,14 @@ function MonthCalendar({
             cellClass += 'text-night-200 cursor-not-allowed line-through ';
           } else if (isStart || isEnd) {
             cellClass += 'bg-bronze-400 text-cream-100 font-medium rounded-full z-10 ';
+          } else if (inRange && hoverRangeInvalid) {
+            // Plage hypothétique invalide (contient une date bloquée)
+            // → toute la plage passe en rouge pour signal visuel fort
+            cellClass += 'bg-red-100 text-red-600 cursor-not-allowed ';
           } else if (inRange) {
             cellClass += 'bg-bronze-400/15 text-night-600 ';
           } else if (wouldContainBlocked) {
-            cellClass += 'text-night-300 cursor-not-allowed ';
+            cellClass += 'text-red-500 cursor-not-allowed ';
           } else if (isToday) {
             cellClass += 'text-bronze-500 font-semibold hover:bg-bronze-50 rounded-full ';
           } else {
@@ -240,9 +252,12 @@ export default function DateRangePicker({
         onCheckInChange(dateStr);
         onCheckOutChange('');
       } else if (isRangeContainsBlocked(checkIn, dateStr, blockedRanges)) {
-        // La plage contient des dates bloquées → recommencer
-        onCheckInChange(dateStr);
-        onCheckOutChange('');
+        // La plage contient une date bloquée (ex : sync Airbnb).
+        // On IGNORE le click au lieu de reset : le curseur 'not-allowed'
+        // + le rendu grisé du hover signalent déjà l'invalidité, et
+        // reset ferait croire à l'utilisateur qu'on revient à checkin
+        // alors qu'il essayait juste de choisir un checkout.
+        return;
       } else {
         onCheckOutChange(dateStr);
         setOpen(false);
