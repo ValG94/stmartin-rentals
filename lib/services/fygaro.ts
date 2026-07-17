@@ -107,26 +107,29 @@ export function buildFygaroPaymentUrl(
 
   const now = Math.floor(Date.now() / 1000);
 
-  // Payload JWT — les 3 claims override du bouton Fygaro sont EXACTEMENT :
+  // Payload JWT — strictement les claims documentés par Fygaro :
+  //   https://help.fygaro.com/en-us/article/fygaro-links-integration-api-h78p9y/
   //   - amount (string, 2 décimales) : override le montant statique du bouton
   //   - currency (string)            : override la devise
   //   - custom_reference (string)    : notre bookingId, retourné dans webhook + return URL
+  //   - exp (UnixTimestamp)          : fenêtre de validité de l'URL signée (1h)
+  //   - nbf (UnixTimestamp)          : validité en avance (optionnel, non utilisé ici)
   //
-  // Les autres champs (return_url, client, etc.) ne sont PAS gérés par le JWT.
-  // Ils se configurent côté Payment Button (Return URL dans Plugins tab)
-  // ou sont saisis par le client sur la page de paiement Fygaro (email, nom).
+  // On N'INCLUT PAS iss / aud / iat : ces claims JWT standards ne sont
+  // pas dans la liste documentée par Fygaro. Certains validateurs stricts
+  // rejettent "Invalid JWT" quand ils rencontrent des claims inattendus.
   //
-  // iss / aud / iat / exp / nbf sont supportés — on garde exp (1h) comme
-  // fenêtre de validité de l'URL signée pour éviter les URLs replay-ables.
+  // Les infos client (email, nom) sont saisies par le client sur la page
+  // hébergée. Le return_url est configuré côté Payment Button (Plugins tab).
   const jwtPayload: Record<string, unknown> = {
-    iss: publicKey,
-    aud: buttonId,
-    iat: now,
     exp: now + 60 * 60,                          // 1h pour compléter le paiement
     amount: payload.amount.toFixed(2),           // string 2 décimales (doc Fygaro)
     currency: payload.currency || 'USD',
     custom_reference: payload.reference,         // ex : "booking:<uuid>" ou "deposit:<uuid>"
   };
+  // buttonId sert uniquement à valider le format côté nous — pas envoyé
+  // dans le JWT. Fygaro sait quel bouton on cible via l'URL de destination.
+  void buttonId;
 
   const jwt = signHS256(jwtPayload, secretKey, publicKey);
 
