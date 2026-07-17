@@ -44,7 +44,13 @@ export async function POST(req: NextRequest) {
   const reference = payload.customReference || payload.reference || '';
   const [refType, bookingId] = reference.split(':');
 
-  if (!bookingId || !['booking', 'deposit'].includes(refType)) {
+  // custom_reference est limité à 40 chars côté Fygaro donc on utilise les
+  // préfixes courts "b:" et "d:" (cf. create-link/route.ts). On accepte
+  // aussi les anciens "booking:"/"deposit:" pour rétrocompat si un webhook
+  // en flight arrive après ce déploiement.
+  const isBooking = refType === 'b' || refType === 'booking';
+  const isDeposit = refType === 'd' || refType === 'deposit';
+  if (!bookingId || (!isBooking && !isDeposit)) {
     console.warn('[Fygaro webhook] reference inattendue :', reference);
     // On répond 200 pour ne pas déclencher les retries Fygaro sur un
     // webhook qu'on n'attend pas (ex : produit non lié à une booking).
@@ -54,7 +60,7 @@ export async function POST(req: NextRequest) {
   const supabase = getServerSupabase();
 
   // ── Type 1 : paiement séjour ────────────────────────────────────────────
-  if (refType === 'booking') {
+  if (isBooking) {
     return await handleBookingPayment(bookingId, payload, supabase);
   }
 

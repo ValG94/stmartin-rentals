@@ -117,10 +117,13 @@ export async function POST(req: NextRequest) {
       // Le return_url et les infos client sont configurés côté Payment Button
       // Fygaro (Plugins tab). On n'injecte que amount + currency + reference
       // dans le JWT (les 3 champs override supportés par Fygaro).
+      // Fygaro limite custom_reference à 40 chars ; on utilise "b:<uuid>"
+      // (38 chars) au lieu de "booking:<uuid>" (44). Cf. parsing symétrique
+      // dans webhook + fygaro-success/cancel pages.
       const redirectUrl = buildFygaroPaymentUrl(bookingButton, {
         amount: useTestAmount ? testAmount! : pricing.amountDue,
         currency: 'USD',
-        reference: `booking:${bookingId}`,
+        reference: `b:${bookingId}`,
       });
 
       return NextResponse.json({ redirectUrl, bookingId, testMode: useTestAmount || undefined });
@@ -156,10 +159,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Aucun montant de caution défini pour cette booking' }, { status: 400 });
     }
 
+    // Idem : "d:<uuid>" (38 chars) au lieu de "deposit:<uuid>" (44).
     const redirectUrl = buildFygaroPaymentUrl(depositButton, {
       amount: useTestAmount ? testAmount! : depositAmount,
       currency: 'USD',
-      reference: `deposit:${bookingId}`,
+      reference: `d:${bookingId}`,
     });
 
     return NextResponse.json({ redirectUrl, bookingId, testMode: useTestAmount || undefined });

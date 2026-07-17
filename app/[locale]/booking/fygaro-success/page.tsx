@@ -36,7 +36,10 @@ export default async function FygaroSuccessPage({ params, searchParams }: Props)
   if (sp.customReference) {
     const [refType, refId] = sp.customReference.split(':');
     if (refType && refId) {
-      mode = refType;               // 'booking' ou 'deposit'
+      // Préfixes courts b:/d: (limite 40 chars Fygaro) + anciens booking:/deposit:
+      // pour rétrocompat sur d'éventuelles redirections en flight.
+      if (refType === 'b' || refType === 'booking') mode = 'booking';
+      else if (refType === 'd' || refType === 'deposit') mode = 'deposit';
       bookingId = refId;
     }
   }

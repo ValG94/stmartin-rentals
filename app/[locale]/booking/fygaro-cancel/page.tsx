@@ -24,7 +24,8 @@ export default async function FygaroCancelPage({ params, searchParams }: Props) 
   let mode = sp.mode || 'booking';
   if (sp.customReference) {
     const [refType] = sp.customReference.split(':');
-    if (refType) mode = refType;
+    if (refType === 'b' || refType === 'booking') mode = 'booking';
+    else if (refType === 'd' || refType === 'deposit') mode = 'deposit';
   }
   const isFr = locale === 'fr';
   const isDepositMode = mode === 'deposit';
