@@ -26,7 +26,14 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const mode: 'booking' | 'deposit' = body.mode === 'deposit' ? 'deposit' : 'booking';
+    // Trois modes :
+    //  - 'booking' : paiement séjour (full ou 40% acompte) — flow initial
+    //  - 'deposit' : empreinte caution (Manual Capture) — après booking
+    //  - 'balance' : paiement du solde restant sur une booking déjà 40% payée
+    const mode: 'booking' | 'deposit' | 'balance' =
+      body.mode === 'deposit' ? 'deposit'
+        : body.mode === 'balance' ? 'balance'
+        : 'booking';
 
     const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://islandlivingsxm.com').replace(/\/+$/, '');
     const publicKey = process.env.FYGARO_PUBLIC_KEY;
@@ -129,6 +136,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ redirectUrl, bookingId, testMode: useTestAmount || undefined });
     }
 
+    const bookingId: string | undefined = body.bookingId;
+    if (!bookingId) {
+      return NextResponse.json({ error: 'bookingId requis' }, { status: 400 });
+    }
+
+    const supabase = getServerSupabase();
+    const { data: booking, error } = await supabase
+      .from('bookings')
+      .select('id, guest_name, guest_email, security_deposit_amount, remaining_balance, payment_option, payment_status, locale')
+      .eq('id', bookingId)
+      .single();
+
+    if (error || !booking) {
+      return NextResponse.json({ error: 'Booking introuvable' }, { status: 404 });
+    }
+
+    // ── MODE 3 : paiement du solde restant (40% déjà payé) ───────────────────
+    if (mode === 'balance') {
+      const bookingButton = process.env.FYGARO_PAYMENT_URL_BOOKING;
+      if (!bookingButton || !FYGARO_URL_RE.test(bookingButton)) {
+        return NextResponse.json(
+          { error: 'FYGARO_PAYMENT_URL_BOOKING non configuré ou invalide' },
+          { status: 500 }
+        );
+      }
+      const balance = Number(booking.remaining_balance) || 0;
+      if (balance <= 0) {
+        return NextResponse.json({ error: 'Aucun solde restant sur cette booking' }, { status: 400 });
+      }
+      if (booking.payment_status === 'paid') {
+        return NextResponse.json({ error: 'Booking déjà entièrement payée' }, { status: 400 });
+      }
+
+      // "bal:<uuid>" = 38 chars, fits Fygaro custom_reference 40-char limit.
+      const redirectUrl = buildFygaroPaymentUrl(bookingButton, {
+        amount: useTestAmount ? testAmount! : balance,
+        currency: 'USD',
+        reference: `bal:${bookingId}`,
+      });
+      return NextResponse.json({ redirectUrl, bookingId, testMode: useTestAmount || undefined });
+    }
+
     // ── MODE 2 : empreinte CB caution ────────────────────────────────────────
     const depositButton = process.env.FYGARO_PAYMENT_URL_DEPOSIT;
     if (!depositButton || !FYGARO_URL_RE.test(depositButton)) {
@@ -136,22 +185,6 @@ export async function POST(req: NextRequest) {
         { error: 'FYGARO_PAYMENT_URL_DEPOSIT non configuré ou invalide' },
         { status: 500 }
       );
-    }
-
-    const bookingId: string | undefined = body.bookingId;
-    if (!bookingId) {
-      return NextResponse.json({ error: 'bookingId requis pour la caution' }, { status: 400 });
-    }
-
-    const supabase = getServerSupabase();
-    const { data: booking, error } = await supabase
-      .from('bookings')
-      .select('id, guest_name, guest_email, security_deposit_amount, locale')
-      .eq('id', bookingId)
-      .single();
-
-    if (error || !booking) {
-      return NextResponse.json({ error: 'Booking introuvable' }, { status: 404 });
     }
 
     const depositAmount = Number(booking.security_deposit_amount) || 0;

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Check, X, Clock, Mail, Building2, RefreshCw, Banknote,
   AlertCircle, Calendar, Users, CreditCard, XCircle, Loader2,
-  ShieldCheck, ShieldAlert,
+  ShieldCheck, ShieldAlert, Send,
 } from 'lucide-react';
 
 // La liste des bookings vient toujours du Server Component (initialBookings).
@@ -35,6 +35,8 @@ export interface Booking {
   deposit_authorization_id?: string | null;
   deposit_authorization_status?: 'authorized' | 'captured' | 'voided' | 'expired' | null;
   deposit_authorized_at?: string | null;
+  balance_reminded_at?: string | null;
+  balance_paid_at?: string | null;
   apartments?: { title_fr?: string; title_en?: string; slug?: string } | null;
 }
 
@@ -52,14 +54,17 @@ export default function BookingsClient({
 
   // Filtre initial lu depuis ?status=xxx (raccourci depuis le dashboard).
   // Valeurs autorisées : whitelisées pour éviter les états invalides.
+  // 'deposit_missing' = bookings CB confirmées mais empreinte caution non
+  // encore autorisée (à relancer avant l'arrivée).
+  type FilterValue = 'all' | 'pending_bank_transfer' | 'confirmed' | 'pending' | 'cancelled' | 'completed' | 'deposit_missing';
   const initialFilter = (() => {
     const s = searchParams.get('status');
-    if (s && ['pending_bank_transfer', 'confirmed', 'pending', 'cancelled', 'completed'].includes(s)) {
-      return s as 'pending_bank_transfer' | 'confirmed' | 'pending' | 'cancelled' | 'completed';
+    if (s && ['pending_bank_transfer', 'confirmed', 'pending', 'cancelled', 'completed', 'deposit_missing'].includes(s)) {
+      return s as FilterValue;
     }
     return 'all' as const;
   })();
-  const [filter, setFilter] = useState<'all' | 'pending_bank_transfer' | 'confirmed' | 'pending' | 'cancelled' | 'completed'>(initialFilter);
+  const [filter, setFilter] = useState<FilterValue>(initialFilter);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -74,10 +79,48 @@ export default function BookingsClient({
 
   const bookings = initialBookings;
   const pendingTransfers = bookings.filter(b => b.booking_status === 'pending_bank_transfer');
-  const filtered = filter === 'all' ? bookings : bookings.filter(b => b.booking_status === filter);
+  // Booking où l'empreinte caution est manquante : confirmée + payée par CB
+  // (uniquement Fygaro peut avoir une empreinte) + caution due > 0 +
+  // status caution absent ou pas encore 'authorized'.
+  const depositMissing = bookings.filter(b =>
+    b.booking_status === 'confirmed'
+    && b.payment_method === 'fygaro'
+    && (b.security_deposit_amount ?? 0) > 0
+    && b.deposit_authorization_status !== 'authorized'
+    && b.deposit_authorization_status !== 'captured'
+  );
+  const filtered = filter === 'all'
+    ? bookings
+    : filter === 'deposit_missing'
+      ? depositMissing
+      : bookings.filter(b => b.booking_status === filter);
 
   function refresh() {
     startRefresh(() => router.refresh());
+  }
+
+  async function sendBalanceReminder(bookingId: string) {
+    setActionLoading(bookingId);
+    setErrorMsg('');
+    try {
+      const res = await fetch('/api/admin/bookings/send-balance-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ bookingId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error');
+      setSuccessMsg(isFr
+        ? `Rappel de solde envoyé pour la réservation ${bookingId.slice(0, 8)}…`
+        : `Balance reminder sent for booking ${bookingId.slice(0, 8)}…`);
+      setTimeout(() => setSuccessMsg(''), 4000);
+      refresh();
+    } catch (e: unknown) {
+      setErrorMsg(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setActionLoading(null);
+    }
   }
 
   async function markBankTransferReceived(bookingId: string) {
@@ -191,9 +234,10 @@ export default function BookingsClient({
     return isFr ? (apt.title_fr || 'Villa') : (apt.title_en || 'Villa');
   }
 
-  const filterButtons: Array<{ value: typeof filter; label: string }> = [
+  const filterButtons: Array<{ value: typeof filter; label: string; badge?: number }> = [
     { value: 'all', label: isFr ? 'Toutes' : 'All' },
     { value: 'pending_bank_transfer', label: isFr ? 'Virements en attente' : 'Awaiting transfer' },
+    { value: 'deposit_missing', label: isFr ? 'Empreintes manquantes' : 'Deposit missing', badge: depositMissing.length },
     { value: 'confirmed', label: isFr ? 'Confirmées' : 'Confirmed' },
     { value: 'pending', label: isFr ? 'En attente' : 'Pending' },
     { value: 'cancelled', label: isFr ? 'Annulées' : 'Cancelled' },
@@ -265,7 +309,7 @@ export default function BookingsClient({
           <button
             key={f.value}
             onClick={() => setFilter(f.value)}
-            className={`px-4 py-2 text-[11px] uppercase font-medium transition-all rounded-md whitespace-nowrap ${
+            className={`inline-flex items-center gap-2 px-4 py-2 text-[11px] uppercase font-medium transition-all rounded-md whitespace-nowrap ${
               filter === f.value
                 ? 'bg-night-600 text-cream-100'
                 : 'bg-cream-100 text-night-500 border border-bronze-100 hover:border-bronze-300'
@@ -273,6 +317,15 @@ export default function BookingsClient({
             style={{ letterSpacing: '0.12em' }}
           >
             {f.label}
+            {typeof f.badge === 'number' && f.badge > 0 && (
+              <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
+                filter === f.value
+                  ? 'bg-cream-100 text-night-600'
+                  : 'bg-amber-100 text-amber-800'
+              }`}>
+                {f.badge}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -297,6 +350,7 @@ export default function BookingsClient({
               onCancel={() => updateStatus(b.id, 'cancelled')}
               onComplete={() => updateStatus(b.id, 'completed')}
               onCancelWithEmail={() => openCancelModal(b)}
+              onSendBalanceReminder={() => sendBalanceReminder(b.id)}
             />
           ))}
         </div>
@@ -443,6 +497,7 @@ function PendingTransferCard({
 function BookingCard({
   booking, villaName, amount, isFr,
   actionLoading, onMarkTransfer, onConfirm, onCancel, onComplete, onCancelWithEmail,
+  onSendBalanceReminder,
 }: {
   booking: Booking;
   villaName: string;
@@ -454,6 +509,7 @@ function BookingCard({
   onCancel: () => void;
   onComplete: () => void;
   onCancelWithEmail: () => void;
+  onSendBalanceReminder: () => void;
 }) {
   const statusConfig: Record<string, { label: string; classes: string; icon: React.ReactNode }> = {
     confirmed:             { label: isFr ? 'Confirmée' : 'Confirmed',                   classes: 'bg-green-50 text-green-700 border-green-200',     icon: <Check size={11} /> },
@@ -602,6 +658,26 @@ function BookingCard({
                 style={{ letterSpacing: '0.1em' }}
               >
                 {isFr ? 'Marquer terminée' : 'Mark completed'}
+              </button>
+            )}
+            {/* Bouton rappel de solde — uniquement pour bookings actives en 40%
+                acompte avec solde restant. On affiche l'info "déjà relancée"
+                comme titre pour éviter les doubles envois. */}
+            {['confirmed', 'pending'].includes(booking.booking_status)
+              && booking.payment_option === 'deposit_40'
+              && (booking.remaining_balance ?? 0) > 0
+              && !booking.balance_paid_at && (
+              <button
+                onClick={onSendBalanceReminder}
+                disabled={actionLoading}
+                className="inline-flex items-center gap-1.5 px-3 py-2 border border-bronze-300 text-bronze-600 hover:bg-bronze-50 transition-colors text-[11px] uppercase font-medium rounded disabled:opacity-50"
+                style={{ letterSpacing: '0.1em' }}
+                title={booking.balance_reminded_at
+                  ? (isFr ? `Dernier rappel : ${new Date(booking.balance_reminded_at).toLocaleDateString()}` : `Last reminder: ${new Date(booking.balance_reminded_at).toLocaleDateString()}`)
+                  : (isFr ? 'Envoyer un email de rappel pour le solde' : 'Send balance reminder email')}
+              >
+                <Send size={12} />
+                {isFr ? 'Rappel solde' : 'Balance reminder'}
               </button>
             )}
             {/* Bouton 'Annuler + email' — pour les statuts actifs uniquement.

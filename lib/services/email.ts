@@ -24,10 +24,14 @@ interface BookingEmailData {
   depositAmount: number;
   remainingBalance: number;
   securityDepositAmount: number;
-  paymentMethod: string;
+  paymentMethod: string;         // 'card' | 'bank_transfer' | 'paypal' etc.
   bookingId: string;
   locale?: Locale;
   bankDetails?: BankDetails;
+  // Statut de l'empreinte caution (uniquement pertinent pour paiement CB).
+  // Si 'authorized' → note "empreinte enregistrée". Sinon → CTA
+  // "Autoriser mon empreinte" avec lien vers la page fygaro-success.
+  depositAuthorizationStatus?: 'authorized' | 'captured' | 'voided' | 'expired' | null;
 }
 
 interface BankDetails {
@@ -64,8 +68,16 @@ const TR = {
   total:          { fr: 'Total',                                         en: 'Total' },
   depositPaid:    { fr: 'Acompte versé (40 %)',                          en: 'Deposit paid (40%)' },
   remainingBal:   { fr: 'Solde restant',                                 en: 'Remaining balance' },
-  securityDep:    { fr: 'Dépôt de garantie (empreinte CB à l\'arrivée)',  en: 'Security deposit (card imprint on arrival)' },
-  securityNote:   { fr: 'Empreinte bancaire prise à votre arrivée par carte bancaire. Aucun débit ne sera effectué sauf en cas de dégât constaté au départ. Si vous avez réglé par virement bancaire, merci de présenter une carte bancaire à l\'arrivée pour l\'empreinte.', en: 'Card imprint taken on arrival. No amount will be charged unless damage is found at check-out. If you paid by bank transfer, please present a credit card on arrival for the imprint.' },
+  securityDep:    { fr: 'Dépôt de garantie (empreinte CB)',              en: 'Security deposit (card imprint)' },
+  // Note affichée quand la caution n'est PAS payable en ligne
+  // (virement bancaire) — empreinte à l'arrivée.
+  securityNoteOffline: { fr: 'Empreinte bancaire prise à votre arrivée par carte bancaire. Aucun débit ne sera effectué sauf en cas de dégât constaté au départ.', en: 'Card imprint taken on arrival. No amount will be charged unless damage is found at check-out.' },
+  // Notes affichées pour un paiement par carte (Fygaro) : empreinte
+  // sécurisée en ligne, avec fallback lien si le client a fermé son
+  // navigateur avant l'étape 2.
+  securityNoteOnlinePending: { fr: 'Pour finaliser votre réservation, autorisez l\'empreinte CB en ligne (aucun débit — pré-autorisation libérée après votre séjour).', en: 'To finalize your reservation, authorize the card imprint online (no debit — pre-authorization released after your stay).' },
+  securityNoteOnlineDone: { fr: 'L\'empreinte de votre carte a bien été enregistrée. Aucun débit sauf en cas de dégât constaté au départ. Libération automatique après votre séjour.', en: 'Your card imprint has been secured. No debit unless damage is found at check-out. Automatic release after your stay.' },
+  authorizeDepositBtn: { fr: 'Autoriser mon empreinte CB', en: 'Authorize my card imprint' },
   // Bank transfer instructions
   wireTitle:      { fr: 'Instructions de virement (USD)',                en: 'Wire Transfer Instructions (USD)' },
   amountToTransfer:{ fr: 'Montant à virer :',                            en: 'Amount to transfer:' },
@@ -146,6 +158,32 @@ function stayDetailsHtml(d: BookingEmailData, locale: Locale): string {
 function bookingSummaryHtml(d: BookingEmailData, locale: Locale): string {
   const stayFn = t('stayLine', locale) as (n: number, rate: string) => string;
   const rate = formatUSD(d.accommodationAmount / d.nights);
+
+  // Choix de la note caution en fonction du mode de paiement :
+  //  - card (Fygaro) → empreinte se fait EN LIGNE (déjà faite ou pending)
+  //  - autre (virement)  → empreinte à l'arrivée sur place
+  const isCardPayment = d.paymentMethod === 'card' || d.paymentMethod === 'fygaro';
+  const depositAlreadySecured = d.depositAuthorizationStatus === 'authorized';
+  let securityNoteKey: 'securityNoteOnlineDone' | 'securityNoteOnlinePending' | 'securityNoteOffline';
+  if (isCardPayment) {
+    securityNoteKey = depositAlreadySecured ? 'securityNoteOnlineDone' : 'securityNoteOnlinePending';
+  } else {
+    securityNoteKey = 'securityNoteOffline';
+  }
+
+  // CTA "Autoriser mon empreinte" — visible uniquement si paiement CB
+  // ET empreinte pas encore posée. Pointe vers la page fygaro-success avec
+  // le bookingId, qui déclenche l'affichage du bouton "Autoriser la caution".
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://islandlivingsxm.com').replace(/\/+$/, '');
+  const authorizeUrl = `${siteUrl}/${locale}/booking/fygaro-success?bookingId=${d.bookingId}&mode=booking`;
+  const authorizeCta = (isCardPayment && !depositAlreadySecured) ? `
+    <div style="text-align:center;margin:16px 0 4px;">
+      <a href="${authorizeUrl}" style="display:inline-block;padding:12px 28px;background:#c9a96e;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;border-radius:4px;">
+        ${t('authorizeDepositBtn', locale)}
+      </a>
+    </div>
+  ` : '';
+
   return `
     <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333;">
       <tr><td style="padding:6px 0;border-bottom:1px solid #eee;">${stayFn(d.nights, rate)}</td><td style="text-align:right;padding:6px 0;border-bottom:1px solid #eee;">${formatUSD(d.accommodationAmount)}</td></tr>
@@ -157,7 +195,8 @@ function bookingSummaryHtml(d: BookingEmailData, locale: Locale): string {
       ` : ''}
       <tr><td style="padding:6px 0;color:#888;font-style:italic;">${t('securityDep', locale)}</td><td style="text-align:right;padding:6px 0;color:#888;font-style:italic;">${formatUSD(d.securityDepositAmount)}</td></tr>
     </table>
-    <p style="font-size:12px;color:#888;margin-top:8px;">${t('securityNote', locale)}</p>
+    <p style="font-size:12px;color:#888;margin-top:8px;">${t(securityNoteKey, locale)}</p>
+    ${authorizeCta}
   `;
 }
 
@@ -355,6 +394,140 @@ export async function sendBookingCancellationEmail(d: CancellationEmailData): Pr
     </div>
   `;
   await sendEmail(d.guestEmail, subjectFn(d.villaName), html);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Email 4b : Rappel de règlement du solde (bookings 40% acompte)
+// ─────────────────────────────────────────────────────────────
+interface BalanceReminderEmailData {
+  guestName: string;
+  guestEmail: string;
+  villaName: string;
+  checkIn: string;
+  checkOut: string;
+  remainingBalance: number;
+  bookingTotal: number;
+  depositAmountPaid: number;
+  bookingId: string;
+  paymentLink: string;    // URL vers /booking/pay-balance/[bookingId]
+  daysUntilCheckIn: number;
+  locale?: Locale;
+}
+
+export async function sendBalanceReminderEmail(d: BalanceReminderEmailData): Promise<void> {
+  const locale: Locale = d.locale === 'fr' ? 'fr' : 'en';
+  const subject = locale === 'fr'
+    ? `Rappel : solde de votre séjour à ${d.villaName}`
+    : `Reminder: balance due for your stay at ${d.villaName}`;
+
+  const intro = locale === 'fr'
+    ? `Votre arrivée à <strong>${d.villaName}</strong> approche dans ${d.daysUntilCheckIn} jour${d.daysUntilCheckIn > 1 ? 's' : ''}. Il reste à régler le solde de votre séjour pour finaliser votre réservation.`
+    : `Your arrival at <strong>${d.villaName}</strong> is approaching in ${d.daysUntilCheckIn} day${d.daysUntilCheckIn > 1 ? 's' : ''}. The balance of your stay is still due to finalize your booking.`;
+
+  const balanceLabel = locale === 'fr' ? 'Solde restant à régler' : 'Balance still due';
+  const paidLabel = locale === 'fr' ? 'Acompte déjà versé (40 %)' : 'Deposit already paid (40%)';
+  const totalLabel = locale === 'fr' ? 'Total du séjour' : 'Stay total';
+  const villaLabel = locale === 'fr' ? 'Villa' : 'Villa';
+  const checkInLabel = locale === 'fr' ? 'Arrivée' : 'Check-in';
+  const checkOutLabel = locale === 'fr' ? 'Départ' : 'Check-out';
+  const ctaLabel = locale === 'fr' ? 'Régler le solde par carte' : 'Pay balance by card';
+  const noteBody = locale === 'fr'
+    ? 'Le paiement est sécurisé et instantané. Vous recevrez un email de confirmation dès la réception. En cas de difficulté, contactez-nous.'
+    : 'Payment is secure and instant. You will receive a confirmation email upon receipt. Please contact us if you encounter any difficulty.';
+
+  const html = `
+    <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#333;">
+      ${headerHtml(locale)}
+      <div style="padding:32px 24px;">
+        <h2 style="color:#0a0a0a;font-size:18px;">${locale === 'fr' ? 'Solde à régler' : 'Balance due'}</h2>
+        <p>${t('dear', locale)} ${d.guestName},</p>
+        <p>${intro}</p>
+
+        <div style="background:#f8f8f6;padding:16px;border-radius:4px;margin:20px 0;font-size:14px;">
+          <p style="margin:4px 0;"><strong>${villaLabel} :</strong> ${d.villaName}</p>
+          <p style="margin:4px 0;"><strong>${checkInLabel} :</strong> ${d.checkIn}</p>
+          <p style="margin:4px 0;"><strong>${checkOutLabel} :</strong> ${d.checkOut}</p>
+        </div>
+
+        <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333;margin:16px 0;">
+          <tr><td style="padding:6px 0;">${totalLabel}</td><td style="text-align:right;padding:6px 0;">${formatUSD(d.bookingTotal)}</td></tr>
+          <tr><td style="padding:6px 0;color:#c9a96e;">${paidLabel}</td><td style="text-align:right;padding:6px 0;color:#c9a96e;">−${formatUSD(d.depositAmountPaid)}</td></tr>
+          <tr style="font-weight:bold;font-size:16px;"><td style="padding:10px 0;border-top:2px solid #c9a96e;">${balanceLabel}</td><td style="text-align:right;padding:10px 0;border-top:2px solid #c9a96e;color:#c9a96e;">${formatUSD(d.remainingBalance)}</td></tr>
+        </table>
+
+        <div style="text-align:center;margin:28px 0 8px;">
+          <a href="${d.paymentLink}" style="display:inline-block;padding:14px 32px;background:#c9a96e;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;border-radius:4px;">
+            ${ctaLabel}
+          </a>
+        </div>
+
+        <p style="font-size:12px;color:#888;text-align:center;margin-top:12px;">${noteBody}</p>
+
+        ${footerHtml(locale)}
+      </div>
+    </div>
+  `;
+  await sendEmail(d.guestEmail, subject, html);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Email 4c : Confirmation de règlement du solde
+// ─────────────────────────────────────────────────────────────
+interface BalancePaidEmailData {
+  guestName: string;
+  guestEmail: string;
+  villaName: string;
+  checkIn: string;
+  checkOut: string;
+  amountPaid: number;
+  bookingTotal: number;
+  bookingId: string;
+  locale?: Locale;
+}
+
+export async function sendBalancePaidEmail(d: BalancePaidEmailData): Promise<void> {
+  const locale: Locale = d.locale === 'fr' ? 'fr' : 'en';
+  const subject = locale === 'fr'
+    ? `Solde reçu — votre séjour à ${d.villaName} est intégralement payé`
+    : `Balance received — your stay at ${d.villaName} is fully paid`;
+
+  const intro = locale === 'fr'
+    ? `Nous avons bien reçu le règlement de votre solde. Votre séjour à <strong>${d.villaName}</strong> est maintenant <strong>intégralement payé</strong> — il ne vous reste plus qu'à préparer vos valises !`
+    : `We have received your balance payment. Your stay at <strong>${d.villaName}</strong> is now <strong>fully paid</strong> — all that's left is to pack your bags!`;
+
+  const villaLabel = locale === 'fr' ? 'Villa' : 'Villa';
+  const checkInLabel = locale === 'fr' ? 'Arrivée' : 'Check-in';
+  const checkOutLabel = locale === 'fr' ? 'Départ' : 'Check-out';
+  const amountLabel = locale === 'fr' ? 'Solde réglé' : 'Balance paid';
+  const totalLabel = locale === 'fr' ? 'Total du séjour' : 'Stay total';
+
+  const html = `
+    <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#333;">
+      ${headerHtml(locale)}
+      <div style="padding:32px 24px;">
+        <h2 style="color:#0a0a0a;font-size:18px;">${locale === 'fr' ? 'Séjour intégralement payé ✓' : 'Stay fully paid ✓'}</h2>
+        <p>${t('dear', locale)} ${d.guestName},</p>
+        <p>${intro}</p>
+
+        <div style="background:#f8f8f6;padding:16px;border-radius:4px;margin:20px 0;font-size:14px;">
+          <p style="margin:4px 0;"><strong>${villaLabel} :</strong> ${d.villaName}</p>
+          <p style="margin:4px 0;"><strong>${checkInLabel} :</strong> ${d.checkIn}</p>
+          <p style="margin:4px 0;"><strong>${checkOutLabel} :</strong> ${d.checkOut}</p>
+          <p style="margin:12px 0 4px;"><strong>${amountLabel} :</strong> ${formatUSD(d.amountPaid)}</p>
+          <p style="margin:4px 0;color:#666;font-size:12px;"><strong>${totalLabel} :</strong> ${formatUSD(d.bookingTotal)}</p>
+        </div>
+
+        <p style="font-size:13px;color:#555;margin-top:20px;">
+          ${locale === 'fr'
+            ? "Nous vous contacterons 48 h avant votre arrivée pour vous transmettre les instructions de check-in."
+            : 'We will contact you 48 hours before your arrival with check-in instructions.'}
+        </p>
+
+        ${footerHtml(locale)}
+      </div>
+    </div>
+  `;
+  await sendEmail(d.guestEmail, subject, html);
 }
 
 // ─────────────────────────────────────────────────────────────

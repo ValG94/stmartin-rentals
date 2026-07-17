@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { verifyFygaroWebhookSignature, type FygaroWebhookPayload } from '@/lib/services/fygaro';
-import { sendBookingConfirmationEmail, sendDepositAuthorizedEmail } from '@/lib/services/email';
+import { sendBookingConfirmationEmail, sendDepositAuthorizedEmail, sendBalancePaidEmail } from '@/lib/services/email';
 import { getServerSupabase } from '@/lib/services/server-pricing';
 
 // Node runtime nécessaire pour crypto.createHmac
@@ -50,7 +50,8 @@ export async function POST(req: NextRequest) {
   // en flight arrive après ce déploiement.
   const isBooking = refType === 'b' || refType === 'booking';
   const isDeposit = refType === 'd' || refType === 'deposit';
-  if (!bookingId || (!isBooking && !isDeposit)) {
+  const isBalance = refType === 'bal';
+  if (!bookingId || (!isBooking && !isDeposit && !isBalance)) {
     console.warn('[Fygaro webhook] reference inattendue :', reference);
     // On répond 200 pour ne pas déclencher les retries Fygaro sur un
     // webhook qu'on n'attend pas (ex : produit non lié à une booking).
@@ -62,6 +63,11 @@ export async function POST(req: NextRequest) {
   // ── Type 1 : paiement séjour ────────────────────────────────────────────
   if (isBooking) {
     return await handleBookingPayment(bookingId, payload, supabase);
+  }
+
+  // ── Type 3 : paiement du solde restant (booking déjà 40% payée) ─────────
+  if (isBalance) {
+    return await handleBalancePayment(bookingId, payload, supabase);
   }
 
   // ── Type 2 : empreinte caution ──────────────────────────────────────────
@@ -181,6 +187,7 @@ async function handleBookingPayment(
       paymentMethod: 'card',
       bookingId,
       locale,
+      depositAuthorizationStatus: booking.deposit_authorization_status,
     });
   } catch (emailErr) {
     // Ne pas planter le webhook si l'email échoue — la booking est déjà confirmée
@@ -275,4 +282,85 @@ async function handleDepositAuthorization(
   }
 
   return NextResponse.json({ success: true, bookingId, status: normalizedStatus });
+}
+
+async function handleBalancePayment(
+  bookingId: string,
+  payload: FygaroWebhookPayload,
+  supabase: SupabaseClient,
+) {
+  const { data: booking, error } = await supabase
+    .from('bookings')
+    .select(`
+      id, guest_name, guest_email, check_in, check_out, locale,
+      remaining_balance, booking_total, payment_status,
+      apartments:apartment_id (title_fr, title_en)
+    `)
+    .eq('id', bookingId)
+    .single();
+
+  if (error || !booking) {
+    console.warn('[Fygaro webhook] balance : booking introuvable', bookingId);
+    return NextResponse.json({ ignored: true });
+  }
+
+  type BookingRow = {
+    id: string; guest_name: string; guest_email: string;
+    check_in: string; check_out: string; locale?: string;
+    remaining_balance: number; booking_total: number; payment_status: string;
+    apartments?: { title_fr?: string; title_en?: string } | { title_fr?: string; title_en?: string }[];
+  };
+  const b = booking as BookingRow;
+
+  // Idempotence : booking déjà payée en totalité
+  if (b.payment_status === 'paid') {
+    return NextResponse.json({ success: true, alreadyProcessed: true });
+  }
+
+  // Validation du montant (tolérance 0.01). Skippée en TEST MODE.
+  const testAmountRaw = process.env.FYGARO_TEST_AMOUNT;
+  const isTestMode = testAmountRaw && Number(testAmountRaw) > 0;
+  const expectedAmount = Number(b.remaining_balance) || 0;
+  const capturedAmount = Number(payload.amount);
+  if (!isTestMode && (!Number.isFinite(capturedAmount) || Math.abs(capturedAmount - expectedAmount) > 0.01)) {
+    console.error('[Fygaro webhook] balance amount mismatch', {
+      bookingId, expected: expectedAmount, received: capturedAmount,
+    });
+    return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 });
+  }
+
+  // Booking fully paid : remaining_balance passe à 0 + statut 'paid'
+  await supabase
+    .from('bookings')
+    .update({
+      payment_status: 'paid',
+      remaining_balance: 0,
+      balance_paid_at: new Date().toISOString(),
+      balance_transaction_id: payload.transactionId,
+    })
+    .eq('id', bookingId);
+
+  const locale: 'fr' | 'en' = b.locale === 'fr' ? 'fr' : 'en';
+  const apartments = Array.isArray(b.apartments) ? b.apartments[0] : b.apartments;
+  const villaName = locale === 'fr'
+    ? (apartments?.title_fr || apartments?.title_en || 'Villa')
+    : (apartments?.title_en || 'Villa');
+
+  try {
+    await sendBalancePaidEmail({
+      guestName: b.guest_name,
+      guestEmail: b.guest_email,
+      villaName,
+      checkIn: b.check_in,
+      checkOut: b.check_out,
+      amountPaid: expectedAmount,
+      bookingTotal: Number(b.booking_total) || 0,
+      bookingId,
+      locale,
+    });
+  } catch (emailErr) {
+    console.error('[Fygaro webhook] balance email failed:', emailErr);
+  }
+
+  return NextResponse.json({ success: true, bookingId, paymentStatus: 'paid' });
 }
