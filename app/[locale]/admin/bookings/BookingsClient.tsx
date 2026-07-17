@@ -481,7 +481,11 @@ function BookingCard({
             </span>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-cream-50 border border-bronze-100 text-night-500 rounded text-[10px] uppercase font-medium" style={{ letterSpacing: '0.1em' }}>
               {booking.payment_method === 'bank_transfer' ? <Banknote size={10} /> : <CreditCard size={10} />}
-              {booking.payment_method === 'bank_transfer' ? (isFr ? 'Virement' : 'Wire') : 'PayPal'}
+              {booking.payment_method === 'bank_transfer'
+                ? (isFr ? 'Virement' : 'Wire')
+                : booking.payment_method === 'fygaro'
+                  ? (isFr ? 'Carte' : 'Card')
+                  : 'PayPal'}
             </span>
           </div>
 
