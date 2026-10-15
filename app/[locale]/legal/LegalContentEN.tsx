@@ -65,8 +65,8 @@ export default function LegalContentEN() {
         <p>Mandatory cleaning fees are added at the time of booking.</p>
         <p>They are set as follows:</p>
         <ul>
-          <li>Villa Vanille: USD 450</li>
-          <li>Maison Blanche: USD 250</li>
+          <li>Villa Vanille: USD 550</li>
+          <li>Maison Blanche: USD 350</li>
         </ul>
         <p>These fees are payable in addition to the rental price.</p>
       </Section>

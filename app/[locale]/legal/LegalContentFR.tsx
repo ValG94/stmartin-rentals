@@ -63,8 +63,8 @@ export default function LegalContentFR() {
         <p>Des frais de ménage obligatoires sont ajoutés au moment de la réservation.</p>
         <p>Ils s’élèvent à :</p>
         <ul>
-          <li>Villa Vanille : 450 USD</li>
-          <li>Maison Blanche : 250 USD</li>
+          <li>Villa Vanille : 550 USD</li>
+          <li>Maison Blanche : 350 USD</li>
         </ul>
         <p>Ces frais sont dus en plus du prix du séjour.</p>
       </Section>

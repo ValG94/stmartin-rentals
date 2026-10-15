@@ -5,8 +5,8 @@
 > **Ne pas éditer manuellement** ces blocs — édite le reste librement.
 
 <!-- AUTO:META -->
-> **Dernière mise à jour** : 2026-07-17 17:09 UTC
-> **Branche** : `main` — **HEAD** : `b06061d`
+> **Dernière mise à jour** : 2026-10-15 17:09 UTC
+> **Branche** : `main` — **HEAD** : `4fdf77f`
 <!-- /AUTO:META -->
 
 ---
@@ -361,6 +361,7 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 <!-- AUTO:LAST_COMMITS -->
 | Hash | Date | Auteur | Sujet |
 |---|---|---|---|
+| `4fdf77f` | 2026-07-17 | Valery Garrec | docs: add TECHNICAL.md with auto-updated sections + Google verification file |
 | `b06061d` | 2026-07-17 | Valery Garrec | feat(seo): Open Graph link previews + sitemap + robots + JSON-LD + hreflang |
 | `fa8ee44` | 2026-07-17 | Valery Garrec | feat(bookings): cron J-2 deposit reminders + 'Manage deposit' shortcut to Fygaro |
 | `516eb43` | 2026-07-17 | Valery Garrec | feat(bookings): deposit-missing filter + balance reminder flow + adapted deposit email |
@@ -375,7 +376,6 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 | `33fa91e` | 2026-07-11 | Valery Garrec | feat(dashboard): pagination + multi-select + batch delete on bookings table |
 | `7076fb0` | 2026-07-11 | Valery Garrec | feat(admin): clickable KPI cards on dashboard — shortcuts to related pages |
 | `53f7c21` | 2026-07-11 | Valery Garrec | feat(admin): 'Cancel + email' button on bookings — releases dates + notifies guest |
-| `9ec4088` | 2026-07-11 | Valery Garrec | feat(booking): payment method UI — Fygaro card + hide PayPal (dormant) |
 <!-- /AUTO:LAST_COMMITS -->
 
 ---
