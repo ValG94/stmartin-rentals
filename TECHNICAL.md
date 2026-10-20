@@ -5,8 +5,8 @@
 > **Ne pas éditer manuellement** ces blocs — édite le reste librement.
 
 <!-- AUTO:META -->
-> **Dernière mise à jour** : 2026-10-15 17:09 UTC
-> **Branche** : `main` — **HEAD** : `4fdf77f`
+> **Dernière mise à jour** : 2026-10-20 19:59 UTC
+> **Branche** : `main` — **HEAD** : `0fecad8`
 <!-- /AUTO:META -->
 
 ---
@@ -361,6 +361,7 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 <!-- AUTO:LAST_COMMITS -->
 | Hash | Date | Auteur | Sujet |
 |---|---|---|---|
+| `0fecad8` | 2026-10-15 | Valery Garrec | feat(pricing): update cleaning fees — Villa Vanille $550, Maison Blanche $350 |
 | `4fdf77f` | 2026-07-17 | Valery Garrec | docs: add TECHNICAL.md with auto-updated sections + Google verification file |
 | `b06061d` | 2026-07-17 | Valery Garrec | feat(seo): Open Graph link previews + sitemap + robots + JSON-LD + hreflang |
 | `fa8ee44` | 2026-07-17 | Valery Garrec | feat(bookings): cron J-2 deposit reminders + 'Manage deposit' shortcut to Fygaro |
@@ -375,7 +376,6 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 | `f2f50d1` | 2026-07-17 | Valery Garrec | fix(fygaro): align JWT payload + webhook secret with official docs |
 | `33fa91e` | 2026-07-11 | Valery Garrec | feat(dashboard): pagination + multi-select + batch delete on bookings table |
 | `7076fb0` | 2026-07-11 | Valery Garrec | feat(admin): clickable KPI cards on dashboard — shortcuts to related pages |
-| `53f7c21` | 2026-07-11 | Valery Garrec | feat(admin): 'Cancel + email' button on bookings — releases dates + notifies guest |
 <!-- /AUTO:LAST_COMMITS -->
 
 ---
