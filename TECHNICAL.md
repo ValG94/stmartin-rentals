@@ -5,8 +5,8 @@
 > **Ne pas éditer manuellement** ces blocs — édite le reste librement.
 
 <!-- AUTO:META -->
-> **Dernière mise à jour** : 2026-10-20 19:59 UTC
-> **Branche** : `main` — **HEAD** : `0fecad8`
+> **Dernière mise à jour** : 2026-10-22 07:41 UTC
+> **Branche** : `main` — **HEAD** : `78fb5d6`
 <!-- /AUTO:META -->
 
 ---
@@ -361,6 +361,7 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 <!-- AUTO:LAST_COMMITS -->
 | Hash | Date | Auteur | Sujet |
 |---|---|---|---|
+| `78fb5d6` | 2026-10-20 | Valery Garrec | chore: remove stale package-lock.json (project uses pnpm) |
 | `0fecad8` | 2026-10-15 | Valery Garrec | feat(pricing): update cleaning fees — Villa Vanille $550, Maison Blanche $350 |
 | `4fdf77f` | 2026-07-17 | Valery Garrec | docs: add TECHNICAL.md with auto-updated sections + Google verification file |
 | `b06061d` | 2026-07-17 | Valery Garrec | feat(seo): Open Graph link previews + sitemap + robots + JSON-LD + hreflang |
@@ -375,7 +376,6 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 | `763d89b` | 2026-07-17 | Valery Garrec | fix(booking): calendar UX + FYGARO_TEST_AMOUNT env for e2e testing |
 | `f2f50d1` | 2026-07-17 | Valery Garrec | fix(fygaro): align JWT payload + webhook secret with official docs |
 | `33fa91e` | 2026-07-11 | Valery Garrec | feat(dashboard): pagination + multi-select + batch delete on bookings table |
-| `7076fb0` | 2026-07-11 | Valery Garrec | feat(admin): clickable KPI cards on dashboard — shortcuts to related pages |
 <!-- /AUTO:LAST_COMMITS -->
 
 ---

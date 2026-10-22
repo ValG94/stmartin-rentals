@@ -65,7 +65,8 @@ const TR = {
   bookingSummary: { fr: 'Récapitulatif de la réservation',               en: 'Booking Summary' },
   stayLine:       { fr: (n: number, rate: string) => `Séjour (${n} nuit${n > 1 ? 's' : ''} × ${rate})`, en: (n: number, rate: string) => `Stay (${n} nights × ${rate})` },
   cleaningFee:    { fr: 'Frais de ménage',                               en: 'Cleaning fee' },
-  total:          { fr: 'Total',                                         en: 'Total' },
+  extraGuests:    { fr: 'Voyageurs supplémentaires',                     en: 'Extra guests' },
+  total:         { fr: 'Total',                                         en: 'Total' },
   depositPaid:    { fr: 'Acompte versé (40 %)',                          en: 'Deposit paid (40%)' },
   remainingBal:   { fr: 'Solde restant',                                 en: 'Remaining balance' },
   securityDep:    { fr: 'Dépôt de garantie (empreinte CB)',              en: 'Security deposit (card imprint)' },
@@ -159,6 +160,13 @@ function bookingSummaryHtml(d: BookingEmailData, locale: Locale): string {
   const stayFn = t('stayLine', locale) as (n: number, rate: string) => string;
   const rate = formatUSD(d.accommodationAmount / d.nights);
 
+  // Surcoût voyageurs supplémentaires : pas stocké à part en DB, mais inclus
+  // dans bookingTotal (= séjour + ménage + voyageurs sup.) → on le retrouve
+  // par différence pour que les lignes du récap tombent juste sur le total.
+  const extraGuestsAmount = Math.round(
+    (Number(d.bookingTotal) - Number(d.accommodationAmount) - Number(d.cleaningFee)) * 100,
+  ) / 100;
+
   // Choix de la note caution en fonction du mode de paiement :
   //  - card (Fygaro) → empreinte se fait EN LIGNE (déjà faite ou pending)
   //  - autre (virement)  → empreinte à l'arrivée sur place
@@ -188,6 +196,9 @@ function bookingSummaryHtml(d: BookingEmailData, locale: Locale): string {
     <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333;">
       <tr><td style="padding:6px 0;border-bottom:1px solid #eee;">${stayFn(d.nights, rate)}</td><td style="text-align:right;padding:6px 0;border-bottom:1px solid #eee;">${formatUSD(d.accommodationAmount)}</td></tr>
       <tr><td style="padding:6px 0;border-bottom:1px solid #eee;">${t('cleaningFee', locale)}</td><td style="text-align:right;padding:6px 0;border-bottom:1px solid #eee;">${formatUSD(d.cleaningFee)}</td></tr>
+      ${extraGuestsAmount >= 1 ? `
+      <tr><td style="padding:6px 0;border-bottom:1px solid #eee;">${t('extraGuests', locale)}</td><td style="text-align:right;padding:6px 0;border-bottom:1px solid #eee;">${formatUSD(extraGuestsAmount)}</td></tr>
+      ` : ''}
       <tr style="font-weight:bold;"><td style="padding:6px 0;border-bottom:2px solid #c9a96e;">${t('total', locale)}</td><td style="text-align:right;padding:6px 0;border-bottom:2px solid #c9a96e;">${formatUSD(d.bookingTotal)}</td></tr>
       ${d.paymentOption === 'deposit_40' ? `
       <tr><td style="padding:6px 0;color:#c9a96e;">${t('depositPaid', locale)}</td><td style="text-align:right;padding:6px 0;color:#c9a96e;">${formatUSD(d.depositAmount)}</td></tr>
