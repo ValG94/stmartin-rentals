@@ -17,6 +17,17 @@ export const SECURITY_DEPOSITS: Record<string, number> = {
 
 export const DEPOSIT_RATE = 0.40; // 40%
 
+// Taxe de séjour Sint Maarten (room tax). Base validée par la comptable :
+// hébergement + voyageurs sup. + ménage obligatoire. L'inclusion du ménage
+// reste à confirmer par l'administration fiscale → réglable ici.
+export const ROOM_TAX = {
+  rate: 0.05,
+  includeCleaningFee: true,
+  includeExtraGuests: true,
+};
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
 export interface SeasonalPriceInput {
   is_active: boolean;
   date_from: string;       // 'YYYY-MM-DD'
@@ -37,9 +48,15 @@ export interface PricingResult {
   cleaningFee: number;
   extraGuestsCount: number;        // nombre de voyageurs sup. facturés
   extraGuestsAmount: number;       // surcoût total des voyageurs sup.
-  bookingTotal: number;
-  depositAmount: number;
+  bookingTotal: number;            // hébergement + ménage + voyageurs sup., HORS taxe de séjour
+  roomTaxRate: number;             // 0 si résident exonéré
+  roomTaxBase: number;
+  roomTaxAmount: number;
+  totalPayable: number;            // bookingTotal + taxe de séjour
+  depositAmount: number;           // 40 % de totalPayable
+  depositRoomTax: number;          // part de taxe incluse dans l'acompte (40 %)
   remainingBalance: number;
+  balanceRoomTax: number;          // part de taxe incluse dans le solde (60 %)
   securityDepositAmount: number;
   currency: 'USD';
 }
@@ -68,6 +85,7 @@ export function calculatePricing(
   nightlyRate: number,
   seasonalPrices: SeasonalPriceInput[] = [],
   extraGuests?: ExtraGuestsConfig,
+  options: { roomTaxExempt?: boolean } = {},
 ): PricingResult {
   const checkInDate = new Date(checkIn);
   const checkOutDate = new Date(checkOut);
@@ -107,8 +125,23 @@ export function calculatePricing(
   }
 
   const bookingTotal = accommodationAmount + cleaningFee + extraGuestsAmount;
-  const depositAmount = Math.round(bookingTotal * DEPOSIT_RATE * 100) / 100;
-  const remainingBalance = Math.round((bookingTotal - depositAmount) * 100) / 100;
+
+  // Taxe de séjour (résidents de Sint Maarten exonérés, sur justificatif
+  // validé manuellement par l'admin).
+  const roomTaxRate = options.roomTaxExempt ? 0 : ROOM_TAX.rate;
+  const roomTaxBase = accommodationAmount
+    + (ROOM_TAX.includeCleaningFee ? cleaningFee : 0)
+    + (ROOM_TAX.includeExtraGuests ? extraGuestsAmount : 0);
+  const roomTaxAmount = round2(roomTaxBase * roomTaxRate);
+  const totalPayable = round2(bookingTotal + roomTaxAmount);
+
+  // Acompte 40 % calculé sur le total TTC ; la taxe suit la même
+  // répartition (40 % avec l'acompte, 60 % avec le solde) pour être
+  // déclarée au mois de chaque encaissement.
+  const depositAmount = round2(totalPayable * DEPOSIT_RATE);
+  const remainingBalance = round2(totalPayable - depositAmount);
+  const depositRoomTax = round2(roomTaxAmount * DEPOSIT_RATE);
+  const balanceRoomTax = round2(roomTaxAmount - depositRoomTax);
   const securityDepositAmount = SECURITY_DEPOSITS[slug] ?? 300;
 
   // Prix moyen pondéré — utilisé pour l'affichage "$X × N nights".
@@ -124,8 +157,14 @@ export function calculatePricing(
     extraGuestsCount,
     extraGuestsAmount,
     bookingTotal,
+    roomTaxRate,
+    roomTaxBase,
+    roomTaxAmount,
+    totalPayable,
     depositAmount,
+    depositRoomTax,
     remainingBalance,
+    balanceRoomTax,
     securityDepositAmount,
     currency: 'USD',
   };
@@ -135,7 +174,8 @@ export function formatUSD(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    // Les centimes n'apparaissent que s'il y en a (la taxe de 5 % en produit).
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 }

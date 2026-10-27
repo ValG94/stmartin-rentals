@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "doc:update": "node scripts/update-technical-doc.mjs",
-    "hooks:install": "git config core.hooksPath .githooks && echo Hooks installed (core.hooksPath = .githooks)"
+    "hooks:install": "git config core.hooksPath .githooks && echo Hooks installed (core.hooksPath = .githooks)",
+    "docs:samples": "esbuild scripts/render-document-samples.tsx --bundle --platform=node --format=esm --packages=external --jsx=automatic --alias:@=. --outfile=node_modules/.cache/render-document-samples.mjs --log-level=warning && node node_modules/.cache/render-document-samples.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -16,6 +17,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@paypal/checkout-server-sdk": "^1.0.3",
     "@paypal/react-paypal-js": "^9.2.0",
+    "@react-pdf/renderer": "4.3.0",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.100.0",
     "@tiptap/extension-color": "^3.23.4",
@@ -45,6 +47,7 @@
   },
   "devDependencies": {
     "@types/sanitize-html": "^2.16.1",
+    "esbuild": "0.23.1",
     "eslint": "^9",
     "eslint-config-next": "15.3.9"
   }

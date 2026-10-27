@@ -19,13 +19,20 @@ interface BookingEmailData {
   nights: number;
   accommodationAmount: number;
   cleaningFee: number;
-  bookingTotal: number;
+  extraGuestsAmount?: number;    // sinon déduit de bookingTotal (anciennes bookings)
+  bookingTotal: number;          // hors taxe de séjour
+  // Taxe de séjour : absente pour les bookings créées avant sa mise en place
+  // → le récap reste alors celui d'avant (pas de ligne de taxe).
+  roomTaxRate?: number;
+  roomTaxAmount?: number;
+  totalPayable?: number;
   paymentOption: 'full' | 'deposit_40';
   depositAmount: number;
   remainingBalance: number;
   securityDepositAmount: number;
   paymentMethod: string;         // 'card' | 'bank_transfer' | 'paypal' etc.
   bookingId: string;
+  invoiceNumber?: string;        // facture PDF jointe au mail
   locale?: Locale;
   bankDetails?: BankDetails;
   // Statut de l'empreinte caution (uniquement pertinent pour paiement CB).
@@ -64,19 +71,24 @@ const TR = {
   paymentSummary: { fr: 'Récapitulatif du paiement',                     en: 'Payment Summary' },
   bookingSummary: { fr: 'Récapitulatif de la réservation',               en: 'Booking Summary' },
   stayLine:       { fr: (n: number, rate: string) => `Séjour (${n} nuit${n > 1 ? 's' : ''} × ${rate})`, en: (n: number, rate: string) => `Stay (${n} nights × ${rate})` },
-  cleaningFee:    { fr: 'Frais de ménage',                               en: 'Cleaning fee' },
+  cleaningFee:    { fr: 'Frais de ménage obligatoires',                  en: 'Mandatory cleaning fee' },
   extraGuests:    { fr: 'Voyageurs supplémentaires',                     en: 'Extra guests' },
-  total:         { fr: 'Total',                                         en: 'Total' },
-  depositPaid:    { fr: 'Acompte versé (40 %)',                          en: 'Deposit paid (40%)' },
-  remainingBal:   { fr: 'Solde restant',                                 en: 'Remaining balance' },
-  securityDep:    { fr: 'Dépôt de garantie (empreinte CB)',              en: 'Security deposit (card imprint)' },
+  subtotal:       { fr: 'Sous-total',                                    en: 'Subtotal' },
+  roomTax:        { fr: (pct: string) => `Taxe de séjour (${pct})`,      en: (pct: string) => `Room tax (${pct})` },
+  roomTaxExempt:  { fr: 'Taxe de séjour : exonéré (résident de Sint Maarten)', en: 'Room tax: exempt (Sint Maarten resident)' },
+  total:          { fr: 'Total',                                         en: 'Total' },
+  totalPayable:   { fr: 'Total à payer',                                 en: 'Total payable' },
+  depositPaid:    { fr: 'Acompte versé (40 %)',                          en: 'Booking deposit paid (40%)' },
+  remainingBal:   { fr: 'Solde restant, à régler avant l\'arrivée',      en: 'Remaining balance, due before arrival' },
+  securityDep:    { fr: 'Dépôt de garantie : empreinte bancaire, non débitée', en: 'Security deposit: card pre-authorization, not charged' },
+  invoiceAttached:{ fr: (n: string) => `Votre facture n° ${n} est jointe à cet e-mail.`, en: (n: string) => `Your invoice no. ${n} is attached to this email.` },
   // Note affichée quand la caution n'est PAS payable en ligne
   // (virement bancaire) — empreinte à l'arrivée.
   securityNoteOffline: { fr: 'Empreinte bancaire prise à votre arrivée par carte bancaire. Aucun débit ne sera effectué sauf en cas de dégât constaté au départ.', en: 'Card imprint taken on arrival. No amount will be charged unless damage is found at check-out.' },
   // Notes affichées pour un paiement par carte (Fygaro) : empreinte
   // sécurisée en ligne, avec fallback lien si le client a fermé son
   // navigateur avant l'étape 2.
-  securityNoteOnlinePending: { fr: 'Pour finaliser votre réservation, autorisez l\'empreinte CB en ligne (aucun débit — pré-autorisation libérée après votre séjour).', en: 'To finalize your reservation, authorize the card imprint online (no debit — pre-authorization released after your stay).' },
+  securityNoteOnlinePending: { fr: 'Pour finaliser votre réservation, autorisez l\'empreinte CB en ligne (aucun débit : pré-autorisation libérée après votre séjour).', en: 'To finalize your reservation, authorize the card imprint online (no debit: pre-authorization released after your stay).' },
   securityNoteOnlineDone: { fr: 'L\'empreinte de votre carte a bien été enregistrée. Aucun débit sauf en cas de dégât constaté au départ. Libération automatique après votre séjour.', en: 'Your card imprint has been secured. No debit unless damage is found at check-out. Automatic release after your stay.' },
   authorizeDepositBtn: { fr: 'Autoriser mon empreinte CB', en: 'Authorize my card imprint' },
   // Bank transfer instructions
@@ -100,26 +112,31 @@ const TR = {
   importantBody:  { fr: 'Votre réservation n\'est pas encore confirmée. Les dates sont réservées pendant 48 h en attente du virement. Merci d\'effectuer le virement dans ce délai pour garantir votre séjour.', en: 'Your reservation is not yet confirmed. Dates will be held for 48 hours pending receipt of funds. Please transfer within this timeframe to secure your booking.' },
   // Cancellation
   cancelTitle:    { fr: 'Conditions d\'annulation',                       en: 'Cancellation Policy' },
-  cancelMore30:   { fr: 'Plus de 30 jours avant l\'arrivée : remboursement possible selon conditions', en: 'More than 30 days before arrival: refund possible per conditions' },
-  cancel30to14:   { fr: '30 à 14 jours avant l\'arrivée : acompte non remboursable',                   en: '30–14 days before arrival: deposit non-refundable' },
-  cancelLess14:   { fr: 'Moins de 14 jours avant l\'arrivée : acompte non remboursable, surplus à la discrétion de l\'hôte', en: 'Less than 14 days before arrival: deposit non-refundable; any surplus at owner\'s discretion' },
-  cancelNoShow:   { fr: 'No-show : aucun remboursement',                  en: 'No-show: no refund' },
-  cancelOwner:    { fr: 'Annulation par l\'hôte : remboursement intégral', en: 'Owner cancellation: full refund' },
+  // Formulation précisée à la demande de la comptable (montants concernés
+  // explicites). Plus de 30 j et moins de 14 j : PROVISOIRE, en attente de
+  // la validation de Sonia (lecture actuelle des CGV).
+  cancelMore30:   { fr: 'Plus de 30 jours avant l\'arrivée : toutes les sommes versées sont remboursées, déduction faite des éventuels frais bancaires ou de carte.', en: 'More than 30 days before arrival: all amounts paid are refunded, less any bank or card processing fees.' },
+  cancel30to14:   { fr: 'Entre 30 et 14 jours avant l\'arrivée : l\'acompte de 40 % est conservé ; les sommes versées au-delà de l\'acompte sont remboursées.', en: '30 to 14 days before arrival: the 40% booking deposit is retained; any amount paid above the deposit is refunded.' },
+  cancelLess14:   { fr: 'Moins de 14 jours avant l\'arrivée : l\'acompte de 40 % est conservé. Si le séjour a été payé en totalité, le solde (60 %) n\'est remboursé que si les dates sont relouées.', en: 'Less than 14 days before arrival: the 40% booking deposit is retained. If the stay was paid in full, the remaining 60% is refunded only if the dates are rebooked.' },
+  cancelNoShow:   { fr: 'Non-présentation : les sommes déjà versées ne sont pas remboursées.', en: 'No-show: amounts already paid are not refunded.' },
+  cancelEarly:    { fr: 'Départ anticipé : les nuits non utilisées ne sont pas remboursées.', en: 'Early departure: unused nights are not refunded.' },
+  cancelOwner:    { fr: 'Annulation par l\'hôte : toutes les sommes versées sont intégralement remboursées, taxe de séjour comprise.', en: 'Cancellation by the owner: all amounts paid are refunded in full, including room tax.' },
+  cancelTermsLink:{ fr: 'Conditions générales complètes', en: 'Full terms and conditions' },
   // Footer
   questions:      { fr: (mail: string) => `Pour toute question, contactez-nous à <a href="mailto:${mail}" style="color:#c9a96e;">${mail}</a> ou via WhatsApp au +1 (514) 947-6100.`, en: (mail: string) => `If you have any questions, please contact us at <a href="mailto:${mail}" style="color:#c9a96e;">${mail}</a> or via WhatsApp at +1 (514) 947-6100.` },
   signature:      { fr: 'Island Living SXM · Saint-Martin · Caraïbes',   en: 'Island Living SXM · Sint Maarten / Saint-Martin · Caribbean' },
   // Email subjects
-  subjectConfirmed: { fr: (villa: string) => `Réservation confirmée — ${villa} | Island Living SXM`, en: (villa: string) => `Booking Confirmed — ${villa} | Island Living SXM` },
-  subjectPending:   { fr: (villa: string) => `Demande de réservation — ${villa} | En attente du virement`, en: (villa: string) => `Booking Request — ${villa} | Awaiting Bank Transfer` },
-  subjectCancelled: { fr: (villa: string) => `Réservation annulée — ${villa} | Island Living SXM`, en: (villa: string) => `Booking Cancelled — ${villa} | Island Living SXM` },
+  subjectConfirmed: { fr: (villa: string) => `Réservation confirmée : ${villa} | Island Living SXM`, en: (villa: string) => `Booking Confirmed: ${villa} | Island Living SXM` },
+  subjectPending:   { fr: (villa: string) => `Demande de réservation : ${villa} | En attente du virement`, en: (villa: string) => `Booking Request: ${villa} | Awaiting Bank Transfer` },
+  subjectCancelled: { fr: (villa: string) => `Réservation annulée : ${villa} | Island Living SXM`, en: (villa: string) => `Booking Cancelled: ${villa} | Island Living SXM` },
   // Cancellation email content
   cancelledTitle:   { fr: 'Réservation annulée',                            en: 'Booking Cancelled' },
   cancelledIntro:   { fr: (villa: string) => `Nous vous informons que votre réservation pour <strong>${villa}</strong> a été annulée.`, en: (villa: string) => `We are writing to inform you that your booking for <strong>${villa}</strong> has been cancelled.` },
   cancelledReason:  { fr: 'Motif de l\'annulation',                          en: 'Reason for cancellation' },
   cancelledRefund:  { fr: 'Remboursement',                                   en: 'Refund' },
   cancelledRefundBody: {
-    fr: 'Si un paiement a déjà été reçu, nous procéderons au remboursement selon nos conditions d\'annulation (voir ci-dessous). En cas de virement bancaire, le remboursement peut nécessiter des frais bancaires internationaux — nous vous tiendrons informé.',
-    en: 'If a payment has already been received, we will proceed with the refund according to our cancellation policy (see below). For bank transfers, refund may incur international banking fees — we will keep you informed.',
+    fr: 'Si un paiement a déjà été reçu, nous procéderons au remboursement selon nos conditions d\'annulation (voir ci-dessous). En cas de virement bancaire, le remboursement peut nécessiter des frais bancaires internationaux ; nous vous tiendrons informé.',
+    en: 'If a payment has already been received, we will proceed with the refund according to our cancellation policy (see below). For bank transfers, refund may incur international banking fees; we will keep you informed.',
   },
   cancelledContact: { fr: 'N\'hésitez pas à nous contacter pour toute question ou pour reprogrammer votre séjour.', en: 'Please feel free to contact us with any questions or to reschedule your stay.' },
 };
@@ -129,7 +146,9 @@ function t<K extends keyof typeof TR>(key: K, locale: Locale): typeof TR[K]['en'
 }
 
 function formatUSD(amount: number): string {
-  return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  // Centimes affichés seulement s'il y en a (la taxe de 5 % en produit).
+  const n = Number(amount);
+  return `$${n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -163,9 +182,13 @@ function bookingSummaryHtml(d: BookingEmailData, locale: Locale): string {
   // Surcoût voyageurs supplémentaires : pas stocké à part en DB, mais inclus
   // dans bookingTotal (= séjour + ménage + voyageurs sup.) → on le retrouve
   // par différence pour que les lignes du récap tombent juste sur le total.
-  const extraGuestsAmount = Math.round(
+  const extraGuestsAmount = d.extraGuestsAmount ?? Math.round(
     (Number(d.bookingTotal) - Number(d.accommodationAmount) - Number(d.cleaningFee)) * 100,
   ) / 100;
+  const hasRoomTax = d.roomTaxAmount !== undefined && d.totalPayable !== undefined;
+  const roomTaxFn = t('roomTax', locale) as (pct: string) => string;
+  const pct = `${Math.round((d.roomTaxRate ?? 0) * 1000) / 10} %`.replace(' %', locale === 'fr' ? ' %' : '%');
+  const invoiceFn = t('invoiceAttached', locale) as (n: string) => string;
 
   // Choix de la note caution en fonction du mode de paiement :
   //  - card (Fygaro) → empreinte se fait EN LIGNE (déjà faite ou pending)
@@ -199,7 +222,15 @@ function bookingSummaryHtml(d: BookingEmailData, locale: Locale): string {
       ${extraGuestsAmount >= 1 ? `
       <tr><td style="padding:6px 0;border-bottom:1px solid #eee;">${t('extraGuests', locale)}</td><td style="text-align:right;padding:6px 0;border-bottom:1px solid #eee;">${formatUSD(extraGuestsAmount)}</td></tr>
       ` : ''}
+      ${hasRoomTax ? `
+      <tr><td style="padding:6px 0;border-bottom:1px solid #eee;">${t('subtotal', locale)}</td><td style="text-align:right;padding:6px 0;border-bottom:1px solid #eee;">${formatUSD(d.bookingTotal)}</td></tr>
+      ${d.roomTaxAmount! > 0
+        ? `<tr><td style="padding:6px 0;border-bottom:1px solid #eee;">${roomTaxFn(pct)}</td><td style="text-align:right;padding:6px 0;border-bottom:1px solid #eee;">${formatUSD(d.roomTaxAmount!)}</td></tr>`
+        : `<tr><td style="padding:6px 0;border-bottom:1px solid #eee;" colspan="2">${t('roomTaxExempt', locale)}</td></tr>`}
+      <tr style="font-weight:bold;"><td style="padding:6px 0;border-bottom:2px solid #c9a96e;">${t('totalPayable', locale)}</td><td style="text-align:right;padding:6px 0;border-bottom:2px solid #c9a96e;">${formatUSD(d.totalPayable!)}</td></tr>
+      ` : `
       <tr style="font-weight:bold;"><td style="padding:6px 0;border-bottom:2px solid #c9a96e;">${t('total', locale)}</td><td style="text-align:right;padding:6px 0;border-bottom:2px solid #c9a96e;">${formatUSD(d.bookingTotal)}</td></tr>
+      `}
       ${d.paymentOption === 'deposit_40' ? `
       <tr><td style="padding:6px 0;color:#c9a96e;">${t('depositPaid', locale)}</td><td style="text-align:right;padding:6px 0;color:#c9a96e;">${formatUSD(d.depositAmount)}</td></tr>
       <tr><td style="padding:6px 0;">${t('remainingBal', locale)}</td><td style="text-align:right;padding:6px 0;">${formatUSD(d.remainingBalance)}</td></tr>
@@ -208,12 +239,13 @@ function bookingSummaryHtml(d: BookingEmailData, locale: Locale): string {
     </table>
     <p style="font-size:12px;color:#888;margin-top:8px;">${t(securityNoteKey, locale)}</p>
     ${authorizeCta}
+    ${d.invoiceNumber ? `<p style="font-size:13px;margin-top:16px;">${invoiceFn(d.invoiceNumber)}</p>` : ''}
   `;
 }
 
 function bankInstructionsHtml(d: BookingEmailData, locale: Locale): string {
   if (!d.bankDetails) return '';
-  const amountDue = d.paymentOption === 'full' ? d.bookingTotal : d.depositAmount;
+  const amountDue = d.paymentOption === 'full' ? (d.totalPayable ?? d.bookingTotal) : d.depositAmount;
   const refFn = t('bookingRefNote', locale) as (id: string) => string;
   return `
     <div style="background:#f8f8f6;border:1px solid #e0d8cc;padding:16px;border-radius:4px;margin:20px 0;">
@@ -240,7 +272,9 @@ function cancellationPolicyHtml(locale: Locale): string {
       • ${t('cancel30to14', locale)}<br/>
       • ${t('cancelLess14', locale)}<br/>
       • ${t('cancelNoShow', locale)}<br/>
-      • ${t('cancelOwner', locale)}
+      • ${t('cancelEarly', locale)}<br/>
+      • ${t('cancelOwner', locale)}<br/>
+      <a href="${(process.env.NEXT_PUBLIC_SITE_URL || 'https://islandlivingsxm.com').replace(/\/+$/, '')}/${locale}/legal" style="color:#c9a96e;">${t('cancelTermsLink', locale)}</a>
     </div>
   `;
 }
@@ -340,7 +374,7 @@ async function sendAdminNotificationEmail(d: BookingEmailData, status: string): 
   const statusLabel = status === 'confirmed' ? '✅ CONFIRMED' : '⏳ PENDING BANK TRANSFER';
   const html = `
     <div style="font-family:monospace;max-width:600px;margin:0 auto;color:#333;font-size:13px;">
-      <h2 style="color:#c9a96e;">New Booking — ${statusLabel}</h2>
+      <h2 style="color:#c9a96e;">New Booking: ${statusLabel}</h2>
       <p><strong>Guest:</strong> ${d.guestName} (${d.guestEmail})</p>
       <p><strong>Locale:</strong> ${d.locale || 'en'}</p>
       <p><strong>Villa:</strong> ${d.villaName}</p>
@@ -352,7 +386,7 @@ async function sendAdminNotificationEmail(d: BookingEmailData, status: string): 
       <p><a href="https://islandlivingsxm.com/en/admin/bookings">View in admin dashboard →</a></p>
     </div>
   `;
-  await sendEmail(ADMIN_EMAIL, `[Island Living SXM] New Booking — ${d.guestName} — ${statusLabel}`, html);
+  await sendEmail(ADMIN_EMAIL, `[Island Living SXM] New Booking: ${d.guestName}, ${statusLabel}`, html);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -499,12 +533,12 @@ interface BalancePaidEmailData {
 export async function sendBalancePaidEmail(d: BalancePaidEmailData): Promise<void> {
   const locale: Locale = d.locale === 'fr' ? 'fr' : 'en';
   const subject = locale === 'fr'
-    ? `Solde reçu — votre séjour à ${d.villaName} est intégralement payé`
-    : `Balance received — your stay at ${d.villaName} is fully paid`;
+    ? `Solde reçu : votre séjour à ${d.villaName} est intégralement payé`
+    : `Balance received: your stay at ${d.villaName} is fully paid`;
 
   const intro = locale === 'fr'
-    ? `Nous avons bien reçu le règlement de votre solde. Votre séjour à <strong>${d.villaName}</strong> est maintenant <strong>intégralement payé</strong> — il ne vous reste plus qu'à préparer vos valises !`
-    : `We have received your balance payment. Your stay at <strong>${d.villaName}</strong> is now <strong>fully paid</strong> — all that's left is to pack your bags!`;
+    ? `Nous avons bien reçu le règlement de votre solde. Votre séjour à <strong>${d.villaName}</strong> est maintenant <strong>intégralement payé</strong>. Il ne vous reste plus qu'à préparer vos valises !`
+    : `We have received your balance payment. Your stay at <strong>${d.villaName}</strong> is now <strong>fully paid</strong>. All that's left is to pack your bags!`;
 
   const villaLabel = locale === 'fr' ? 'Villa' : 'Villa';
   const checkInLabel = locale === 'fr' ? 'Arrivée' : 'Check-in';
@@ -562,8 +596,8 @@ export async function sendDepositReminderEmail(d: DepositReminderEmailData): Pro
     : `Reminder: deposit authorization for ${d.villaName}`;
 
   const intro = locale === 'fr'
-    ? `Votre arrivée à <strong>${d.villaName}</strong> est prévue le ${d.checkIn}. Pour finaliser votre séjour, il ne reste qu'à autoriser l'empreinte CB de garantie — c'est instantané et sans débit.`
-    : `Your arrival at <strong>${d.villaName}</strong> is scheduled for ${d.checkIn}. To finalize your stay, only the security deposit imprint remains to be authorized — instant and without debit.`;
+    ? `Votre arrivée à <strong>${d.villaName}</strong> est prévue le ${d.checkIn}. Pour finaliser votre séjour, il ne reste qu'à autoriser l'empreinte CB de garantie, c'est instantané et sans débit.`
+    : `Your arrival at <strong>${d.villaName}</strong> is scheduled for ${d.checkIn}. To finalize your stay, only the security deposit imprint remains to be authorized. It is instant and without debit.`;
 
   const ctaLabel = locale === 'fr' ? 'Autoriser mon empreinte CB' : 'Authorize my card imprint';
   const amountLine = locale === 'fr'
@@ -614,8 +648,8 @@ interface DepositAuthorizedEmailData {
 export async function sendDepositAuthorizedEmail(d: DepositAuthorizedEmailData): Promise<void> {
   const locale: Locale = d.locale === 'fr' ? 'fr' : 'en';
   const subject = locale === 'fr'
-    ? `Votre caution est sécurisée — ${d.villaName}`
-    : `Your security deposit is secured — ${d.villaName}`;
+    ? `Votre caution est sécurisée : ${d.villaName}`
+    : `Your security deposit is secured: ${d.villaName}`;
 
   const intro = locale === 'fr'
     ? `Nous confirmons que l'empreinte de votre carte a bien été enregistrée en garantie pour votre séjour à <strong>${d.villaName}</strong>.`
@@ -623,8 +657,8 @@ export async function sendDepositAuthorizedEmail(d: DepositAuthorizedEmailData):
 
   const noDebitTitle = locale === 'fr' ? 'Aucun débit effectué' : 'No debit charged';
   const noDebitBody = locale === 'fr'
-    ? "Le montant de votre caution est simplement pré-autorisé sur votre carte — aucune somme n'est prélevée. La pré-autorisation est visible sur votre relevé mais ne réduit pas votre solde disponible de manière définitive."
-    : "Your deposit amount is simply pre-authorized on your card — no amount is charged. The pre-authorization may show on your statement but does not permanently reduce your available balance.";
+    ? "Le montant de votre caution est simplement pré-autorisé sur votre carte : aucune somme n'est prélevée. La pré-autorisation est visible sur votre relevé mais ne réduit pas votre solde disponible de manière définitive."
+    : "Your deposit amount is simply pre-authorized on your card: no amount is charged. The pre-authorization may show on your statement but does not permanently reduce your available balance.";
 
   const releaseTitle = locale === 'fr' ? 'Libération automatique' : 'Automatic release';
   const releaseBody = locale === 'fr'

@@ -119,7 +119,7 @@ export async function computeServerPricing(args: {
       ? { guestsCount, baseCapacity, pricePerNight: extraPrice }
       : undefined,
   );
-  const amountDue = paymentOption === 'full' ? pricing.bookingTotal : pricing.depositAmount;
+  const amountDue = paymentOption === 'full' ? pricing.totalPayable : pricing.depositAmount;
 
   return {
     ...pricing,
