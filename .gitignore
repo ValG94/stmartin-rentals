@@ -37,3 +37,6 @@ next-env.d.ts
 
 # Claude Code local config
 .claude/
+
+# Livrables générés pour le client / la comptable (PDF, exports) — hors Git
+livrables/

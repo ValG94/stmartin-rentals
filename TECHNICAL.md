@@ -5,8 +5,8 @@
 > **Ne pas éditer manuellement** ces blocs — édite le reste librement.
 
 <!-- AUTO:META -->
-> **Dernière mise à jour** : 2026-10-22 07:41 UTC
-> **Branche** : `main` — **HEAD** : `78fb5d6`
+> **Dernière mise à jour** : 2026-10-28 07:46 UTC
+> **Branche** : `main` — **HEAD** : `e257830`
 <!-- /AUTO:META -->
 
 ---
@@ -361,6 +361,7 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 <!-- AUTO:LAST_COMMITS -->
 | Hash | Date | Auteur | Sujet |
 |---|---|---|---|
+| `e257830` | 2026-10-22 | Valery Garrec | fix(email): show extra guests line in booking summary |
 | `78fb5d6` | 2026-10-20 | Valery Garrec | chore: remove stale package-lock.json (project uses pnpm) |
 | `0fecad8` | 2026-10-15 | Valery Garrec | feat(pricing): update cleaning fees — Villa Vanille $550, Maison Blanche $350 |
 | `4fdf77f` | 2026-07-17 | Valery Garrec | docs: add TECHNICAL.md with auto-updated sections + Google verification file |
@@ -375,7 +376,6 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 | `9d52fb8` | 2026-07-17 | Valery Garrec | fix(db): allow 'fygaro' in bookings.payment_method CHECK constraint |
 | `763d89b` | 2026-07-17 | Valery Garrec | fix(booking): calendar UX + FYGARO_TEST_AMOUNT env for e2e testing |
 | `f2f50d1` | 2026-07-17 | Valery Garrec | fix(fygaro): align JWT payload + webhook secret with official docs |
-| `33fa91e` | 2026-07-11 | Valery Garrec | feat(dashboard): pagination + multi-select + batch delete on bookings table |
 <!-- /AUTO:LAST_COMMITS -->
 
 ---
