@@ -5,8 +5,8 @@
 > **Ne pas éditer manuellement** ces blocs — édite le reste librement.
 
 <!-- AUTO:META -->
-> **Dernière mise à jour** : 2026-10-28 07:46 UTC
-> **Branche** : `HEAD` — **HEAD** : `7c8dfaa`
+> **Dernière mise à jour** : 2026-10-28 13:03 UTC
+> **Branche** : `feat/room-tax-invoices` — **HEAD** : `cee8e14`
 <!-- /AUTO:META -->
 
 ---
@@ -361,6 +361,7 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 <!-- AUTO:LAST_COMMITS -->
 | Hash | Date | Auteur | Sujet |
 |---|---|---|---|
+| `cee8e14` | 2026-10-27 | Valery Garrec | feat(invoices): room tax 5% + PDF invoice/receipt drafts for accountant review |
 | `7c8dfaa` | 2026-10-28 | Valery Garrec | chore: ignore livrables/ folder (generated client deliverables) |
 | `e257830` | 2026-10-22 | Valery Garrec | fix(email): show extra guests line in booking summary |
 | `78fb5d6` | 2026-10-20 | Valery Garrec | chore: remove stale package-lock.json (project uses pnpm) |
@@ -375,7 +376,6 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 | `3e4426f` | 2026-07-17 | Valery Garrec | fix(fygaro): shorten custom_reference to fit 40-char Fygaro limit |
 | `44fad02` | 2026-07-17 | Valery Garrec | fix(fygaro): strip non-documented JWT claims to avoid 'Invalid JWT' |
 | `9d52fb8` | 2026-07-17 | Valery Garrec | fix(db): allow 'fygaro' in bookings.payment_method CHECK constraint |
-| `763d89b` | 2026-07-17 | Valery Garrec | fix(booking): calendar UX + FYGARO_TEST_AMOUNT env for e2e testing |
 <!-- /AUTO:LAST_COMMITS -->
 
 ---

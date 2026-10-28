@@ -113,11 +113,10 @@ const TR = {
   // Cancellation
   cancelTitle:    { fr: 'Conditions d\'annulation',                       en: 'Cancellation Policy' },
   // Formulation précisée à la demande de la comptable (montants concernés
-  // explicites). Plus de 30 j et moins de 14 j : PROVISOIRE, en attente de
-  // la validation de Sonia (lecture actuelle des CGV).
+  // explicites). Plus de 30 j et moins de 14 j validés par Sonia le 28/10/2026.
   cancelMore30:   { fr: 'Plus de 30 jours avant l\'arrivée : toutes les sommes versées sont remboursées, déduction faite des éventuels frais bancaires ou de carte.', en: 'More than 30 days before arrival: all amounts paid are refunded, less any bank or card processing fees.' },
   cancel30to14:   { fr: 'Entre 30 et 14 jours avant l\'arrivée : l\'acompte de 40 % est conservé ; les sommes versées au-delà de l\'acompte sont remboursées.', en: '30 to 14 days before arrival: the 40% booking deposit is retained; any amount paid above the deposit is refunded.' },
-  cancelLess14:   { fr: 'Moins de 14 jours avant l\'arrivée : l\'acompte de 40 % est conservé. Si le séjour a été payé en totalité, le solde (60 %) n\'est remboursé que si les dates sont relouées.', en: 'Less than 14 days before arrival: the 40% booking deposit is retained. If the stay was paid in full, the remaining 60% is refunded only if the dates are rebooked.' },
+  cancelLess14:   { fr: 'Moins de 14 jours avant l\'arrivée : les sommes déjà versées (l\'acompte de 40 %, et le solde s\'il a été réglé) ne sont pas remboursées.', en: 'Less than 14 days before arrival: amounts already paid (the 40% booking deposit, and the balance if already paid) are not refunded.' },
   cancelNoShow:   { fr: 'Non-présentation : les sommes déjà versées ne sont pas remboursées.', en: 'No-show: amounts already paid are not refunded.' },
   cancelEarly:    { fr: 'Départ anticipé : les nuits non utilisées ne sont pas remboursées.', en: 'Early departure: unused nights are not refunded.' },
   cancelOwner:    { fr: 'Annulation par l\'hôte : toutes les sommes versées sont intégralement remboursées, taxe de séjour comprise.', en: 'Cancellation by the owner: all amounts paid are refunded in full, including room tax.' },
