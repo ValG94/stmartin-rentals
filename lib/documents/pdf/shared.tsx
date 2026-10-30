@@ -3,7 +3,7 @@
 import React from 'react';
 import { Image, StyleSheet, Text, View } from '@react-pdf/renderer';
 import { EMBLEM_PNG_DATA_URI } from '../assets/emblem';
-import { SELLER } from '../company';
+import { BRAND, type Seller } from '../company';
 import { labels } from '../labels';
 import type { DocLocale } from '../types';
 
@@ -60,23 +60,24 @@ export function Header({ title, meta }: { title: string; meta: string[] }) {
   );
 }
 
-export function SellerBlock({ locale }: { locale: DocLocale }) {
+// L'émetteur est la société qui fournit l'hébergement (une par villa).
+export function SellerBlock({ locale, seller }: { locale: DocLocale; seller: Seller }) {
   const l = labels(locale);
   return (
     <View style={s.col}>
       <Text style={s.label}>{l.issuedBy}</Text>
-      <Text style={s.strong}>{SELLER.name}</Text>
-      {SELLER.addressLines.map((a) => <Text key={a}>{a}</Text>)}
-      <Text>{l.crib} {SELLER.crib}</Text>
+      <Text style={s.strong}>{seller.name}</Text>
+      {seller.addressLines.map((a) => <Text key={a}>{a}</Text>)}
+      <Text>{l.crib} {seller.crib}</Text>
     </View>
   );
 }
 
-export function Footer({ locale }: { locale: DocLocale }) {
+export function Footer({ locale, seller }: { locale: DocLocale; seller: Seller }) {
   const l = labels(locale);
   return (
     <View style={s.footer} fixed>
-      <Text>{SELLER.name} · {l.crib} {SELLER.crib} · {SELLER.tradeName} · {SELLER.email} · {SELLER.website}</Text>
+      <Text>{seller.name} · {l.crib} {seller.crib} · {BRAND.tradeName} · {BRAND.email} · {BRAND.website}</Text>
       <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
     </View>
   );

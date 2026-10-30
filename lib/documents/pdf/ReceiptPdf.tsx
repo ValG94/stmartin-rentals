@@ -12,15 +12,16 @@ export function ReceiptPdf({ data }: { data: ReceiptData }) {
   const l = labels(locale);
   const m = (n: number) => money(n, locale);
   const colon = locale === 'fr' ? ' :' : ':';
+  const { seller } = invoice.stay.property;
 
   return (
-    <Document title={`${l.receiptNo} ${payment.receiptNumber}`} author="CHENILLE INVESTMENTS LTD" language={locale}>
+    <Document title={`${l.receiptNo} ${payment.receiptNumber}`} author={seller.name} language={locale}>
       <Page size="A4" style={s.page}>
         <Header title={l.receipt} meta={[`${l.receiptNo} ${payment.receiptNumber}`, `${l.paymentDate}${colon} ${date(payment.date, locale)}`]} />
 
         <View style={s.body}>
           <View style={s.row}>
-            <SellerBlock locale={locale} />
+            <SellerBlock locale={locale} seller={seller} />
             <View style={s.col}>
               <Text style={s.label}>{l.receivedFrom}</Text>
               <Text style={s.strong}>{invoice.guest.name}</Text>
@@ -67,7 +68,7 @@ export function ReceiptPdf({ data }: { data: ReceiptData }) {
           <Text style={[s.note, { marginTop: 24 }]}>{l.thanks} {l.amountsInUsd}</Text>
         </View>
 
-        <Footer locale={locale} />
+        <Footer locale={locale} seller={seller} />
       </Page>
     </Document>
   );

@@ -5,8 +5,8 @@
 > **Ne pas éditer manuellement** ces blocs — édite le reste librement.
 
 <!-- AUTO:META -->
-> **Dernière mise à jour** : 2026-10-28 13:03 UTC
-> **Branche** : `feat/room-tax-invoices` — **HEAD** : `cee8e14`
+> **Dernière mise à jour** : 2026-10-30 15:14 UTC
+> **Branche** : `feat/room-tax-invoices` — **HEAD** : `0e8b51d`
 <!-- /AUTO:META -->
 
 ---
@@ -361,6 +361,7 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 <!-- AUTO:LAST_COMMITS -->
 | Hash | Date | Auteur | Sujet |
 |---|---|---|---|
+| `0e8b51d` | 2026-10-28 | Valery Garrec | fix(email): cancellation under 14 days, amounts paid not refunded (validated by owner) |
 | `cee8e14` | 2026-10-27 | Valery Garrec | feat(invoices): room tax 5% + PDF invoice/receipt drafts for accountant review |
 | `7c8dfaa` | 2026-10-28 | Valery Garrec | chore: ignore livrables/ folder (generated client deliverables) |
 | `e257830` | 2026-10-22 | Valery Garrec | fix(email): show extra guests line in booking summary |
@@ -375,7 +376,6 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 | `f48a3c1` | 2026-07-17 | Valery Garrec | fix(admin): show 'Card' badge on Fygaro bookings (was mislabeled 'PayPal') |
 | `3e4426f` | 2026-07-17 | Valery Garrec | fix(fygaro): shorten custom_reference to fit 40-char Fygaro limit |
 | `44fad02` | 2026-07-17 | Valery Garrec | fix(fygaro): strip non-documented JWT claims to avoid 'Invalid JWT' |
-| `9d52fb8` | 2026-07-17 | Valery Garrec | fix(db): allow 'fygaro' in bookings.payment_method CHECK constraint |
 <!-- /AUTO:LAST_COMMITS -->
 
 ---

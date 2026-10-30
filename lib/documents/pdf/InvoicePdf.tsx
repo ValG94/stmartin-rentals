@@ -12,15 +12,16 @@ export function InvoicePdf({ data }: { data: InvoiceData }) {
   const m = (n: number) => money(n, locale);
   const totalPaid = Math.round(data.payments.reduce((sum, p) => sum + p.amount, 0) * 100) / 100;
   const colon = locale === 'fr' ? ' :' : ':';
+  const { seller } = data.stay.property;
 
   return (
-    <Document title={`${l.invoiceNo} ${data.number}`} author="CHENILLE INVESTMENTS LTD" language={locale}>
+    <Document title={`${l.invoiceNo} ${data.number}`} author={seller.name} language={locale}>
       <Page size="A4" style={s.page}>
         <Header title={l.invoice} meta={[`${l.invoiceNo} ${data.number}`, `${l.issueDate}${colon} ${date(data.issueDate, locale)}`]} />
 
         <View style={s.body}>
           <View style={s.row}>
-            <SellerBlock locale={locale} />
+            <SellerBlock locale={locale} seller={seller} />
             <View style={s.col}>
               <Text style={s.label}>{l.billTo}</Text>
               <Text style={s.strong}>{data.guest.name}</Text>
@@ -106,7 +107,7 @@ export function InvoicePdf({ data }: { data: InvoiceData }) {
           </View>
         </View>
 
-        <Footer locale={locale} />
+        <Footer locale={locale} seller={seller} />
       </Page>
     </Document>
   );

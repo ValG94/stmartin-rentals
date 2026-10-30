@@ -2,7 +2,8 @@
 // Données des documents comptables (facture, reçu)
 // ============================================================
 //
-// Une facture par réservation (IL-AAAA-NNNN), un reçu daté par paiement
+// Une facture par réservation (PRÉFIXE-AAAA-NNNN, une série par société
+// émettrice, cf. company.ts), un reçu daté par paiement
 // (numéro de facture + -R1, -R2…) qui référence la facture.
 
 import type { PropertyIdentity } from './company';

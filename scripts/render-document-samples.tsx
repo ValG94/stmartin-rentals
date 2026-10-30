@@ -18,7 +18,8 @@ mkdirSync(outDir, { recursive: true });
 // Exemple de la comptable : 7 nuits × 650 USD + ménage 550 USD.
 const pricing = calculatePricing('villa-vanille', '2026-12-12', '2026-12-19', 650);
 const bookingId = '3f2a9c1e-7b4d-4e8a-9f61-2c5d8e0b7a14';
-const invoiceNumber = 'IL-2026-0001';
+const property = PROPERTIES['villa-vanille'];
+const invoiceNumber = `${property.seller.invoicePrefix}-2026-0001`;
 
 const deposit: PaymentRecord = {
   receiptNumber: `${invoiceNumber}-R1`, date: '2026-10-27', kind: 'deposit', method: 'card',
@@ -40,7 +41,7 @@ function invoiceFor(locale: DocLocale) {
       billingAddressLines: ['125 Ocean Drive', 'Miami, FL 33139', 'United States'],
     },
     stay: {
-      property: PROPERTIES['villa-vanille'],
+      property,
       bookingReference: bookingId,
       checkIn: '2026-12-12', checkOut: '2026-12-19', nights: pricing.nights, guestsCount: 6,
     },
