@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buildFygaroPaymentUrl } from '@/lib/services/fygaro';
-import { computeServerPricing, getServerSupabase } from '@/lib/services/server-pricing';
+import { bookingPricingColumns, computeServerPricing, getServerSupabase } from '@/lib/services/server-pricing';
 
 // Format canonique d'une URL Fygaro Payment Button
 // (validation sommaire pour éviter d'accepter n'importe quoi via env)
@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
       const paymentOption: 'full' | 'deposit_40' =
         body.paymentOption === 'deposit_40' ? 'deposit_40' : 'full';
       const locale: 'fr' | 'en' = body.locale === 'fr' ? 'fr' : 'en';
+      const billingAddress: string = String(body.billingAddress || '').trim().slice(0, 500);
 
       if (!apartmentId || !checkIn || !checkOut) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -99,20 +100,13 @@ export async function POST(req: NextRequest) {
           guest_name: guestName,
           guest_email: guestEmail,
           currency: 'USD',
-          nights: pricing.nights,
-          price_per_night: pricing.effectiveNightlyRate,
-          accommodation_amount: pricing.accommodationAmount,
-          cleaning_fee: pricing.cleaningFee,
-          booking_total: pricing.bookingTotal,
+          ...bookingPricingColumns(pricing),
           payment_option: paymentOption,
-          deposit_amount: pricing.depositAmount,
-          remaining_balance: pricing.remainingBalance,
           security_deposit_due_on_arrival: true,
-          security_deposit_amount: pricing.securityDepositAmount,
+          billing_address: billingAddress || null,
           payment_method: 'fygaro',
           payment_status: 'pending',
           booking_status: 'pending',
-          total_amount: pricing.amountDue,
           locale,
         })
         .select('id, guest_name, guest_email')

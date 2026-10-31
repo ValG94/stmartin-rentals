@@ -21,7 +21,7 @@ export function ReceiptPdf({ data }: { data: ReceiptData }) {
 
         <View style={s.body}>
           <View style={s.row}>
-            <SellerBlock locale={locale} seller={seller} />
+            <SellerBlock locale={locale} seller={seller} managedBy={invoice.stay.property.managedBy} />
             <View style={s.col}>
               <Text style={s.label}>{l.receivedFrom}</Text>
               <Text style={s.strong}>{invoice.guest.name}</Text>

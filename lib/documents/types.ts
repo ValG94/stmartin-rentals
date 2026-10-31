@@ -37,7 +37,7 @@ export interface PaymentRecord {
   receiptNumber: string;
   date: string;            // 'YYYY-MM-DD', date réelle d'encaissement
   kind: 'deposit' | 'balance' | 'full';
-  method: 'card' | 'bank_transfer';
+  method: 'card' | 'bank_transfer' | 'paypal';
   amount: number;          // taxe de séjour comprise
   roomTax: number;         // part de taxe de séjour incluse
   processorReference?: string;

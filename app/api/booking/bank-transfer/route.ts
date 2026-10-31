@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendBankTransferPendingEmail } from '@/lib/services/email';
-import { computeServerPricing, getServerSupabase } from '@/lib/services/server-pricing';
+import { sendBankTransferPendingEmail, roomTaxEmailFields } from '@/lib/services/email';
+import { PROPERTIES } from '@/lib/documents/company';
+import { bookingPricingColumns, computeServerPricing, getServerSupabase } from '@/lib/services/server-pricing';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -18,6 +19,7 @@ export async function POST(req: NextRequest) {
     const paymentOption: 'full' | 'deposit_40' =
       body.paymentOption === 'deposit_40' ? 'deposit_40' : 'full';
     const locale: 'fr' | 'en' = body.locale === 'fr' ? 'fr' : 'en';
+    const billingAddress: string = String(body.billingAddress || '').trim().slice(0, 500);
 
     if (!apartmentId || !checkIn || !checkOut) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -44,20 +46,13 @@ export async function POST(req: NextRequest) {
         guest_name: guestName,
         guest_email: guestEmail,
         currency: 'USD',
-        nights: pricing.nights,
-        price_per_night: pricing.effectiveNightlyRate,
-        accommodation_amount: pricing.accommodationAmount,
-        cleaning_fee: pricing.cleaningFee,
-        booking_total: pricing.bookingTotal,
+        ...bookingPricingColumns(pricing),
         payment_option: paymentOption,
-        deposit_amount: pricing.depositAmount,
-        remaining_balance: pricing.remainingBalance,
         security_deposit_due_on_arrival: true,
-        security_deposit_amount: pricing.securityDepositAmount,
+        billing_address: billingAddress || null,
         payment_method: 'bank_transfer',
         payment_status: 'pending_bank_transfer',
         booking_status: 'pending_bank_transfer',
-        total_amount: pricing.amountDue,
         locale,
       })
       .select('id')
@@ -66,11 +61,15 @@ export async function POST(req: NextRequest) {
     if (error) throw new Error(`DB error: ${error.message}`);
     const bookingId = booking.id;
 
-    const { data: bankConfig } = await supabase
+    // RIB de la société émettrice de la villa s'il est configuré, sinon le
+    // compte par défaut (company_key NULL, Chenille).
+    const companyKey = PROPERTIES[pricing.apartmentSlug]?.seller.key;
+    const { data: bankRows } = await supabase
       .from('bank_transfer_config')
       .select('*')
-      .eq('is_active', true)
-      .single();
+      .eq('is_active', true);
+    const bankConfig = bankRows?.find((r) => r.company_key === companyKey)
+      ?? bankRows?.find((r) => r.company_key == null);
 
     await sendBankTransferPendingEmail({
       guestName,
@@ -82,6 +81,12 @@ export async function POST(req: NextRequest) {
       accommodationAmount: pricing.accommodationAmount,
       cleaningFee: pricing.cleaningFee,
       bookingTotal: pricing.bookingTotal,
+      ...roomTaxEmailFields({
+        extra_guests_amount: pricing.extraGuestsAmount,
+        room_tax_rate: pricing.roomTaxRate,
+        room_tax_amount: pricing.roomTaxAmount,
+        total_payable: pricing.totalPayable,
+      }),
       paymentOption,
       depositAmount: pricing.depositAmount,
       remainingBalance: pricing.remainingBalance,

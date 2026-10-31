@@ -124,6 +124,18 @@ export default function BookingsClient({
   }
 
   async function markBankTransferReceived(bookingId: string) {
+    // Date réelle d'arrivée des fonds : elle date le reçu et le mois de
+    // déclaration de la taxe de séjour.
+    const today = new Date().toISOString().slice(0, 10);
+    const receivedDate = window.prompt(
+      isFr ? 'Date de réception du virement (AAAA-MM-JJ)' : 'Date the transfer was received (YYYY-MM-DD)',
+      today,
+    );
+    if (receivedDate === null) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(receivedDate.trim())) {
+      setErrorMsg(isFr ? 'Date invalide, format attendu AAAA-MM-JJ' : 'Invalid date, expected YYYY-MM-DD');
+      return;
+    }
     setActionLoading(bookingId);
     setErrorMsg('');
     try {
@@ -131,7 +143,7 @@ export default function BookingsClient({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ bookingId }),
+        body: JSON.stringify({ bookingId, receivedDate: receivedDate.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error');

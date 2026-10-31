@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPayPalOrder } from '@/lib/services/paypal';
-import { computeServerPricing, getServerSupabase } from '@/lib/services/server-pricing';
+import { bookingPricingColumns, computeServerPricing, getServerSupabase } from '@/lib/services/server-pricing';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -43,20 +43,12 @@ export async function POST(req: NextRequest) {
         guest_name: guestName,
         guest_email: guestEmail,
         currency: 'USD',
-        nights: pricing.nights,
-        price_per_night: pricing.effectiveNightlyRate,
-        accommodation_amount: pricing.accommodationAmount,
-        cleaning_fee: pricing.cleaningFee,
-        booking_total: pricing.bookingTotal,
+        ...bookingPricingColumns(pricing),
         payment_option: paymentOption,
-        deposit_amount: pricing.depositAmount,
-        remaining_balance: pricing.remainingBalance,
         security_deposit_due_on_arrival: true,
-        security_deposit_amount: pricing.securityDepositAmount,
         payment_method: 'paypal',
         payment_status: 'pending',
         booking_status: 'pending',
-        total_amount: pricing.amountDue,
         locale,
       })
       .select('id')

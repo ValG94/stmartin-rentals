@@ -5,7 +5,15 @@ import type { DocLocale, GuestIdentity, InvoiceData, InvoiceLine, PaymentRecord,
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-export function buildInvoiceLines(pricing: PricingResult, extraGuestPricePerNight = 0): InvoiceLine[] {
+// Montants nécessaires à une facture : un PricingResult (aperçus) ou les
+// colonnes figées sur la booking à sa création (émission réelle).
+export type PricingSnapshot = Pick<PricingResult,
+  | 'nights' | 'nightlyRate' | 'accommodationAmount' | 'cleaningFee'
+  | 'extraGuestsCount' | 'extraGuestsAmount' | 'bookingTotal'
+  | 'roomTaxRate' | 'roomTaxBase' | 'roomTaxAmount' | 'totalPayable'
+  | 'securityDepositAmount'>;
+
+export function buildInvoiceLines(pricing: PricingSnapshot, extraGuestPricePerNight = 0): InvoiceLine[] {
   const lines: InvoiceLine[] = [
     { kind: 'accommodation', quantity: pricing.nights, unitPrice: pricing.nightlyRate, amount: pricing.accommodationAmount },
     { kind: 'cleaning', quantity: 1, unitPrice: pricing.cleaningFee, amount: pricing.cleaningFee },
@@ -28,7 +36,7 @@ export function buildInvoiceData(args: {
   issueDate: string;
   guest: GuestIdentity;
   stay: StayInfo;
-  pricing: PricingResult;
+  pricing: PricingSnapshot;
   extraGuestPricePerNight?: number;
   payments: PaymentRecord[];
   roomTaxExemptionNote?: string;

@@ -31,6 +31,7 @@ export interface ServerPricing extends PricingResult {
   apartmentSlug: string;
   apartmentName: string;
   effectiveNightlyRate: number;
+  extraGuestPricePerNight: number;
   amountDue: number;
 }
 
@@ -126,7 +127,36 @@ export async function computeServerPricing(args: {
     apartmentSlug: apt.slug,
     apartmentName: apt.title_en,
     effectiveNightlyRate: pricing.nightlyRate,
+    extraGuestPricePerNight: extraPrice,
     amountDue,
+  };
+}
+
+/**
+ * Colonnes montants communes à toutes les créations de booking (Fygaro,
+ * virement, PayPal). Elles sont figées ici : la facture est construite
+ * plus tard à partir de ces valeurs, jamais recalculée.
+ */
+export function bookingPricingColumns(pricing: ServerPricing) {
+  return {
+    nights: pricing.nights,
+    price_per_night: pricing.effectiveNightlyRate,
+    accommodation_amount: pricing.accommodationAmount,
+    cleaning_fee: pricing.cleaningFee,
+    extra_guests_count: pricing.extraGuestsCount,
+    extra_guest_price_per_night: pricing.extraGuestPricePerNight,
+    extra_guests_amount: pricing.extraGuestsAmount,
+    booking_total: pricing.bookingTotal,
+    room_tax_rate: pricing.roomTaxRate,
+    room_tax_base: pricing.roomTaxBase,
+    room_tax_amount: pricing.roomTaxAmount,
+    total_payable: pricing.totalPayable,
+    deposit_amount: pricing.depositAmount,
+    deposit_room_tax: pricing.depositRoomTax,
+    remaining_balance: pricing.remainingBalance,
+    balance_room_tax: pricing.balanceRoomTax,
+    security_deposit_amount: pricing.securityDepositAmount,
+    total_amount: pricing.amountDue,
   };
 }
 

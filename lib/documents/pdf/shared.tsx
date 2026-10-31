@@ -25,7 +25,7 @@ export const s = StyleSheet.create({
   docMeta: { color: '#D8DEE8', fontSize: 8.5, textAlign: 'right', marginTop: 4 },
   body: { paddingHorizontal: 40, paddingTop: 22 },
   row: { flexDirection: 'row' },
-  col: { flex: 1 },
+  col: { flex: 1, paddingRight: 16 },
   label: { fontSize: 7.5, color: GOLD, fontFamily: 'Helvetica-Bold', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 },
   strong: { fontFamily: 'Helvetica-Bold' },
   muted: { color: MUTED },
@@ -61,7 +61,7 @@ export function Header({ title, meta }: { title: string; meta: string[] }) {
 }
 
 // L'émetteur est la société qui fournit l'hébergement (une par villa).
-export function SellerBlock({ locale, seller }: { locale: DocLocale; seller: Seller }) {
+export function SellerBlock({ locale, seller, managedBy }: { locale: DocLocale; seller: Seller; managedBy?: Seller }) {
   const l = labels(locale);
   return (
     <View style={s.col}>
@@ -69,6 +69,7 @@ export function SellerBlock({ locale, seller }: { locale: DocLocale; seller: Sel
       <Text style={s.strong}>{seller.name}</Text>
       {seller.addressLines.map((a) => <Text key={a}>{a}</Text>)}
       <Text>{l.crib} {seller.crib}</Text>
+      {managedBy && <Text style={s.muted}>{l.managedBy(managedBy.name, managedBy.crib)}</Text>}
     </View>
   );
 }

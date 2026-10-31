@@ -33,12 +33,36 @@ interface BookingEmailData {
   paymentMethod: string;         // 'card' | 'bank_transfer' | 'paypal' etc.
   bookingId: string;
   invoiceNumber?: string;        // facture PDF jointe au mail
+  attachments?: EmailAttachment[];
   locale?: Locale;
   bankDetails?: BankDetails;
   // Statut de l'empreinte caution (uniquement pertinent pour paiement CB).
   // Si 'authorized' → note "empreinte enregistrée". Sinon → CTA
   // "Autoriser mon empreinte" avec lien vers la page fygaro-success.
   depositAuthorizationStatus?: 'authorized' | 'captured' | 'voided' | 'expired' | null;
+}
+
+// Champs taxe de séjour du récap à partir d'une ligne bookings.
+// NULL (bookings antérieures à la taxe) → undefined → ancien récap.
+export function roomTaxEmailFields(b: {
+  extra_guests_amount?: number | string | null;
+  room_tax_rate?: number | string | null;
+  room_tax_amount?: number | string | null;
+  total_payable?: number | string | null;
+}): Pick<BookingEmailData, 'extraGuestsAmount' | 'roomTaxRate' | 'roomTaxAmount' | 'totalPayable'> {
+  const n = (v: number | string | null | undefined) => (v == null ? undefined : Number(v));
+  return {
+    extraGuestsAmount: n(b.extra_guests_amount),
+    roomTaxRate: n(b.room_tax_rate),
+    roomTaxAmount: n(b.room_tax_amount),
+    totalPayable: n(b.total_payable),
+  };
+}
+
+// Pièce jointe Resend : contenu en base64
+export interface EmailAttachment {
+  filename: string;
+  content: string;
 }
 
 interface BankDetails {
@@ -289,9 +313,9 @@ function footerHtml(locale: Locale): string {
 // ─────────────────────────────────────────────────────────────
 // Send
 // ─────────────────────────────────────────────────────────────
-async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+async function sendEmail(to: string, subject: string, html: string, attachments?: EmailAttachment[]): Promise<void> {
   if (!RESEND_API_KEY) {
-    console.log(`[EMAIL MOCK] To: ${to} | Subject: ${subject}`);
+    console.log(`[EMAIL MOCK] To: ${to} | Subject: ${subject}${attachments?.length ? ` | ${attachments.map((a) => a.filename).join(', ')}` : ''}`);
     return;
   }
   const res = await fetch('https://api.resend.com/emails', {
@@ -300,7 +324,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
       Authorization: `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from: FROM_EMAIL, to, subject, html }),
+    body: JSON.stringify({ from: FROM_EMAIL, to, subject, html, ...(attachments?.length ? { attachments } : {}) }),
   });
   if (!res.ok) {
     const err = await res.text();
@@ -331,7 +355,7 @@ export async function sendBookingConfirmationEmail(d: BookingEmailData): Promise
       </div>
     </div>
   `;
-  await sendEmail(d.guestEmail, subjectFn(d.villaName), html);
+  await sendEmail(d.guestEmail, subjectFn(d.villaName), html, d.attachments);
   await sendAdminNotificationEmail(d, 'confirmed');
 }
 
@@ -378,14 +402,15 @@ async function sendAdminNotificationEmail(d: BookingEmailData, status: string): 
       <p><strong>Locale:</strong> ${d.locale || 'en'}</p>
       <p><strong>Villa:</strong> ${d.villaName}</p>
       <p><strong>Check-in:</strong> ${d.checkIn} | <strong>Check-out:</strong> ${d.checkOut} (${d.nights} nights)</p>
-      <p><strong>Total:</strong> $${d.bookingTotal} | <strong>Payment:</strong> ${d.paymentOption === 'full' ? 'Full payment' : '40% deposit ($' + d.depositAmount + ')'}</p>
+      <p><strong>Total:</strong> ${formatUSD(d.totalPayable ?? d.bookingTotal)}${d.roomTaxAmount ? ` (incl. room tax ${formatUSD(d.roomTaxAmount)})` : ''} | <strong>Payment:</strong> ${d.paymentOption === 'full' ? 'Full payment' : `40% deposit (${formatUSD(d.depositAmount)})`}</p>
       <p><strong>Method:</strong> ${d.paymentMethod}</p>
       <p><strong>Booking ID:</strong> ${d.bookingId}</p>
+      ${d.attachments?.length ? `<p><strong>Documents:</strong> ${d.attachments.map((a) => a.filename).join(', ')} (attached)</p>` : ''}
       <hr/>
       <p><a href="https://islandlivingsxm.com/en/admin/bookings">View in admin dashboard →</a></p>
     </div>
   `;
-  await sendEmail(ADMIN_EMAIL, `[Island Living SXM] New Booking: ${d.guestName}, ${statusLabel}`, html);
+  await sendEmail(ADMIN_EMAIL, `[Island Living SXM] New Booking: ${d.guestName}, ${statusLabel}`, html, d.attachments);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -524,8 +549,10 @@ interface BalancePaidEmailData {
   checkIn: string;
   checkOut: string;
   amountPaid: number;
-  bookingTotal: number;
+  bookingTotal: number;          // total du séjour (TTC si taxe de séjour)
   bookingId: string;
+  receiptNumber?: string;        // reçu PDF joint au mail
+  attachments?: EmailAttachment[];
   locale?: Locale;
 }
 
@@ -560,6 +587,7 @@ export async function sendBalancePaidEmail(d: BalancePaidEmailData): Promise<voi
           <p style="margin:12px 0 4px;"><strong>${amountLabel} :</strong> ${formatUSD(d.amountPaid)}</p>
           <p style="margin:4px 0;color:#666;font-size:12px;"><strong>${totalLabel} :</strong> ${formatUSD(d.bookingTotal)}</p>
         </div>
+        ${d.receiptNumber ? `<p style="font-size:13px;color:#555;">${locale === 'fr' ? `Votre reçu n° ${d.receiptNumber} est joint à cet e-mail.` : `Your receipt no. ${d.receiptNumber} is attached to this email.`}</p>` : ''}
 
         <p style="font-size:13px;color:#555;margin-top:20px;">
           ${locale === 'fr'
@@ -571,7 +599,16 @@ export async function sendBalancePaidEmail(d: BalancePaidEmailData): Promise<voi
       </div>
     </div>
   `;
-  await sendEmail(d.guestEmail, subject, html);
+  await sendEmail(d.guestEmail, subject, html, d.attachments);
+  // Copie du reçu pour la propriétaire (comptabilité)
+  if (d.attachments?.length) {
+    await sendEmail(
+      ADMIN_EMAIL,
+      `[Island Living SXM] Balance received: ${d.guestName}`,
+      `<div style="font-family:monospace;font-size:13px;"><p>Balance of ${formatUSD(d.amountPaid)} received for ${d.villaName} (${d.checkIn} to ${d.checkOut}).</p><p><strong>Booking ID:</strong> ${d.bookingId}</p><p><strong>Documents:</strong> ${d.attachments.map((x) => x.filename).join(', ')} (attached)</p></div>`,
+      d.attachments,
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────

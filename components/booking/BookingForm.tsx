@@ -57,6 +57,7 @@ export default function BookingForm({
   const [guests, setGuests] = useState(2);
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
+  const [billingAddress, setBillingAddress] = useState('');
   const [message, setMessage] = useState('');
   const [paymentOption, setPaymentOption] = useState<PaymentOption>('full');
   // Défaut = Fygaro si activé, sinon virement (fallback toujours disponible).
@@ -89,7 +90,7 @@ export default function BookingForm({
   const extraGuestsActive = pricing && pricing.extraGuestsCount > 0;
 
   const amountDue = pricing
-    ? (paymentOption === 'full' ? pricing.bookingTotal : pricing.depositAmount)
+    ? (paymentOption === 'full' ? pricing.totalPayable : pricing.depositAmount)
     : 0;
 
   function fmt(amount: number): string {
@@ -119,6 +120,7 @@ export default function BookingForm({
           guests,
           guestName,
           guestEmail,
+          billingAddress,
           paymentOption,
           locale,
         }),
@@ -155,6 +157,7 @@ export default function BookingForm({
           guests,
           guestName,
           guestEmail,
+          billingAddress,
           paymentOption,
           locale,
         }),
@@ -332,9 +335,25 @@ export default function BookingForm({
                   <span>{fmt(pricing.extraGuestsAmount)}</span>
                 </div>
               )}
+              {pricing.roomTaxAmount > 0 && (
+                <>
+                  <div className="flex justify-between text-sm text-night-500 pt-3 border-t border-bronze-100">
+                    <span className="font-light">{isFr ? 'Sous-total' : 'Subtotal'}</span>
+                    <span>{fmt(pricing.bookingTotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-night-500">
+                    <span className="font-light">
+                      {isFr
+                        ? `Taxe de séjour ${String(pricing.roomTaxRate * 100).replace('.', ',')} %`
+                        : `Room tax ${pricing.roomTaxRate * 100}%`}
+                    </span>
+                    <span>{fmt(pricing.roomTaxAmount)}</span>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between items-baseline pt-3 border-t border-bronze-200">
                 <span className="text-xs uppercase font-medium text-night-600" style={{ letterSpacing: '0.15em' }}>Total</span>
-                <span className="font-serif font-light text-2xl text-night-600">{fmt(pricing.bookingTotal)}</span>
+                <span className="font-serif font-light text-2xl text-night-600">{fmt(pricing.totalPayable)}</span>
               </div>
             </div>
           )}
@@ -378,7 +397,7 @@ export default function BookingForm({
                   <div className="text-[11px] uppercase font-medium text-night-600 mb-1" style={{ letterSpacing: '0.1em' }}>
                     {isFr ? 'Intégral' : 'Pay in full'}
                   </div>
-                  <div className="font-serif text-night-600 text-lg">{fmt(pricing.bookingTotal)}</div>
+                  <div className="font-serif text-night-600 text-lg">{fmt(pricing.totalPayable)}</div>
                 </button>
                 <button
                   type="button"
@@ -398,7 +417,7 @@ export default function BookingForm({
               {paymentOption === 'deposit_40' && (
                 <p className="text-xs text-night-400 mt-3 font-light">
                   {isFr ? 'Solde :' : 'Balance:'} <span className="text-night-600 font-medium">{fmt(pricing.remainingBalance)}</span>
-                  {isFr ? ' — dû avant l’arrivée' : ' — due before arrival'}
+                  {isFr ? ', à régler avant l’arrivée' : ', due before arrival'}
                 </p>
               )}
             </div>
@@ -428,6 +447,19 @@ export default function BookingForm({
                   value={guestEmail}
                   onChange={e => setGuestEmail(e.target.value)}
                   className="w-full px-4 py-3 bg-cream-50 border border-bronze-100 rounded-md text-sm text-night-600 placeholder:text-night-300 focus:outline-none focus:border-bronze-400 focus:ring-1 focus:ring-bronze-400 transition-colors"
+                />
+              </div>
+              <div>
+                <label htmlFor="billing-address" className="sr-only">{isFr ? 'Adresse de facturation' : 'Billing address'}</label>
+                <textarea
+                  id="billing-address"
+                  placeholder={isFr ? 'Adresse de facturation (facultatif, figure sur la facture)' : 'Billing address (optional, shown on the invoice)'}
+                  value={billingAddress}
+                  onChange={e => setBillingAddress(e.target.value)}
+                  rows={2}
+                  maxLength={500}
+                  autoComplete="street-address"
+                  className="w-full px-4 py-3 bg-cream-50 border border-bronze-100 rounded-md text-sm text-night-600 placeholder:text-night-300 focus:outline-none focus:border-bronze-400 focus:ring-1 focus:ring-bronze-400 resize-none transition-colors"
                 />
               </div>
               <div>

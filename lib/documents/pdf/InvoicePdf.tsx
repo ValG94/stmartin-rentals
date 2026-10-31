@@ -21,7 +21,7 @@ export function InvoicePdf({ data }: { data: InvoiceData }) {
 
         <View style={s.body}>
           <View style={s.row}>
-            <SellerBlock locale={locale} seller={seller} />
+            <SellerBlock locale={locale} seller={seller} managedBy={data.stay.property.managedBy} />
             <View style={s.col}>
               <Text style={s.label}>{l.billTo}</Text>
               <Text style={s.strong}>{data.guest.name}</Text>

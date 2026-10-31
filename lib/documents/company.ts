@@ -11,8 +11,15 @@
 //     attestation (la villa elle-même).
 // Les factures portent la marque Island Living SXM, mais l'émetteur est
 // toujours la société qui fournit l'hébergement.
+//
+// Villa Vanille est gérée par Chenille pour le compte de Golden Island
+// (décision de la propriétaire du 30/10/2026, contrat écrit de gestion et
+// d'encaissement préparé par la comptable) : les factures restent au nom de
+// Golden Island, avec la mention que Chenille agit pour son compte.
 
 export interface Seller {
+  // Clé stable en base (invoices.company_key, bank_transfer_config.company_key)
+  key: 'chenille' | 'goldenIsland';
   name: string;
   addressLines: string[];
   crib: string;
@@ -28,12 +35,14 @@ export const BRAND = {
 
 export const SELLERS = {
   chenille: {
+    key: 'chenille',
     name: 'CHENILLE INVESTMENTS LTD',
     addressLines: ['Rhine Road #149', 'Cupecoy, Low Lands', 'Sint Maarten'],
     crib: '435230608',
     invoicePrefix: 'CI',
   },
   goldenIsland: {
+    key: 'goldenIsland',
     name: 'GOLDEN ISLAND LUXURY RENTALS INC.',
     addressLines: ['Seaside Drive #33', 'Indigo Bay, Cole Bay', 'Sint Maarten'],
     crib: '435230700',
@@ -45,21 +54,24 @@ export interface PropertyIdentity {
   name: string;
   addressLines: string[];
   seller: Seller;
+  // Société qui gère et encaisse pour le compte de l'émetteur (mandat écrit).
+  managedBy?: Seller;
 }
 
 // Clé = slug de l'apartment. 'villa-blanche' est le slug réel en base de
 // la Maison Blanche (legacy), 'maison-blanche' un alias.
 const MAISON_BLANCHE: PropertyIdentity = {
   name: 'Maison Blanche',
-  addressLines: ['[Adresse à compléter]', 'Sint Maarten'],
+  addressLines: ['14 Tisza Drive', 'Lowlands', 'Sint Maarten'],
   seller: SELLERS.chenille,
 };
 
 export const PROPERTIES: Record<string, PropertyIdentity> = {
   'villa-vanille': {
     name: 'Villa Vanille',
-    addressLines: ['33 Seaside Drive 11', 'Indigo Bay', 'Sint Maarten'],
+    addressLines: ['33 Seaside Drive', 'Indigo Bay', 'Sint Maarten'],
     seller: SELLERS.goldenIsland,
+    managedBy: SELLERS.chenille,
   },
   'villa-blanche': MAISON_BLANCHE,
   'maison-blanche': MAISON_BLANCHE,

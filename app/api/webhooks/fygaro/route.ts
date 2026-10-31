@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { verifyFygaroWebhookSignature, type FygaroWebhookPayload } from '@/lib/services/fygaro';
-import { sendBookingConfirmationEmail, sendDepositAuthorizedEmail, sendBalancePaidEmail } from '@/lib/services/email';
+import { sendBookingConfirmationEmail, sendDepositAuthorizedEmail, sendBalancePaidEmail, roomTaxEmailFields } from '@/lib/services/email';
 import { getServerSupabase } from '@/lib/services/server-pricing';
+import { toEmailAttachments, tryIssueDocumentsForPayment } from '@/lib/documents/issue';
 
 // Node runtime nécessaire pour crypto.createHmac
 export const runtime = 'nodejs';
@@ -163,6 +164,13 @@ async function handleBookingPayment(
     booking_id: bookingId,
   });
 
+  // Facture + reçu R1 (bookings avec taxe de séjour uniquement)
+  const docs = await tryIssueDocumentsForPayment(supabase, bookingId, {
+    kind: booking.payment_option === 'deposit_40' ? 'deposit' : 'full',
+    method: 'card',
+    processorReference: payload.transactionId,
+  });
+
   // Email de confirmation
   const locale: 'fr' | 'en' = booking.locale === 'fr' ? 'fr' : 'en';
   const villaName = locale === 'fr'
@@ -180,12 +188,15 @@ async function handleBookingPayment(
       accommodationAmount: booking.accommodation_amount,
       cleaningFee: booking.cleaning_fee,
       bookingTotal: booking.booking_total,
+      ...roomTaxEmailFields(booking),
       paymentOption: booking.payment_option,
       depositAmount: booking.deposit_amount,
       remainingBalance: booking.remaining_balance,
       securityDepositAmount: booking.security_deposit_amount,
       paymentMethod: 'card',
       bookingId,
+      invoiceNumber: docs?.invoice?.number,
+      attachments: toEmailAttachments(docs),
       locale,
       depositAuthorizationStatus: booking.deposit_authorization_status,
     });
@@ -293,7 +304,7 @@ async function handleBalancePayment(
     .from('bookings')
     .select(`
       id, guest_name, guest_email, check_in, check_out, locale,
-      remaining_balance, booking_total, payment_status,
+      remaining_balance, booking_total, total_payable, payment_status,
       apartments:apartment_id (title_fr, title_en)
     `)
     .eq('id', bookingId)
@@ -307,7 +318,7 @@ async function handleBalancePayment(
   type BookingRow = {
     id: string; guest_name: string; guest_email: string;
     check_in: string; check_out: string; locale?: string;
-    remaining_balance: number; booking_total: number; payment_status: string;
+    remaining_balance: number; booking_total: number; total_payable: number | null; payment_status: string;
     apartments?: { title_fr?: string; title_en?: string } | { title_fr?: string; title_en?: string }[];
   };
   const b = booking as BookingRow;
@@ -340,6 +351,13 @@ async function handleBalancePayment(
     })
     .eq('id', bookingId);
 
+  // Reçu R2 (la facture a été émise au paiement de l'acompte)
+  const docs = await tryIssueDocumentsForPayment(supabase, bookingId, {
+    kind: 'balance',
+    method: 'card',
+    processorReference: payload.transactionId,
+  });
+
   const locale: 'fr' | 'en' = b.locale === 'fr' ? 'fr' : 'en';
   const apartments = Array.isArray(b.apartments) ? b.apartments[0] : b.apartments;
   const villaName = locale === 'fr'
@@ -354,8 +372,10 @@ async function handleBalancePayment(
       checkIn: b.check_in,
       checkOut: b.check_out,
       amountPaid: expectedAmount,
-      bookingTotal: Number(b.booking_total) || 0,
+      bookingTotal: Number(b.total_payable ?? b.booking_total) || 0,
       bookingId,
+      receiptNumber: docs?.receipt.number,
+      attachments: toEmailAttachments(docs),
       locale,
     });
   } catch (emailErr) {

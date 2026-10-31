@@ -18,7 +18,9 @@ const nextConfig: NextConfig = {
   // node-ical embarque des modules Node natifs (BigInt côté init de certains
   // chunks) qui plantent quand Next.js tente de les bundler. On l'externalise
   // pour qu'il soit require() au runtime côté serveur uniquement.
-  serverExternalPackages: ['node-ical'],
+  // Idem pour @react-pdf/renderer (factures PDF générées côté serveur) :
+  // ses dépendances ESM (hyphenate, fontkit) ne doivent pas être bundlées.
+  serverExternalPackages: ['node-ical', '@react-pdf/renderer'],
 };
 
 export default withNextIntl(nextConfig);

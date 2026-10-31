@@ -40,6 +40,7 @@ const L = {
     billTo: 'Bill to',
     receivedFrom: 'Received from',
     crib: 'CRIB',
+    managedBy: (name: string, crib: string) => `Managed by ${name} (CRIB ${crib}), acting on behalf of the issuer`,
     stay: 'Stay',
     property: 'Property',
     bookingRef: 'Booking reference',
@@ -77,7 +78,7 @@ const L = {
       extra_guests: (g: number) => `Extra guests: ${g}, per guest per night`,
     },
     paymentKind: { deposit: 'Booking deposit (40%)', balance: 'Balance payment', full: 'Full payment' },
-    paymentMethod: { card: 'Card', bank_transfer: 'Bank transfer' },
+    paymentMethod: { card: 'Card', bank_transfer: 'Bank transfer', paypal: 'PayPal' },
   },
   fr: {
     invoice: 'FACTURE',
@@ -90,6 +91,7 @@ const L = {
     billTo: 'Facturé à',
     receivedFrom: 'Reçu de',
     crib: 'CRIB',
+    managedBy: (name: string, crib: string) => `Géré par ${name} (CRIB ${crib}), agissant pour le compte de l'émetteur`,
     stay: 'Séjour',
     property: 'Hébergement',
     bookingRef: 'Référence de réservation',
@@ -127,7 +129,7 @@ const L = {
       extra_guests: (g: number) => `Voyageurs supplémentaires : ${g}, par voyageur et par nuit`,
     },
     paymentKind: { deposit: 'Acompte de réservation (40 %)', balance: 'Paiement du solde', full: 'Paiement intégral' },
-    paymentMethod: { card: 'Carte bancaire', bank_transfer: 'Virement bancaire' },
+    paymentMethod: { card: 'Carte bancaire', bank_transfer: 'Virement bancaire', paypal: 'PayPal' },
   },
 };
 
@@ -144,5 +146,6 @@ export function lineLabel(line: InvoiceLine, locale: DocLocale): string {
 
 export function paymentLabel(p: PaymentRecord, locale: DocLocale): string {
   const l = L[locale];
-  return `${l.paymentKind[p.kind]}, ${l.paymentMethod[p.method].toLowerCase()}`;
+  const method = l.paymentMethod[p.method];
+  return `${l.paymentKind[p.kind]}, ${p.method === 'paypal' ? method : method.toLowerCase()}`;
 }

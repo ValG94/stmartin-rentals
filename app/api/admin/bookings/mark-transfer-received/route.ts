@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendBookingConfirmationEmail } from '@/lib/services/email';
+import { sendBookingConfirmationEmail, roomTaxEmailFields } from '@/lib/services/email';
+import { toEmailAttachments, tryIssueDocumentsForPayment } from '@/lib/documents/issue';
 import { verifyAdminTokenAsync } from '@/lib/auth-admin';
 import { createClient } from '@supabase/supabase-js';
 
@@ -13,8 +14,15 @@ export async function POST(req: NextRequest) {
     const isAuth = await verifyAdminTokenAsync(req);
     if (!isAuth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { bookingId } = await req.json();
+    const { bookingId, receivedDate } = await req.json();
     if (!bookingId) return NextResponse.json({ error: 'bookingId required' }, { status: 400 });
+    // Date réelle de réception du virement (YYYY-MM-DD), saisie par l'admin.
+    // Elle date le reçu et donc le mois de déclaration de la taxe de séjour.
+    if (receivedDate !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(receivedDate))) {
+      return NextResponse.json({ error: 'receivedDate must be YYYY-MM-DD' }, { status: 400 });
+    }
+    // Midi UTC = même jour calendaire à Sint Maarten (UTC-4)
+    const paidAt = receivedDate ? new Date(`${receivedDate}T12:00:00Z`) : new Date();
 
     // Récupérer la réservation
     const { data: booking, error: fetchError } = await supabase
@@ -38,7 +46,7 @@ export async function POST(req: NextRequest) {
       .update({
         booking_status: 'confirmed',
         payment_status: paymentStatus,
-        paid_at: new Date().toISOString(),
+        paid_at: paidAt.toISOString(),
       })
       .eq('id', bookingId);
 
@@ -48,6 +56,13 @@ export async function POST(req: NextRequest) {
       start_date: booking.check_in,
       end_date: booking.check_out,
       reason: `Bank transfer confirmed — Booking #${bookingId}`,
+    });
+
+    // Facture + reçu R1, datés du jour de réception du virement
+    const docs = await tryIssueDocumentsForPayment(supabase, bookingId, {
+      kind: booking.payment_option === 'deposit_40' ? 'deposit' : 'full',
+      method: 'bank_transfer',
+      paidAt,
     });
 
     // Envoyer l'email de confirmation au voyageur — dans sa langue
@@ -65,12 +80,15 @@ export async function POST(req: NextRequest) {
       accommodationAmount: booking.accommodation_amount,
       cleaningFee: booking.cleaning_fee,
       bookingTotal: booking.booking_total,
+      ...roomTaxEmailFields(booking),
       paymentOption: booking.payment_option,
       depositAmount: booking.deposit_amount,
       remainingBalance: booking.remaining_balance,
       securityDepositAmount: booking.security_deposit_amount,
       paymentMethod: 'bank_transfer',
       bookingId,
+      invoiceNumber: docs?.invoice?.number,
+      attachments: toEmailAttachments(docs),
       locale,
     });
 

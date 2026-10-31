@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { capturePayPalOrder } from '@/lib/services/paypal';
-import { sendBookingConfirmationEmail } from '@/lib/services/email';
+import { sendBookingConfirmationEmail, roomTaxEmailFields } from '@/lib/services/email';
 import { getServerSupabase } from '@/lib/services/server-pricing';
+import { toEmailAttachments, tryIssueDocumentsForPayment } from '@/lib/documents/issue';
 
 export async function POST(req: NextRequest) {
   try {
@@ -91,6 +92,13 @@ export async function POST(req: NextRequest) {
       reason: `Booking #${bookingId}`,
     });
 
+    // Facture + reçu R1
+    const docs = await tryIssueDocumentsForPayment(supabase, bookingId, {
+      kind: booking.payment_option === 'deposit_40' ? 'deposit' : 'full',
+      method: 'paypal',
+      processorReference: capture.captureId,
+    });
+
     // Email de confirmation — dans la langue choisie au moment de la réservation
     const locale: 'fr' | 'en' = booking.locale === 'fr' ? 'fr' : 'en';
     const villaName = locale === 'fr'
@@ -106,12 +114,15 @@ export async function POST(req: NextRequest) {
       accommodationAmount: booking.accommodation_amount,
       cleaningFee: booking.cleaning_fee,
       bookingTotal: booking.booking_total,
+      ...roomTaxEmailFields(booking),
       paymentOption: booking.payment_option,
       depositAmount: booking.deposit_amount,
       remainingBalance: booking.remaining_balance,
       securityDepositAmount: booking.security_deposit_amount,
       paymentMethod: 'paypal',
       bookingId,
+      invoiceNumber: docs?.invoice?.number,
+      attachments: toEmailAttachments(docs),
       locale,
     });
 
