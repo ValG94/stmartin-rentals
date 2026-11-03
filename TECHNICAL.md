@@ -5,8 +5,8 @@
 > **Ne pas éditer manuellement** ces blocs — édite le reste librement.
 
 <!-- AUTO:META -->
-> **Dernière mise à jour** : 2026-11-03 14:46 UTC
-> **Branche** : `feat/room-tax-invoices` — **HEAD** : `3f4ae3d`
+> **Dernière mise à jour** : 2026-11-03 21:43 UTC
+> **Branche** : `feat/room-tax-invoices` — **HEAD** : `dde7119`
 <!-- /AUTO:META -->
 
 ---
@@ -361,6 +361,7 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 <!-- AUTO:LAST_COMMITS -->
 | Hash | Date | Auteur | Sujet |
 |---|---|---|---|
+| `dde7119` | 2026-11-03 | Valery Garrec | feat(invoices): accountant wording for Chenille agent mention, track collecting company |
 | `3f4ae3d` | 2026-10-31 | Valery Garrec | feat(invoices): issue invoices and receipts on each payment (step 2) |
 | `35b55b3` | 2026-10-30 | Valery Garrec | feat(invoices): one issuing company per villa (accountant option A) |
 | `0e8b51d` | 2026-10-28 | Valery Garrec | fix(email): cancellation under 14 days, amounts paid not refunded (validated by owner) |
@@ -375,7 +376,6 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 | `516eb43` | 2026-07-17 | Valery Garrec | feat(bookings): deposit-missing filter + balance reminder flow + adapted deposit email |
 | `3d4ee16` | 2026-07-17 | Valery Garrec | feat(fygaro): deposit-authorized email + admin caution status badges |
 | `ced9830` | 2026-07-17 | Valery Garrec | feat(booking): chain caution flow after Fygaro booking payment |
-| `f48a3c1` | 2026-07-17 | Valery Garrec | fix(admin): show 'Card' badge on Fygaro bookings (was mislabeled 'PayPal') |
 <!-- /AUTO:LAST_COMMITS -->
 
 ---
