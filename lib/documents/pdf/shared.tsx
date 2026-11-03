@@ -69,7 +69,7 @@ export function SellerBlock({ locale, seller, managedBy }: { locale: DocLocale; 
       <Text style={s.strong}>{seller.name}</Text>
       {seller.addressLines.map((a) => <Text key={a}>{a}</Text>)}
       <Text>{l.crib} {seller.crib}</Text>
-      {managedBy && <Text style={s.muted}>{l.managedBy(managedBy.name, managedBy.crib)}</Text>}
+      {managedBy && <Text style={s.muted}>{l.managedBy(managedBy.name, managedBy.crib, seller.name)}</Text>}
     </View>
   );
 }

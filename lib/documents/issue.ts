@@ -64,6 +64,7 @@ interface BookingRow {
   deposit_room_tax: number | null;
   balance_room_tax: number | null;
   security_deposit_amount: number;
+  bank_account_company_key: string | null;
   apartments: { slug: string } | { slug: string }[] | null;
 }
 
@@ -116,6 +117,7 @@ export async function issueDocumentsForPayment(
       extra_guests_count, extra_guest_price_per_night, extra_guests_amount,
       booking_total, room_tax_rate, room_tax_base, room_tax_amount, total_payable,
       deposit_amount, deposit_room_tax, balance_room_tax, security_deposit_amount,
+      bank_account_company_key,
       apartments:apartment_id (slug)
     `)
     .eq('id', bookingId)
@@ -129,6 +131,12 @@ export async function issueDocumentsForPayment(
   const property = apt ? PROPERTIES[apt.slug] : undefined;
   if (!property) throw new Error(`No issuing company configured for apartment "${apt?.slug}"`);
   const seller = property.seller;
+  // Société qui encaisse réellement : titulaire du compte de virement
+  // indiqué au voyageur, sinon celle du compte carte (Fygaro, Chenille),
+  // c.-à-d. le mandataire s'il y en a un. Sert aux relevés de reversement.
+  const collectedBy = payment.method === 'bank_transfer' && b.bank_account_company_key
+    ? b.bank_account_company_key
+    : (property.managedBy ?? seller).key;
   const locale: DocLocale = b.locale === 'fr' ? 'fr' : 'en';
   const paymentDate = sxmDate(payment.paidAt ?? new Date());
 
@@ -181,6 +189,7 @@ export async function issueDocumentsForPayment(
     p_amount: amount,
     p_room_tax: roomTax,
     p_processor_reference: payment.processorReference ?? null,
+    p_collected_by: collectedBy,
   }).single<ReceiptRow & { id: string }>();
   if (rcpErr || !receipt) throw new Error(`issue_receipt failed: ${rcpErr?.message}`);
 

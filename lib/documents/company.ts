@@ -15,7 +15,10 @@
 // Villa Vanille est gérée par Chenille pour le compte de Golden Island
 // (décision de la propriétaire du 30/10/2026, contrat écrit de gestion et
 // d'encaissement préparé par la comptable) : les factures restent au nom de
-// Golden Island, avec la mention que Chenille agit pour son compte.
+// Golden Island, avec la mention que Chenille agit comme mandataire de
+// gestion et d'encaissement (formulation validée par la comptable le
+// 03/11/2026). Les virements de Villa Vanille vont directement sur le
+// compte de Golden Island (bank_transfer_config.company_key).
 
 export interface Seller {
   // Clé stable en base (invoices.company_key, bank_transfer_config.company_key)

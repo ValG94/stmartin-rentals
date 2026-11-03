@@ -26,7 +26,9 @@ ALTER TABLE bookings
   ADD COLUMN IF NOT EXISTS deposit_room_tax            NUMERIC(10,2),
   ADD COLUMN IF NOT EXISTS balance_room_tax            NUMERIC(10,2),
   ADD COLUMN IF NOT EXISTS room_tax_exempt             BOOLEAN       NOT NULL DEFAULT FALSE,
-  ADD COLUMN IF NOT EXISTS billing_address             TEXT;
+  ADD COLUMN IF NOT EXISTS billing_address             TEXT,
+  -- Titulaire du compte de virement indiqué au voyageur (company_key)
+  ADD COLUMN IF NOT EXISTS bank_account_company_key    TEXT;
 
 -- Les bookings antérieures gardent room_tax_* = NULL : pas de facture
 -- automatique pour elles (créées avant la taxe de séjour).
@@ -70,12 +72,16 @@ CREATE TABLE IF NOT EXISTS receipts (
   amount              NUMERIC(10,2) NOT NULL,
   room_tax            NUMERIC(10,2) NOT NULL,
   processor_reference TEXT,
+  -- Société qui a encaissé (relevés de reversement Chenille → Golden Island)
+  collected_by        TEXT NOT NULL DEFAULT 'chenille',
   pdf_path            TEXT,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (invoice_id, seq),
   -- Idempotence des webhooks : un seul reçu d'acompte / de solde / intégral
   UNIQUE (booking_id, kind)
 );
+
+ALTER TABLE receipts ADD COLUMN IF NOT EXISTS collected_by TEXT NOT NULL DEFAULT 'chenille';
 
 CREATE INDEX IF NOT EXISTS idx_receipts_payment_date ON receipts (payment_date);
 
@@ -138,6 +144,7 @@ $$;
 -- 6. Émission atomique d'un reçu ─────────────────────────────────────────
 --    Idempotent par (booking, kind) : un retry de webhook renvoie le reçu
 --    déjà émis.
+DROP FUNCTION IF EXISTS issue_receipt(UUID, TEXT, TEXT, DATE, NUMERIC, NUMERIC, TEXT);
 CREATE OR REPLACE FUNCTION issue_receipt(
   p_invoice_id          UUID,
   p_kind                TEXT,
@@ -145,7 +152,8 @@ CREATE OR REPLACE FUNCTION issue_receipt(
   p_payment_date        DATE,
   p_amount              NUMERIC,
   p_room_tax            NUMERIC,
-  p_processor_reference TEXT
+  p_processor_reference TEXT,
+  p_collected_by        TEXT
 ) RETURNS receipts
 LANGUAGE plpgsql AS $$
 DECLARE
@@ -168,11 +176,12 @@ BEGIN
 
   INSERT INTO receipts (
     invoice_id, booking_id, seq, number, payment_date, kind, method,
-    amount, room_tax, processor_reference
+    amount, room_tax, processor_reference, collected_by
   ) VALUES (
     p_invoice_id, v_invoice.booking_id, v_seq,
     v_invoice.number || '-R' || v_seq,
-    p_payment_date, p_kind, p_method, p_amount, p_room_tax, p_processor_reference
+    p_payment_date, p_kind, p_method, p_amount, p_room_tax, p_processor_reference,
+    p_collected_by
   )
   RETURNING * INTO v_receipt;
 
@@ -182,12 +191,13 @@ $$;
 
 -- Fonctions appelables uniquement par le service role (routes serveur)
 REVOKE ALL ON FUNCTION issue_invoice(UUID, TEXT, TEXT, DATE, TEXT, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION issue_receipt(UUID, TEXT, TEXT, DATE, NUMERIC, NUMERIC, TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION issue_receipt(UUID, TEXT, TEXT, DATE, NUMERIC, NUMERIC, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
 
 -- 7. Coordonnées bancaires par société ───────────────────────────────────
---    company_key NULL = compte par défaut (Chenille). Ajouter une ligne
---    active avec company_key = 'goldenIsland' quand Golden Island encaisse
---    les virements de Villa Vanille sur son propre compte.
+--    company_key NULL = compte par défaut (Chenille). Recommandation de la
+--    comptable (03/11/2026) : les virements de Villa Vanille vont
+--    directement sur le compte de Golden Island → ajouter une ligne active
+--    avec company_key = 'goldenIsland' dès réception de son RIB.
 ALTER TABLE bank_transfer_config
   ADD COLUMN IF NOT EXISTS company_key TEXT;
 

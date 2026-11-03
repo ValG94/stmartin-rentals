@@ -40,7 +40,8 @@ const L = {
     billTo: 'Bill to',
     receivedFrom: 'Received from',
     crib: 'CRIB',
-    managedBy: (name: string, crib: string) => `Managed by ${name} (CRIB ${crib}), acting on behalf of the issuer`,
+    managedBy: (agent: string, crib: string, issuer: string) =>
+      `Managed by ${agent} (CRIB ${crib}), acting as management and collection agent for and on behalf of ${issuer}`,
     stay: 'Stay',
     property: 'Property',
     bookingRef: 'Booking reference',
@@ -91,7 +92,8 @@ const L = {
     billTo: 'Facturé à',
     receivedFrom: 'Reçu de',
     crib: 'CRIB',
-    managedBy: (name: string, crib: string) => `Géré par ${name} (CRIB ${crib}), agissant pour le compte de l'émetteur`,
+    managedBy: (agent: string, crib: string, issuer: string) =>
+      `Géré par ${agent} (CRIB ${crib}), agissant en qualité de mandataire de gestion et d'encaissement pour le compte de ${issuer}`,
     stay: 'Séjour',
     property: 'Hébergement',
     bookingRef: 'Référence de réservation',

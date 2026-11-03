@@ -70,6 +70,12 @@ export async function POST(req: NextRequest) {
       .eq('is_active', true);
     const bankConfig = bankRows?.find((r) => r.company_key === companyKey)
       ?? bankRows?.find((r) => r.company_key == null);
+    // Mémorise le titulaire du compte indiqué : le reçu dira qui a encaissé
+    // (Golden Island en direct, ou Chenille). Ligne par défaut = Chenille.
+    await supabase
+      .from('bookings')
+      .update({ bank_account_company_key: bankConfig?.company_key ?? 'chenille' })
+      .eq('id', bookingId);
 
     await sendBankTransferPendingEmail({
       guestName,
