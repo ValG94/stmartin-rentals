@@ -5,8 +5,8 @@
 > **Ne pas éditer manuellement** ces blocs — édite le reste librement.
 
 <!-- AUTO:META -->
-> **Dernière mise à jour** : 2026-11-03 21:43 UTC
-> **Branche** : `feat/room-tax-invoices` — **HEAD** : `dde7119`
+> **Dernière mise à jour** : 2026-11-04 18:48 UTC
+> **Branche** : `feat/room-tax-invoices` — **HEAD** : `8f916e5`
 <!-- /AUTO:META -->
 
 ---
@@ -361,6 +361,7 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 <!-- AUTO:LAST_COMMITS -->
 | Hash | Date | Auteur | Sujet |
 |---|---|---|---|
+| `8f916e5` | 2026-11-03 | Valery Garrec | feat(bank-transfer): Golden Island USD account for Villa Vanille transfers |
 | `dde7119` | 2026-11-03 | Valery Garrec | feat(invoices): accountant wording for Chenille agent mention, track collecting company |
 | `3f4ae3d` | 2026-10-31 | Valery Garrec | feat(invoices): issue invoices and receipts on each payment (step 2) |
 | `35b55b3` | 2026-10-30 | Valery Garrec | feat(invoices): one issuing company per villa (accountant option A) |
@@ -375,7 +376,6 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 | `fa8ee44` | 2026-07-17 | Valery Garrec | feat(bookings): cron J-2 deposit reminders + 'Manage deposit' shortcut to Fygaro |
 | `516eb43` | 2026-07-17 | Valery Garrec | feat(bookings): deposit-missing filter + balance reminder flow + adapted deposit email |
 | `3d4ee16` | 2026-07-17 | Valery Garrec | feat(fygaro): deposit-authorized email + admin caution status badges |
-| `ced9830` | 2026-07-17 | Valery Garrec | feat(booking): chain caution flow after Fygaro booking payment |
 <!-- /AUTO:LAST_COMMITS -->
 
 ---

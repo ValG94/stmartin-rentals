@@ -132,7 +132,7 @@ export default async function HomePage() {
               <VillaCard key={apt.id} apartment={apt} index={index} />
             )) : [
               {slug:'villa-vanille', title:'La Villa Vanille', desc: isFr ? 'Villa de prestige avec piscine à débordement et vue mer panoramique' : 'Prestige villa with infinity pool and panoramic sea view', img:'/images/villa-vanille/piscine-terrasse.jpg', price:1500, bedrooms:3, bathrooms:3, guests:6, location:'Terres Basses, Saint-Martin'},
-              {slug:'villa-blanche', title:'La Villa Blanche', desc: isFr ? 'Villa intimiste avec piscine privée et vue sur le lagon turquoise' : 'Intimate villa with private pool and turquoise lagoon view', img:'/images/villa-blanche/piscine.jpg', price:480, bedrooms:2, bathrooms:2, guests:4, location:'Sandy Ground, Saint-Martin'},
+              {slug:'villa-blanche', title:'La Villa Blanche', desc: isFr ? 'Villa intimiste avec piscine privée et vue sur le lagon turquoise' : 'Intimate villa with private pool and turquoise lagoon view', img:'/images/villa-blanche/piscine.jpg', price:550, bedrooms:2, bathrooms:2, guests:4, location:'Sandy Ground, Saint-Martin'},
             ].map((villa, index) => (
               <VillaCardFallback key={villa.slug} villa={villa} index={index} />
             ))}
