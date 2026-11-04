@@ -40,3 +40,6 @@ next-env.d.ts
 
 # Livrables générés pour le client / la comptable (PDF, exports) — hors Git
 livrables/
+
+# RIB et documents clients (ne pas versionner)
+docs/*.pdf

@@ -1,19 +1,18 @@
 -- ============================================================
 -- Configuration RIB USD — Golden Island Luxury Rentals Inc.
--- Banque bénéficiaire : RBC Caribbean — Philipsburg Branch
+-- Banque bénéficiaire : RBC Royal Bank NV (anciennement RBTT) — St. Maarten
+-- Banque correspondante : Wells Fargo Bank (New York)
 -- ============================================================
 --
 -- Recommandation de la comptable (03/11/2026) : les virements des
 -- voyageurs de Villa Vanille vont directement sur le compte de Golden
--- Island. Coordonnées transmises par Sonia le 03/11/2026.
+-- Island. Instructions de virement RBC transmises par Sonia le 04/11/2026
+-- (mêmes banques et correspondant que le RIB Chenille).
 --
 -- PRÉREQUIS : add_room_tax_invoices.sql exécuté (colonne company_key) ET
 -- branche feat/room-tax-invoices déployée. L'ancienne route de virement
 -- lit UNE seule ligne active (.single()) : avec deux lignes actives, les
 -- réservations par virement échoueraient.
---
--- Banque correspondante non communiquée (le RIB Chenille passe par
--- Wells Fargo New York) : à compléter après confirmation de RBC.
 --
 -- À exécuter dans Supabase SQL Editor. Ré-exécutable.
 -- ============================================================
@@ -37,11 +36,11 @@ INSERT INTO bank_transfer_config (
   is_active
 ) VALUES (
   'goldenIsland',
-  'RBC Caribbean, Philipsburg Branch — 24 Cannegieter Street, Philipsburg, St. Maarten',
-  NULL,
+  'RBC Royal Bank NV (Former RBTT Bank NV) — 24 Cannegieter Street, Philipsburg, St. Maarten',
+  'Wells Fargo Bank, New York (SWIFT: PNBPUS3NNYC)',
   'RBTTSXSM',
-  NULL,
-  'GOLDEN ISLAND LUXURY RENTALS INC.',
+  '026005092',
+  'GOLDEN ISLAND LUXURY RENTALS INC',
   '8200009990207723',
   'Suite 3, Gambles Medical Centre, Friars Hill Road, St. John''s, Antigua and Barbuda',
   'All bank charges (sender and intermediary) are the responsibility of the sender. The full amount must be received by the beneficiary in USD. Please include the booking reference in the transfer notes.',
