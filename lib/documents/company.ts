@@ -5,10 +5,11 @@
 // Deux sociétés, une par villa (recommandation de la comptable, option A,
 // 30/10/2026) : chaque société facture sa propre villa, avec sa propre
 // numérotation, et déclare la taxe de séjour sous son propre CRIB.
-//   - Maison Blanche : CHENILLE INVESTMENTS LTD, à l'adresse de son
-//     certificat CRIB (celle d'un autre bien de Chenille, Sardinia Yacht Club).
-//   - Villa Vanille : GOLDEN ISLAND LUXURY RENTALS INC., à l'adresse de son
-//     attestation (la villa elle-même).
+//   - Maison Blanche : CHENILLE INVESTMENTS LTD.
+//   - Villa Vanille : GOLDEN ISLAND LUXURY RENTALS INC.
+// Adresse de l'émetteur = adresse locale à Sint Maarten, au libellé exact
+// communiqué par la comptable le 06/11/2026 (pas le siège social étranger,
+// Saint-Kitts-et-Nevis ou Antigua, qui figure sur les RIB).
 // Les factures portent la marque Island Living SXM, mais l'émetteur est
 // toujours la société qui fournit l'hébergement.
 //
@@ -40,14 +41,14 @@ export const SELLERS = {
   chenille: {
     key: 'chenille',
     name: 'CHENILLE INVESTMENTS LTD',
-    addressLines: ['Rhine Road #149', 'Cupecoy, Low Lands', 'Sint Maarten'],
+    addressLines: ['Sardinia Yacht Club', 'Rhine Road 149', 'Cupecoy, Lowlands', 'Sint Maarten'],
     crib: '435230608',
     invoicePrefix: 'CI',
   },
   goldenIsland: {
     key: 'goldenIsland',
     name: 'GOLDEN ISLAND LUXURY RENTALS INC.',
-    addressLines: ['Seaside Drive #33', 'Indigo Bay, Cole Bay', 'Sint Maarten'],
+    addressLines: ['Seaside Drive 33', 'Indigo Bay', 'Sint Maarten'],
     crib: '435230700',
     invoicePrefix: 'GI',
   },
