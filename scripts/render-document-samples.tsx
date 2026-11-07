@@ -1,4 +1,4 @@
-// Génère des exemples de facture, reçus et mail de confirmation à partir
+// Génère des exemples de facture, reçus, avoir et mail de confirmation à partir
 // du vrai code (pricing + modèles), pour relecture par la comptable.
 //
 // Usage : pnpm docs:samples <dossier-de-sortie>
@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { calculatePricing } from '../lib/services/pricing';
 import { PROPERTIES } from '../lib/documents/company';
 import { buildInvoiceData, buildReceiptData } from '../lib/documents/build';
-import { renderInvoicePdf, renderReceiptPdf } from '../lib/documents/render';
+import { renderCreditNotePdf, renderInvoicePdf, renderReceiptPdf } from '../lib/documents/render';
 import type { DocLocale, PaymentRecord } from '../lib/documents/types';
 
 const outDir = process.argv[2];
@@ -56,6 +56,21 @@ async function main() {
     writeFileSync(join(outDir, `invoice-${invoiceNumber}-${locale}.pdf`), await renderInvoicePdf(invoice));
     writeFileSync(join(outDir, `receipt-${deposit.receiptNumber}-${locale}.pdf`), await renderReceiptPdf(buildReceiptData(invoice, deposit, [])));
     writeFileSync(join(outDir, `receipt-${balance.receiptNumber}-${locale}.pdf`), await renderReceiptPdf(buildReceiptData(invoice, balance, [deposit])));
+    // Avoir : annulation plus de 30 jours avant l'arrivée, acompte remboursé
+    writeFileSync(join(outDir, `credit-note-${invoiceNumber}-C1-${locale}.pdf`), await renderCreditNotePdf({
+      locale,
+      number: `${invoiceNumber}-C1`,
+      issueDate: '2026-11-05',
+      invoice,
+      amount: deposit.amount,
+      roomTax: deposit.roomTax,
+      reason: locale === 'fr' ? "Annulation plus de 30 jours avant l'arrivée" : 'Cancellation more than 30 days before arrival',
+      refundMethod: 'card',
+      refundReference: 'SAMPLE-RF-0001',
+      paidToDate: deposit.amount,
+      creditedToDate: deposit.amount,
+      netPaid: 0,
+    }));
   }
 
   // Mail de confirmation révisé : on intercepte l'envoi Resend pour

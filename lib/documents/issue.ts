@@ -19,7 +19,7 @@ import { buildInvoiceData, buildReceiptData, type PricingSnapshot } from './buil
 import { renderInvoicePdf, renderReceiptPdf } from './render';
 import type { DocLocale, InvoiceData, PaymentRecord } from './types';
 
-const BUCKET = 'documents';
+export const BUCKET = 'documents';
 
 export interface PaymentEvent {
   kind: PaymentRecord['kind'];
@@ -257,7 +257,7 @@ export async function issueDocumentsForPayment(
   };
 }
 
-async function upload(sb: SupabaseClient, path: string, pdf: Buffer): Promise<void> {
+export async function upload(sb: SupabaseClient, path: string, pdf: Buffer): Promise<void> {
   const { error } = await sb.storage.from(BUCKET).upload(path, pdf, {
     contentType: 'application/pdf',
     upsert: true,

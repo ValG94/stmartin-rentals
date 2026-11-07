@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Check, X, Clock, Mail, Building2, RefreshCw, Banknote,
   AlertCircle, Calendar, Users, CreditCard, XCircle, Loader2,
-  ShieldCheck, ShieldAlert, Send, ExternalLink,
+  ShieldCheck, ShieldAlert, Send, ExternalLink, FileText, Download,
 } from 'lucide-react';
+import DocumentsModal from './DocumentsModal';
 
 // La liste des bookings vient toujours du Server Component (initialBookings).
 // Quand on fait router.refresh() après une mutation, Next.js re-rend le
@@ -76,6 +77,16 @@ export default function BookingsClient({
   }>({ open: false });
   const [cancelReason, setCancelReason] = useState('');
   const [cancelLoading, setCancelLoading] = useState(false);
+  // Documents comptables d'une réservation (facture, reçus, avoirs)
+  const [docsBooking, setDocsBooking] = useState<Booking | null>(null);
+  // Export mensuel pour la comptable : mois précédent par défaut
+  const [exportMonth, setExportMonth] = useState(() => {
+    const d = new Date();
+    d.setUTCDate(1);
+    d.setUTCMonth(d.getUTCMonth() - 1);
+    return d.toISOString().slice(0, 7);
+  });
+  const [exportCompany, setExportCompany] = useState('');
 
   const bookings = initialBookings;
   const pendingTransfers = bookings.filter(b => b.booking_status === 'pending_bank_transfer');
@@ -267,6 +278,34 @@ export default function BookingsClient({
             <span className="ml-3 text-base text-night-300 font-light">({bookings.length})</span>
           </h1>
         </div>
+        <div className="flex flex-wrap items-end gap-2">
+        <div className="flex items-center gap-2 bg-cream-100 border border-bronze-100 rounded-md px-3 py-1.5" title={isFr ? 'Paiements et avoirs du mois, avec la taxe de séjour (CSV pour la comptable)' : 'Payments and credit notes of the month, with room tax (CSV for the accountant)'}>
+          <span className="text-[10px] uppercase text-night-400 font-medium" style={{ letterSpacing: '0.15em' }}>{isFr ? 'Export' : 'Export'}</span>
+          <input
+            type="month"
+            value={exportMonth}
+            onChange={(e) => setExportMonth(e.target.value)}
+            className="bg-transparent text-xs text-night-600 focus:outline-none"
+            aria-label={isFr ? 'Mois exporté' : 'Export month'}
+          />
+          <select
+            value={exportCompany}
+            onChange={(e) => setExportCompany(e.target.value)}
+            className="bg-transparent text-xs text-night-600 focus:outline-none"
+            aria-label={isFr ? 'Société' : 'Company'}
+          >
+            <option value="">{isFr ? 'Les deux sociétés' : 'Both companies'}</option>
+            <option value="chenille">Chenille (Maison Blanche)</option>
+            <option value="goldenIsland">Golden Island (Villa Vanille)</option>
+          </select>
+          <a
+            href={`/api/admin/exports/monthly?month=${exportMonth}${exportCompany ? `&company=${exportCompany}` : ''}`}
+            className="inline-flex items-center gap-1 text-xs uppercase font-medium text-bronze-500 hover:text-bronze-600"
+            style={{ letterSpacing: '0.1em' }}
+          >
+            <Download size={13} /> CSV
+          </a>
+        </div>
         <button
           onClick={refresh}
           disabled={refreshing}
@@ -276,6 +315,7 @@ export default function BookingsClient({
           <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
           {isFr ? 'Actualiser' : 'Refresh'}
         </button>
+        </div>
       </div>
 
       {successMsg && (
@@ -363,9 +403,14 @@ export default function BookingsClient({
               onComplete={() => updateStatus(b.id, 'completed')}
               onCancelWithEmail={() => openCancelModal(b)}
               onSendBalanceReminder={() => sendBalanceReminder(b.id)}
+              onDocuments={() => setDocsBooking(b)}
             />
           ))}
         </div>
+      )}
+
+      {docsBooking && (
+        <DocumentsModal booking={docsBooking} isFr={isFr} onClose={() => setDocsBooking(null)} />
       )}
 
       {/* Modal d'annulation avec email */}
@@ -509,7 +554,7 @@ function PendingTransferCard({
 function BookingCard({
   booking, villaName, amount, isFr,
   actionLoading, onMarkTransfer, onConfirm, onCancel, onComplete, onCancelWithEmail,
-  onSendBalanceReminder,
+  onSendBalanceReminder, onDocuments,
 }: {
   booking: Booking;
   villaName: string;
@@ -522,6 +567,7 @@ function BookingCard({
   onComplete: () => void;
   onCancelWithEmail: () => void;
   onSendBalanceReminder: () => void;
+  onDocuments: () => void;
 }) {
   const statusConfig: Record<string, { label: string; classes: string; icon: React.ReactNode }> = {
     confirmed:             { label: isFr ? 'Confirmée' : 'Confirmed',                   classes: 'bg-green-50 text-green-700 border-green-200',     icon: <Check size={11} /> },
@@ -711,6 +757,18 @@ function BookingCard({
               >
                 <Send size={12} />
                 {isFr ? 'Rappel solde' : 'Balance reminder'}
+              </button>
+            )}
+            {/* Facture, reçus et avoirs : émis à partir du premier paiement */}
+            {['confirmed', 'completed', 'cancelled'].includes(booking.booking_status) && (
+              <button
+                onClick={onDocuments}
+                className="inline-flex items-center gap-1.5 px-3 py-2 border border-bronze-200 text-night-500 hover:bg-cream-50 hover:border-bronze-300 transition-colors text-[11px] uppercase font-medium rounded"
+                style={{ letterSpacing: '0.1em' }}
+                title={isFr ? 'Facture, reçus et avoirs' : 'Invoice, receipts and credit notes'}
+              >
+                <FileText size={12} />
+                {isFr ? 'Documents' : 'Documents'}
               </button>
             )}
             {/* Bouton 'Annuler + email' — pour les statuts actifs uniquement.

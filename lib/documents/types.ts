@@ -4,7 +4,8 @@
 //
 // Une facture par réservation (PRÉFIXE-AAAA-NNNN, une série par société
 // émettrice, cf. company.ts), un reçu daté par paiement
-// (numéro de facture + -R1, -R2…) qui référence la facture.
+// (numéro de facture + -R1, -R2…) qui référence la facture, et un avoir
+// par remboursement (numéro de facture + -C1, -C2…).
 
 import type { PropertyIdentity } from './company';
 
@@ -71,4 +72,19 @@ export interface ReceiptData {
   payment: PaymentRecord;
   paidToDate: number;      // après ce paiement
   balanceRemaining: number;
+}
+
+export interface CreditNoteData {
+  locale: DocLocale;
+  number: string;
+  issueDate: string;
+  invoice: Pick<InvoiceData, 'number' | 'issueDate' | 'guest' | 'stay' | 'totalPayable'>;
+  amount: number;          // remboursé, taxe de séjour comprise
+  roomTax: number;         // part de taxe de séjour remboursée
+  reason?: string;
+  refundMethod?: PaymentRecord['method'];
+  refundReference?: string;
+  paidToDate: number;      // total encaissé sur la facture
+  creditedToDate: number;  // total des avoirs, celui-ci compris
+  netPaid: number;         // paidToDate - creditedToDate
 }

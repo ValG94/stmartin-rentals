@@ -612,6 +612,58 @@ export async function sendBalancePaidEmail(d: BalancePaidEmailData): Promise<voi
 }
 
 // ─────────────────────────────────────────────────────────────
+// Email 4c bis : Avoir (remboursement) émis depuis l'admin
+// ─────────────────────────────────────────────────────────────
+interface CreditNoteEmailData {
+  guestName: string;
+  guestEmail: string;
+  villaName: string;
+  checkIn: string;
+  checkOut: string;
+  amount: number;                // remboursé, taxe de séjour comprise
+  creditNoteNumber: string;
+  bookingId: string;
+  attachments: EmailAttachment[];
+  locale?: Locale;
+}
+
+export async function sendCreditNoteEmail(d: CreditNoteEmailData): Promise<void> {
+  const locale: Locale = d.locale === 'fr' ? 'fr' : 'en';
+  const subject = locale === 'fr'
+    ? `Avoir n° ${d.creditNoteNumber} : votre séjour à ${d.villaName}`
+    : `Credit note no. ${d.creditNoteNumber}: your stay at ${d.villaName}`;
+  const intro = locale === 'fr'
+    ? `Vous trouverez ci-joint l'avoir n° ${d.creditNoteNumber} d'un montant de <strong>${formatUSD(d.amount)}</strong>, correspondant au remboursement effectué pour votre réservation.`
+    : `Please find attached credit note no. ${d.creditNoteNumber} for <strong>${formatUSD(d.amount)}</strong>, corresponding to the refund made for your booking.`;
+
+  const html = `
+    <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#333;">
+      ${headerHtml(locale)}
+      <div style="padding:32px 24px;">
+        <h2 style="color:#0a0a0a;font-size:18px;">${locale === 'fr' ? 'Avoir' : 'Credit note'}</h2>
+        <p>${t('dear', locale)} ${d.guestName},</p>
+        <p>${intro}</p>
+        <div style="background:#f8f8f6;padding:16px;border-radius:4px;margin:20px 0;font-size:14px;">
+          <p style="margin:4px 0;"><strong>Villa${locale === 'fr' ? ' :' : ':'}</strong> ${d.villaName}</p>
+          <p style="margin:4px 0;"><strong>${t('checkInLbl', locale)}</strong> ${d.checkIn}</p>
+          <p style="margin:4px 0;"><strong>${t('checkOutLbl', locale)}</strong> ${d.checkOut}</p>
+          <p style="margin:4px 0;"><strong>${t('bookingRefLbl', locale)}</strong> ${d.bookingId}</p>
+        </div>
+        ${footerHtml(locale)}
+      </div>
+    </div>
+  `;
+  await sendEmail(d.guestEmail, subject, html, d.attachments);
+  // Copie pour la propriétaire (comptabilité)
+  await sendEmail(
+    ADMIN_EMAIL,
+    `[Island Living SXM] Credit note ${d.creditNoteNumber}: ${d.guestName}`,
+    `<div style="font-family:monospace;font-size:13px;"><p>Credit note ${d.creditNoteNumber} of ${formatUSD(d.amount)} sent to ${d.guestEmail} for ${d.villaName} (${d.checkIn} to ${d.checkOut}).</p><p><strong>Booking ID:</strong> ${d.bookingId}</p></div>`,
+    d.attachments,
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // Email 4d : Rappel d'empreinte CB si non posée avant l'arrivée
 // ─────────────────────────────────────────────────────────────
 interface DepositReminderEmailData {
