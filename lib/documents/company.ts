@@ -73,7 +73,8 @@ const MAISON_BLANCHE: PropertyIdentity = {
 export const PROPERTIES: Record<string, PropertyIdentity> = {
   'villa-vanille': {
     name: 'Villa Vanille',
-    addressLines: ['33 Seaside Drive', 'Indigo Bay', 'Sint Maarten'],
+    // Libellé du contrat de gestion Chenille / Golden Island (art. 1)
+    addressLines: ['Seaside Drive #33', 'Indigo Bay, Cole Bay', 'Sint Maarten'],
     seller: SELLERS.goldenIsland,
     managedBy: SELLERS.chenille,
   },

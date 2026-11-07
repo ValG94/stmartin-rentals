@@ -5,8 +5,8 @@
 > **Ne pas éditer manuellement** ces blocs — édite le reste librement.
 
 <!-- AUTO:META -->
-> **Dernière mise à jour** : 2026-11-05 15:29 UTC
-> **Branche** : `feat/room-tax-invoices` — **HEAD** : `7c443d1`
+> **Dernière mise à jour** : 2026-11-07 18:58 UTC
+> **Branche** : `main` — **HEAD** : `c9a99a1`
 <!-- /AUTO:META -->
 
 ---
@@ -361,6 +361,7 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 <!-- AUTO:LAST_COMMITS -->
 | Hash | Date | Auteur | Sujet |
 |---|---|---|---|
+| `c9a99a1` | 2026-11-05 | Valery Garrec | fix(invoices): issuer addresses as confirmed by the accountant (local Sint Maarten addresses) |
 | `7c443d1` | 2026-11-04 | Valery Garrec | feat(bank-transfer): Golden Island correspondent bank from RBC wire instructions, ignore client PDFs in docs/ |
 | `9ffdbf5` | 2026-11-04 | Valery Garrec | chore(home): Maison Blanche fallback price 550 USD |
 | `8f916e5` | 2026-11-03 | Valery Garrec | feat(bank-transfer): Golden Island USD account for Villa Vanille transfers |
@@ -375,7 +376,6 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 | `0fecad8` | 2026-10-15 | Valery Garrec | feat(pricing): update cleaning fees — Villa Vanille $550, Maison Blanche $350 |
 | `4fdf77f` | 2026-07-17 | Valery Garrec | docs: add TECHNICAL.md with auto-updated sections + Google verification file |
 | `b06061d` | 2026-07-17 | Valery Garrec | feat(seo): Open Graph link previews + sitemap + robots + JSON-LD + hreflang |
-| `fa8ee44` | 2026-07-17 | Valery Garrec | feat(bookings): cron J-2 deposit reminders + 'Manage deposit' shortcut to Fygaro |
 <!-- /AUTO:LAST_COMMITS -->
 
 ---
