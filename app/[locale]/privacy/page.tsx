@@ -2,8 +2,17 @@ import { getLocale } from 'next-intl/server';
 import BrandLogo from '@/components/layout/BrandLogo';
 import PrivacyContentFR from './PrivacyContentFR';
 import PrivacyContentEN from './PrivacyContentEN';
+import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 
 export const revalidate = 3600;
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  return locale === 'fr'
+    ? pageMetadata(locale, '/privacy', 'Politique de confidentialité', 'Comment Island Living SXM collecte, utilise et protège vos données personnelles lors d’une réservation de villa à Saint-Martin.')
+    : pageMetadata(locale, '/privacy', 'Privacy policy', 'How Island Living SXM collects, uses and protects your personal data when you book a villa in Sint Maarten.');
+}
 
 export default async function PrivacyPage() {
   const locale = await getLocale();

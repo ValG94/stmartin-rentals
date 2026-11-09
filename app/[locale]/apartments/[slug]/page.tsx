@@ -9,8 +9,8 @@ import ImageGallery from '@/components/apartments/ImageGallery';
 import BookingForm from '@/components/booking/BookingForm';
 import { AMENITIES_MAP } from '@/components/apartments/AmenityIcon';
 import { sanitizeRichHtml } from '@/lib/services/sanitize';
-
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://islandlivingsxm.com').replace(/\/+$/, '');
+import { SITE_URL, localeAlternates } from '@/lib/seo';
+import { jsonLdScript, villaJsonLd } from '@/lib/structured-data';
 
 /**
  * generateMetadata — SEO par villa :
@@ -43,13 +43,7 @@ export async function generateMetadata({
   return {
     title: name,
     description,
-    alternates: {
-      canonical: canonicalPath,
-      languages: {
-        en: `/en/apartments/${slug}`,
-        fr: `/fr/apartments/${slug}`,
-      },
-    },
+    alternates: localeAlternates(locale, `/apartments/${slug}`),
     openGraph: {
       title: `${name} — Island Living SXM`,
       description,
@@ -113,49 +107,18 @@ export default async function ApartmentDetailPage({
   const name = locale === 'fr' ? apartment.title_fr : apartment.title_en;
   const description = locale === 'fr' ? apartment.description_fr : apartment.description_en;
 
-  // ── JSON-LD structured data (LodgingBusiness) — indexation Google ──
-  // Rich results possibles : nom, image, adresse, rating, prix. Injecté
-  // en <script type="application/ld+json"> juste avant le contenu HTML.
-  const coverImg = apartment.images?.find((im) => im.is_cover) || apartment.images?.[0];
-  const canonicalUrl = `${SITE_URL}/${locale}/apartments/${apartment.slug}`;
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'LodgingBusiness',
-    '@id': canonicalUrl,
-    name,
-    description: (description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300),
-    url: canonicalUrl,
-    image: coverImg?.url ? [coverImg.url] : undefined,
-    telephone: '+1-514-947-6100',
-    priceRange: '$$$$',
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: apartment.location || 'Sint Maarten',
-      addressCountry: 'SX',
-    },
-    numberOfRooms: apartment.bedrooms,
-    petsAllowed: false,
-    checkinTime: '16:00',
-    checkoutTime: '10:00',
-    amenityFeature: (apartment.amenities || []).slice(0, 12).map((a: string) => ({
-      '@type': 'LocationFeatureSpecification',
-      name: a,
-      value: true,
-    })),
-    offers: {
-      '@type': 'Offer',
-      priceCurrency: 'USD',
-      price: activePriceUsd,
-      availability: 'https://schema.org/InStock',
-      url: canonicalUrl,
-    },
-  };
+  // ── JSON-LD (hébergement + fil d'Ariane), voir lib/structured-data.ts ──
+  const amenityLabels = (apartment.amenities || [])
+    .map((key) => AMENITIES_MAP[key])
+    .filter(Boolean)
+    .map((def) => (isFr ? def.label_fr : def.label_en));
+  const jsonLd = villaJsonLd(locale, apartment, activePriceUsd, tApt('page_title'), amenityLabels);
 
   return (
     <div className="bg-cream-100">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={jsonLdScript(jsonLd)}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
 
@@ -220,7 +183,7 @@ export default async function ApartmentDetailPage({
                     apartment.extra_guests_max > 0 ? (
                       <span className="inline-flex items-baseline gap-1">
                         <span>{apartment.max_guests}</span>
-                        <span className="text-base text-bronze-400 font-medium">+{apartment.extra_guests_max}</span>
+                        <span className="text-base text-bronze-500 font-medium">+{apartment.extra_guests_max}</span>
                       </span>
                     ) : (
                       apartment.max_guests
@@ -308,7 +271,7 @@ export default async function ApartmentDetailPage({
                     {isFr ? 'Livraison de courses, restaurants, location de bateau — sur simple demande.' : 'Grocery delivery, restaurants, boat rental — on request.'}
                   </p>
                   <span
-                    className="inline-flex items-center gap-1.5 mt-3 text-[11px] uppercase font-medium text-bronze-400 group-hover:text-bronze-500 transition-colors duration-300"
+                    className="inline-flex items-center gap-1.5 mt-3 text-[11px] uppercase font-medium text-bronze-500 group-hover:text-bronze-600 transition-colors duration-300"
                     style={{ letterSpacing: '0.15em' }}
                   >
                     {isFr ? 'Voir les services' : 'View services'} →

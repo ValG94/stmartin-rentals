@@ -5,27 +5,32 @@ import { routing } from '@/i18n/routing';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import type { Metadata } from 'next';
+import { Inter, Cormorant_Garamond } from 'next/font/google';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  variable: '--font-cormorant',
+  weight: ['300', '400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+});
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://islandlivingsxm.com';
-
-// Metadata bilingue par défaut — chaque page peut override title/description
-// via son propre generateMetadata (voir /apartments/[slug]).
-// L'objet `alternates` cible la racine locale (/en, /fr) ; les pages
-// intérieures ré-définissent leurs alternates pour cibler leur URL propre.
+// Metadata par défaut. Pas d'`alternates` ici : un canonical hérité
+// désignerait une autre page. Chaque page publique déclare le sien via
+// pageMetadata() / localeAlternates() (lib/seo.ts).
 export const metadata: Metadata = {
   title: 'Island Living SXM — Luxury Vacation Rentals in Sint Maarten',
   description: 'Luxury vacation rentals in Sint Maarten. Discover our exceptional villas with private pool and sea view.',
-  alternates: {
-    canonical: `${SITE_URL}/en`,
-    languages: {
-      en: `${SITE_URL}/en`,
-      fr: `${SITE_URL}/fr`,
-    },
-  },
 };
 
 export default async function LocaleLayout({
@@ -44,12 +49,16 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-      </div>
-    </NextIntlClientProvider>
+    <html lang={locale} className={`${inter.variable} ${cormorant.variable}`}>
+      <body className={inter.className}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+        </NextIntlClientProvider>
+      </body>
+    </html>
   );
 }

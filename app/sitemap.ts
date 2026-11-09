@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getApartments } from '@/lib/api';
+import { localeAlternates, SITE_URL } from '@/lib/seo';
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://islandlivingsxm.com').replace(/\/+$/, '');
 const LOCALES = ['en', 'fr'] as const;
 
 /**
@@ -42,12 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: apt.updated_at ? new Date(apt.updated_at) : now,
         changeFrequency: 'weekly',
         priority: 0.9,
-        alternates: {
-          languages: {
-            en: `${SITE_URL}/en/apartments/${apt.slug}`,
-            fr: `${SITE_URL}/fr/apartments/${apt.slug}`,
-          },
-        },
+        alternates: { languages: localeAlternates(locale, `/apartments/${apt.slug}`)?.languages as Record<string, string> },
       });
     }
   }
@@ -60,12 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: now,
         changeFrequency: page.changeFrequency,
         priority: page.priority,
-        alternates: {
-          languages: {
-            en: `${SITE_URL}/en${page.path}`,
-            fr: `${SITE_URL}/fr${page.path}`,
-          },
-        },
+        alternates: { languages: localeAlternates(locale, page.path)?.languages as Record<string, string> },
       });
     }
   }

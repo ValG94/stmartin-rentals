@@ -51,7 +51,7 @@ export default function ApartmentCard({ apartment }: ApartmentCardProps) {
         {/* Content */}
         <div className="p-5">
           <div className="flex items-start justify-between mb-2">
-            <h3 className="font-bold text-gray-900 text-lg leading-tight">{name}</h3>
+            <h2 className="font-bold text-gray-900 text-lg leading-tight">{name}</h2>
           </div>
           <div className="flex items-center gap-1.5 text-gray-500 text-sm mb-3">
             <MapPin size={13} />
@@ -77,9 +77,9 @@ export default function ApartmentCard({ apartment }: ApartmentCardProps) {
           {/* CTA */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-xs text-gray-400">{locale === 'fr' ? 'à partir de' : 'from'}</span>
+              <span className="text-xs text-gray-500">{locale === 'fr' ? 'à partir de' : 'from'}</span>
               <span className="text-xl font-bold text-primary-600">{displayMinPrice}</span>
-              <span className="text-gray-400 text-sm">/ {t('night')}</span>
+              <span className="text-gray-500 text-sm">/ {t('night')}</span>
             </div>
             <span className="text-sm font-medium text-primary-600 group-hover:underline">
               {t('view_details')} →

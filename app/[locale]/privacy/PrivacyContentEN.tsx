@@ -22,7 +22,7 @@ export default function PrivacyContentEN() {
           </li>
           <li>
             <strong>Contact email:</strong>{' '}
-            <a href="mailto:admin@islandlivingsxm.com" className="text-bronze-500 hover:underline">
+            <a href="mailto:admin@islandlivingsxm.com" className="text-bronze-500 underline hover:no-underline">
               admin@islandlivingsxm.com
             </a>
           </li>
@@ -209,7 +209,7 @@ export default function PrivacyContentEN() {
         </ul>
         <p>
           To exercise these rights, please send an email to{' '}
-          <a href="mailto:admin@islandlivingsxm.com" className="text-bronze-500 hover:underline">
+          <a href="mailto:admin@islandlivingsxm.com" className="text-bronze-500 underline hover:no-underline">
             admin@islandlivingsxm.com
           </a>{' '}
           specifying the subject of your request. We will respond within a maximum period of{' '}

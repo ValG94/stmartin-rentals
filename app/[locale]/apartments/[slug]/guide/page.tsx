@@ -5,6 +5,14 @@ import { getFullGuide, getApartmentKeyInfo } from '@/lib/api-guide';
 import { ChevronLeft } from 'lucide-react';
 import QuickAccessCards from '@/components/guide/QuickAccessCards';
 import GuideSectionBlock from '@/components/guide/GuideSectionBlock';
+import type { Metadata } from 'next';
+
+// Guide voyageur (codes Wi-Fi, infos d'arrivée) : jamais indexé, et bloqué
+// pour tous les robots dans robots.txt.
+export const metadata: Metadata = {
+  title: 'Guide',
+  robots: { index: false, follow: false },
+};
 
 // ── Phrases d'accroche statiques (fallback si rien en BDD) ──
 const VILLA_TAGLINES: Record<string, { fr: string; en: string }> = {

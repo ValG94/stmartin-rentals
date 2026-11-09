@@ -67,7 +67,7 @@ export default function ContactPage() {
                   <div>
                     <div className="font-semibold text-gray-900">WhatsApp</div>
                     <a href="https://wa.me/15149476100" target="_blank" rel="noopener noreferrer"
-                      className="text-green-600 hover:underline">+1 (514) 947-6100</a>
+                      className="text-green-700 hover:underline">+1 (514) 947-6100</a>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm">
@@ -76,7 +76,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">{t('location')}</div>
-                    <div className="text-gray-600">Saint-Martin, Côté Hollandais97150</div>
+                    <div className="text-gray-600">{locale === 'fr' ? 'Sint Maarten, partie néerlandaise de Saint-Martin' : 'Sint Maarten (Dutch side of Saint-Martin)'}</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm">
@@ -106,33 +106,33 @@ export default function ContactPage() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('name')}</label>
-                      <input type="text" required value={form.name}
+                      <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 mb-1">{t('name')}</label>
+                      <input id="contact-name" autoComplete="name" type="text" required value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('email')}</label>
-                      <input type="email" required value={form.email}
+                      <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 mb-1">{t('email')}</label>
+                      <input id="contact-email" autoComplete="email" type="email" required value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('phone')}</label>
-                    <input type="tel" value={form.phone}
+                    <label htmlFor="contact-phone" className="block text-sm font-medium text-gray-700 mb-1">{t('phone')}</label>
+                    <input id="contact-phone" autoComplete="tel" type="tel" value={form.phone}
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}
                       className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('subject')}</label>
-                    <input type="text" required value={form.subject}
+                    <label htmlFor="contact-subject" className="block text-sm font-medium text-gray-700 mb-1">{t('subject')}</label>
+                    <input id="contact-subject" type="text" required value={form.subject}
                       onChange={(e) => setForm({ ...form, subject: e.target.value })}
                       className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('message')}</label>
-                    <textarea rows={5} required value={form.message}
+                    <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 mb-1">{t('message')}</label>
+                    <textarea id="contact-message" rows={5} required value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
                       className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 resize-none" />
                   </div>

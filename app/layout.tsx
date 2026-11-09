@@ -1,28 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter, Cormorant_Garamond } from 'next/font/google';
+import { SITE_URL } from '@/lib/seo';
 import './globals.css';
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-const cormorant = Cormorant_Garamond({
-  subsets: ['latin'],
-  variable: '--font-cormorant',
-  weight: ['300', '400', '500', '600', '700'],
-  style: ['normal', 'italic'],
-  display: 'swap',
-});
 
 // L'URL de base sert pour :
 //   - résoudre les chemins relatifs (og:image, canonical, sitemap)
 //   - alternates hreflang
 //   - Twitter Card
-// On lit NEXT_PUBLIC_SITE_URL en priorité pour rester cohérent avec les
-// autres endroits du code (Fygaro return URLs, emails).
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://islandlivingsxm.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -34,13 +17,13 @@ export const metadata: Metadata = {
     template: '%s — Island Living SXM',
   },
   description:
-    'Discover Villa Vanille and Villa Blanche, two exceptional luxury villas in Sint Maarten. Private pool, sea view, premium Caribbean experience.',
+    'Discover Villa Vanille and Maison Blanche, two exceptional luxury villas in Sint Maarten. Private pool, sea view, premium Caribbean experience.',
   keywords: [
     'luxury villa sint maarten',
     'vacation rental caribbean',
     'villa pool sint maarten',
     'villa vanille',
-    'villa blanche',
+    'maison blanche',
     'island living sxm',
     'saint martin villa',
     'location villa luxe saint martin',
@@ -95,14 +78,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html className={`${inter.variable} ${cormorant.variable}`}>
-      <body className={inter.className}>{children}</body>
-    </html>
-  );
+// <html> et <body> sont rendus par app/[locale]/layout.tsx pour porter
+// lang="fr" / lang="en" sans rendre tout le site dynamique (lire la langue
+// ici passerait par les headers). Les URLs hors locale tombent sur
+// app/not-found.tsx, qui a son propre <html>.
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return children;
 }

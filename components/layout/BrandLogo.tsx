@@ -27,7 +27,9 @@ export default function BrandLogo({ variant = 'dark', forceTagline = false }: Br
   const isDark = variant === 'dark';
 
   const nameColor   = isDark ? '#FFFFFF' : '#0D1B2A';
-  const taglineColor = '#C8A96B';
+  // Or plus foncé sur fond clair : le #C8A96B en 9px n'atteint pas le
+  // contraste 4.5:1 exigé (WCAG AA) sur blanc
+  const taglineColor = isDark ? '#C8A96B' : '#8C6A38';
 
   return (
     <div className="flex items-center" style={{ gap: '14px' }}>

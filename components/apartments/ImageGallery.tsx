@@ -293,12 +293,12 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
           <span>{sorted.length} média{sorted.length > 1 ? 's' : ''}</span>
           <div className="flex gap-3">
             {showAll && hasMore && (
-              <button onClick={() => setShowAll(false)} className="text-[#B08B52] hover:underline font-medium">
+              <button onClick={() => setShowAll(false)} className="text-bronze-500 hover:underline font-medium">
                 {locale === 'fr' ? 'Réduire' : 'Show less'}
               </button>
             )}
             {!showAll && hasMore && (
-              <button onClick={() => setShowAll(true)} className="text-[#B08B52] hover:underline font-medium">
+              <button onClick={() => setShowAll(true)} className="text-bronze-500 hover:underline font-medium">
                 {locale === 'fr' ? `Voir les ${sorted.length} médias` : `View all ${sorted.length} media`}
               </button>
             )}

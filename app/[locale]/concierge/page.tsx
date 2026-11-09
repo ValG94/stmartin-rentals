@@ -6,6 +6,8 @@ import {
   MessageCircle, Mail, ArrowRight,
 } from 'lucide-react';
 import { CONCIERGE_SERVICES, type ConciergeServiceIcon } from '@/lib/concierge';
+import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 
 const ICONS: Record<ConciergeServiceIcon, React.ComponentType<{ size?: number; className?: string }>> = {
   grocery:    ShoppingBasket,
@@ -20,6 +22,12 @@ const ICONS: Record<ConciergeServiceIcon, React.ComponentType<{ size?: number; c
   security:   ShieldCheck,
   activities: Trophy,
 };
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'concierge' });
+  return pageMetadata(locale, '/concierge', t('hero_title'), t('hero_subtitle'));
+}
 
 export default async function ConciergePage({
   params,

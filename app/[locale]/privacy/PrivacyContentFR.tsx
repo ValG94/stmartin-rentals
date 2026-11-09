@@ -25,7 +25,7 @@ export default function PrivacyContentFR() {
           </li>
           <li>
             <strong>Email de contact&nbsp;:</strong>{' '}
-            <a href="mailto:admin@islandlivingsxm.com" className="text-bronze-500 hover:underline">
+            <a href="mailto:admin@islandlivingsxm.com" className="text-bronze-500 underline hover:no-underline">
               admin@islandlivingsxm.com
             </a>
           </li>
@@ -220,7 +220,7 @@ export default function PrivacyContentFR() {
         </ul>
         <p>
           Pour exercer ces droits, adressez-nous un email à{' '}
-          <a href="mailto:admin@islandlivingsxm.com" className="text-bronze-500 hover:underline">
+          <a href="mailto:admin@islandlivingsxm.com" className="text-bronze-500 underline hover:no-underline">
             admin@islandlivingsxm.com
           </a>{' '}
           en précisant l’objet de votre demande. Nous vous répondrons dans un délai maximum de{' '}

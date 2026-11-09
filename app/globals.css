@@ -58,18 +58,19 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    background-color: #B08B52;
+    /* Bronze foncé : texte blanc 12px lisible (contraste 5.4:1, WCAG AA) */
+    background-color: #856434;
     color: #FFFFFF;
     font-weight: 500;
     padding: 0.875rem 2rem;
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    border: 1px solid #B08B52;
+    border: 1px solid #856434;
     transition: all 0.5s;
   }
   .btn-bronze:hover {
-    background-color: #8C6A38;
+    background-color: #6B4F28;
   }
   .section-label {
     font-family: var(--font-inter), system-ui, sans-serif;
@@ -77,7 +78,8 @@
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.25em;
-    color: #B08B52;
+    /* Bronze foncé : le #B08B52 en 12px n'atteint pas 4.5:1 sur crème */
+    color: #856434;
   }
   .divider-bronze {
     width: 3rem;

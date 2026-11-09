@@ -7,6 +7,9 @@ import Image from 'next/image';
 import { getApartments } from '@/lib/api';
 import { getPublishedDestinationMedia } from '@/lib/services/homepage-media';
 import { MapPin, ArrowRight, Star, Shield, Phone, ChevronDown } from 'lucide-react';
+import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
+import { homeJsonLd, jsonLdScript } from '@/lib/structured-data';
 
 // Revalide la liste des villas toutes les 60 s côté CDN.
 // Combiné avec revalidatePath('/[locale]') déclenché par les mutations
@@ -24,6 +27,16 @@ function numberToWord(n: number, isFr: boolean): string {
   return words[n] ?? String(n);
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'home' });
+  const tagline = locale === 'fr' ? 'Locations de villas de luxe à Saint-Martin' : 'Luxury Vacation Rentals in Sint Maarten';
+  return {
+    ...pageMetadata(locale, '', tagline, t('hero_subtitle')),
+    title: { absolute: `Island Living SXM — ${tagline}` },
+  };
+}
+
 export default async function HomePage() {
   const locale = await getLocale();
   const t = await getTranslations('home');
@@ -39,6 +52,7 @@ export default async function HomePage() {
 
   return (
     <div className="bg-cream-100">
+      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(homeJsonLd(locale, apartments))} />
 
       {/* HERO */}
       <section className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">

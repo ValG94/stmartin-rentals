@@ -37,7 +37,7 @@ export default async function Footer() {
               </div>
             </div>
             <p className="font-sans text-sm text-cream-100/50 leading-relaxed mb-6">{t('tagline')}</p>
-            <div className="flex items-center gap-2 text-cream-100/40 text-xs font-sans">
+            <div className="flex items-center gap-2 text-cream-100/60 text-xs font-sans">
               <MapPin size={12} className="text-bronze-400" />
               <span style={{letterSpacing:'0.05em'}}>Sint Maarten / Saint-Martin</span>
             </div>
@@ -45,11 +45,11 @@ export default async function Footer() {
 
           {/* Nos villas — liste dynamique */}
           <div className="md:col-span-2">
-            <h3 className="font-sans text-xs font-medium uppercase text-cream-100/40 mb-6" style={{letterSpacing:'0.2em'}}>
+            <h3 className="font-sans text-xs font-medium uppercase text-cream-100/60 mb-6" style={{letterSpacing:'0.2em'}}>
               {isFr ? 'Nos villas' : 'Our villas'}
             </h3>
             {apartments.length === 0 ? (
-              <p className="font-sans text-sm text-cream-100/40 italic">
+              <p className="font-sans text-sm text-cream-100/60 italic">
                 {isFr ? 'Aucune villa disponible' : 'No villas available'}
               </p>
             ) : (
@@ -70,7 +70,7 @@ export default async function Footer() {
 
           {/* Navigation */}
           <div className="md:col-span-2">
-            <h3 className="font-sans text-xs font-medium uppercase text-cream-100/40 mb-6" style={{letterSpacing:'0.2em'}}>
+            <h3 className="font-sans text-xs font-medium uppercase text-cream-100/60 mb-6" style={{letterSpacing:'0.2em'}}>
               {t('links_title')}
             </h3>
             <ul className="space-y-3">
@@ -85,7 +85,7 @@ export default async function Footer() {
 
           {/* Contact */}
           <div className="md:col-span-4">
-            <h3 className="font-sans text-xs font-medium uppercase text-cream-100/40 mb-6" style={{letterSpacing:'0.2em'}}>
+            <h3 className="font-sans text-xs font-medium uppercase text-cream-100/60 mb-6" style={{letterSpacing:'0.2em'}}>
               {t('contact_title')}
             </h3>
             <ul className="space-y-4">
@@ -115,24 +115,24 @@ export default async function Footer() {
         </div>
 
         <div className="border-t border-cream-100/10 mt-16 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-sans text-xs text-cream-100/30" style={{letterSpacing:'0.05em'}}>
+          <p className="font-sans text-xs text-cream-100/60" style={{letterSpacing:'0.05em'}}>
             &copy; {year} Island Living SXM. {t('rights')}.
           </p>
           <div className="divider-bronze" />
-          <p className="font-sans text-xs text-cream-100/20" style={{letterSpacing:'0.1em'}}>
+          <p className="font-sans text-xs text-cream-100/60" style={{letterSpacing:'0.1em'}}>
             SINT MAARTEN · CARIBBEAN
           </p>
         </div>
 
         {/* Powered by — credit agence */}
         <div className="mt-6 pt-4 border-t border-cream-100/5 text-center">
-          <p className="font-sans text-[10px] text-cream-100/25 uppercase" style={{letterSpacing:'0.2em'}}>
+          <p className="font-sans text-[10px] text-cream-100/60 uppercase" style={{letterSpacing:'0.2em'}}>
             {isFr ? 'Conçu par' : 'Powered by'}{' '}
             <a
               href="https://www.onenationagency.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-bronze-300/70 hover:text-bronze-300 transition-colors duration-300"
+              className="text-bronze-300 hover:text-bronze-200 transition-colors duration-300"
             >
               One Nation Agency
             </a>

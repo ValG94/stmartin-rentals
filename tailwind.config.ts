@@ -15,7 +15,9 @@ const config: Config = {
           50: '#E8EDF2',
           100: '#C5D2DE',
           200: '#8FA9BF',
-          300: '#5A80A0',
+          // Assombri (ex #5A80A0) : n'est utilisé que pour du texte, qui doit
+          // atteindre un contraste 4.5:1 sur les fonds crème (WCAG AA)
+          300: '#4A6B87',
           400: '#2E5F82',
           500: '#1A3D5C',
           600: '#0D1B2A',
