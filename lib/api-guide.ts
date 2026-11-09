@@ -174,13 +174,26 @@ export async function getFullGuide(apartmentId: string): Promise<GuideSection[]>
   return sectionsWithItems;
 }
 
+// Colonnes lisibles publiquement. Le mot de passe Wi-Fi et les codes
+// portail / alarme n'en font pas partie : ils ne sont lus que côté serveur
+// (lib/services/guest-access.ts) et envoyés dans le mail de confirmation.
+// Voir supabase/protect_guest_access_codes.sql.
+const PUBLIC_KEY_INFO_COLUMNS = [
+  'apartment_id', 'wifi_name',
+  'parking_info_fr', 'parking_info_en', 'address_text_fr', 'address_text_en', 'map_link',
+  'host_phone', 'emergency_phone', 'fire_phone', 'whatsapp',
+  'checkin_time', 'checkout_time', 'checkin_note_fr', 'checkin_note_en', 'checkout_note_fr', 'checkout_note_en',
+  'hero_image_url', 'hero_tagline_fr', 'hero_tagline_en', 'hero_tagline_color', 'hero_tagline_italic',
+  'created_at', 'updated_at',
+].join(',');
+
 /**
- * Récupère les infos clés d'un appartement.
+ * Récupère les infos clés publiques d'un appartement (sans les codes).
  */
 export async function getApartmentKeyInfo(apartmentId: string): Promise<ApartmentKeyInfo | null> {
   const { data, error } = await supabasePublic
     .from('apartment_key_info')
-    .select('*')
+    .select(PUBLIC_KEY_INFO_COLUMNS)
     .eq('apartment_id', apartmentId)
     .single();
 
@@ -190,7 +203,7 @@ export async function getApartmentKeyInfo(apartmentId: string): Promise<Apartmen
     }
     return null;
   }
-  return data as ApartmentKeyInfo;
+  return { ...(data as unknown as ApartmentKeyInfo), wifi_password: null, gate_code: null, alarm_code: null };
 }
 
 // ============================================================

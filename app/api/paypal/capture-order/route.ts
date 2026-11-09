@@ -3,6 +3,7 @@ import { capturePayPalOrder } from '@/lib/services/paypal';
 import { sendBookingConfirmationEmail, roomTaxEmailFields } from '@/lib/services/email';
 import { getServerSupabase } from '@/lib/services/server-pricing';
 import { toEmailAttachments, tryIssueDocumentsForPayment } from '@/lib/documents/issue';
+import { getGuestWifi } from '@/lib/services/guest-access';
 
 export async function POST(req: NextRequest) {
   try {
@@ -108,6 +109,7 @@ export async function POST(req: NextRequest) {
       guestName: booking.guest_name,
       guestEmail: booking.guest_email,
       villaName,
+      wifi: await getGuestWifi(supabase, booking.apartment_id),
       checkIn: booking.check_in,
       checkOut: booking.check_out,
       nights: booking.nights || 0,

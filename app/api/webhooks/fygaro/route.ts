@@ -4,6 +4,7 @@ import { verifyFygaroWebhookSignature, type FygaroWebhookPayload } from '@/lib/s
 import { sendBookingConfirmationEmail, sendDepositAuthorizedEmail, sendBalancePaidEmail, roomTaxEmailFields } from '@/lib/services/email';
 import { getServerSupabase } from '@/lib/services/server-pricing';
 import { toEmailAttachments, tryIssueDocumentsForPayment } from '@/lib/documents/issue';
+import { getGuestWifi } from '@/lib/services/guest-access';
 
 // Node runtime nécessaire pour crypto.createHmac
 export const runtime = 'nodejs';
@@ -182,6 +183,7 @@ async function handleBookingPayment(
       guestName: booking.guest_name,
       guestEmail: booking.guest_email,
       villaName,
+      wifi: await getGuestWifi(supabase, booking.apartment_id),
       checkIn: booking.check_in,
       checkOut: booking.check_out,
       nights: booking.nights || 0,

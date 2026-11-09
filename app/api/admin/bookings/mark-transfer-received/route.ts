@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendBookingConfirmationEmail, roomTaxEmailFields } from '@/lib/services/email';
 import { toEmailAttachments, tryIssueDocumentsForPayment } from '@/lib/documents/issue';
+import { getGuestWifi } from '@/lib/services/guest-access';
 import { verifyAdminTokenAsync } from '@/lib/auth-admin';
 import { createClient } from '@supabase/supabase-js';
 
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest) {
       guestName: booking.guest_name,
       guestEmail: booking.guest_email,
       villaName,
+      wifi: await getGuestWifi(supabase, booking.apartment_id),
       checkIn: booking.check_in,
       checkOut: booking.check_out,
       nights: booking.nights || 0,

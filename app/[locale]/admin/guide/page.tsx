@@ -95,12 +95,10 @@ export default function AdminGuidePage() {
     // Reset immédiat pour éviter d'afficher les données de la villa précédente
     setKeyInfo({});
     setKeyInfoLoading(true);
-    const { data } = await supabase
-      .from('apartment_key_info')
-      .select('*')
-      .eq('apartment_id', selectedApartmentId)
-      .maybeSingle();
-    setKeyInfo(data ?? {});
+    // Via le serveur : la clé publique n'a pas accès aux codes
+    const res = await fetch(`/api/admin/guide/key-info?apartmentId=${selectedApartmentId}`);
+    const json = res.ok ? await res.json() : null;
+    setKeyInfo(json?.keyInfo ?? {});
     setKeyInfoLoading(false);
   }, [selectedApartmentId]);
 
@@ -137,11 +135,14 @@ export default function AdminGuidePage() {
   const saveKeyInfo = async () => {
     if (!selectedApartmentId) return;
     setSaving(true);
-    const { error } = await supabase
-      .from('apartment_key_info')
-      .upsert({ ...keyInfo, apartment_id: selectedApartmentId }, { onConflict: 'apartment_id' });
+    const res = await fetch('/api/admin/guide/key-info', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apartmentId: selectedApartmentId, keyInfo }),
+    });
+    const json = await res.json().catch(() => ({}));
     setSaving(false);
-    if (error) showMsg('error', error.message);
+    if (!res.ok) showMsg('error', json.error ?? `Erreur ${res.status}`);
     else showMsg('success', 'Infos clés sauvegardées !');
   };
 

@@ -93,6 +93,7 @@ async function main() {
       paymentOption: 'deposit_40', depositAmount: pricing.depositAmount, remainingBalance: pricing.remainingBalance,
       securityDepositAmount: pricing.securityDepositAmount, paymentMethod: 'fygaro', bookingId, locale,
       depositAuthorizationStatus: 'authorized', invoiceNumber,
+      wifi: { name: 'VILLA-SAMPLE', password: 'sample-password' },
     });
     const mail = sent.find((m) => m.to === 'guest@example.com')!;
     writeFileSync(join(outDir, `confirmation-${locale}.html`),

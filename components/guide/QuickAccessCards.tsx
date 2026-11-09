@@ -198,6 +198,14 @@ function WifiCard({ name, password, isFr }: { name: string; password: string | n
               )}
             </div>
           )}
+          {/* Le guide public ne reçoit plus le mot de passe (envoyé par mail) */}
+          {!password && (
+            <p className="text-xs text-stone-500 font-light">
+              {isFr
+                ? 'Mot de passe communiqué dans votre e-mail de confirmation de réservation.'
+                : 'Password sent in your booking confirmation email.'}
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -10,6 +10,9 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'contact@islandlivingsxm.com';
 
 export type Locale = 'fr' | 'en';
 
+const escapeHtml = (v: string) =>
+  v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 interface BookingEmailData {
   guestName: string;
   guestEmail: string;
@@ -40,6 +43,8 @@ interface BookingEmailData {
   // Si 'authorized' → note "empreinte enregistrée". Sinon → CTA
   // "Autoriser mon empreinte" avec lien vers la page fygaro-success.
   depositAuthorizationStatus?: 'authorized' | 'captured' | 'voided' | 'expired' | null;
+  // Wi-Fi de la villa : retiré du guide public, communiqué uniquement ici
+  wifi?: { name: string; password: string | null };
 }
 
 // Champs taxe de séjour du récap à partir d'une ligne bookings.
@@ -182,6 +187,21 @@ function headerHtml(locale: Locale): string {
     <div style="background:#0a0a0a;padding:24px;text-align:center;">
       <h1 style="color:#c9a96e;font-size:22px;margin:0;">${t('brand', locale)}</h1>
       <p style="color:#888;font-size:12px;margin:4px 0 0;">${t('tagline', locale)}</p>
+    </div>
+  `;
+}
+
+function guestWifiHtml(d: BookingEmailData, locale: Locale): string {
+  if (!d.wifi) return '';
+  const fr = locale === 'fr';
+  return `
+    <div style="background:#f8f8f6;border:1px solid #e0d8cc;padding:16px;border-radius:4px;margin:20px 0;">
+      <h3 style="color:#c9a96e;font-size:14px;margin:0 0 12px;">${fr ? 'Wi-Fi de la villa' : 'Villa Wi-Fi'}</h3>
+      <p style="margin:4px 0;"><strong>${fr ? 'Réseau :' : 'Network:'}</strong> ${escapeHtml(d.wifi.name)}</p>
+      ${d.wifi.password ? `<p style="margin:4px 0;"><strong>${fr ? 'Mot de passe :' : 'Password:'}</strong> ${escapeHtml(d.wifi.password)}</p>` : ''}
+      <p style="font-size:12px;color:#888;margin:8px 0 0;">${fr
+        ? 'Ces informations vous sont personnelles, merci de ne pas les partager.'
+        : 'This information is for you only, please do not share it.'}</p>
     </div>
   `;
 }
@@ -350,6 +370,7 @@ export async function sendBookingConfirmationEmail(d: BookingEmailData): Promise
         ${stayDetailsHtml(d, locale)}
         <h3 style="font-size:15px;color:#0a0a0a;">${t('paymentSummary', locale)}</h3>
         ${bookingSummaryHtml(d, locale)}
+        ${guestWifiHtml(d, locale)}
         ${cancellationPolicyHtml(locale)}
         ${footerHtml(locale)}
       </div>
