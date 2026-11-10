@@ -15,10 +15,31 @@ import RichTextEditor from '@/components/admin/RichTextEditor';
 import { GUIDE_ICON_REGISTRY, GUIDE_ICON_GROUPS } from '@/lib/guide-icons';
 import { ITEM_TYPES, type GuideSection, type GuideItem, type ApartmentKeyInfo } from '@/lib/api-guide';
 
+// Lecture publique (liste des villas) seulement : toutes les lectures et
+// écritures du guide passent par /api/admin/guide/* (service role).
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
+
+type GuideTable = 'guide_sections' | 'guide_items';
+
+/** Appel de l'API admin du guide ; renvoie { data, error } comme supabase-js. */
+async function guideApi<T = unknown>(
+  table: GuideTable,
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+  opts: { query?: Record<string, string>; body?: unknown } = {},
+): Promise<{ data: T | null; error: { message: string } | null }> {
+  const qs = opts.query ? `?${new URLSearchParams(opts.query)}` : '';
+  const res = await fetch(`/api/admin/guide/${table}${qs}`, {
+    method,
+    headers: opts.body ? { 'Content-Type': 'application/json' } : undefined,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) return { data: null, error: { message: json.error ?? `Erreur ${res.status}` } };
+  return { data: (json.data ?? null) as T | null, error: null };
+}
 
 // ── Types locaux ──────────────────────────────────────────────
 interface Apartment { id: string; title_fr: string; title_en: string; slug: string; }
@@ -82,12 +103,8 @@ export default function AdminGuidePage() {
 
   const loadSections = useCallback(async () => {
     if (!selectedApartmentId) return;
-    const { data } = await supabase
-      .from('guide_sections')
-      .select('*')
-      .or(`scope.eq.shared,apartment_id.eq.${selectedApartmentId}`)
-      .order('display_order', { ascending: true });
-    setSections((data ?? []) as GuideSection[]);
+    const { data } = await guideApi<GuideSection[]>('guide_sections', 'GET', { query: { apartmentId: selectedApartmentId } });
+    setSections(data ?? []);
   }, [selectedApartmentId]);
 
   const loadKeyInfo = useCallback(async () => {
@@ -108,12 +125,8 @@ export default function AdminGuidePage() {
   }, [loadSections, loadKeyInfo]);
 
   const loadItems = useCallback(async (sectionId: string) => {
-    const { data } = await supabase
-      .from('guide_items')
-      .select('*')
-      .eq('section_id', sectionId)
-      .order('display_order', { ascending: true });
-    setSectionItems(prev => ({ ...prev, [sectionId]: (data ?? []) as GuideItem[] }));
+    const { data } = await guideApi<GuideItem[]>('guide_items', 'GET', { query: { sectionId } });
+    setSectionItems(prev => ({ ...prev, [sectionId]: data ?? [] }));
   }, []);
 
   const toggleSection = (sectionId: string) => {
@@ -148,17 +161,13 @@ export default function AdminGuidePage() {
 
   // ── Toggle publication section ────────────────────────────────
   const togglePublish = async (section: GuideSection) => {
-    await supabase.from('guide_sections')
-      .update({ is_published: !section.is_published })
-      .eq('id', section.id);
+    await guideApi('guide_sections', 'PATCH', { query: { id: section.id }, body: { is_published: !section.is_published } });
     loadSections();
   };
 
   // ── Toggle visibilité item ────────────────────────────────────
   const toggleItemVisible = async (item: GuideItem, sectionId: string) => {
-    await supabase.from('guide_items')
-      .update({ is_visible: !item.is_visible })
-      .eq('id', item.id);
+    await guideApi('guide_items', 'PATCH', { query: { id: item.id }, body: { is_visible: !item.is_visible } });
     loadItems(sectionId);
   };
 
@@ -169,15 +178,15 @@ export default function AdminGuidePage() {
     const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= items.length) return;
     const swapItem = items[swapIdx];
-    await supabase.from('guide_items').update({ display_order: swapItem.display_order }).eq('id', item.id);
-    await supabase.from('guide_items').update({ display_order: item.display_order }).eq('id', swapItem.id);
+    await guideApi('guide_items', 'PATCH', { query: { id: item.id }, body: { display_order: swapItem.display_order } });
+    await guideApi('guide_items', 'PATCH', { query: { id: swapItem.id }, body: { display_order: item.display_order } });
     loadItems(sectionId);
   };
 
   // ── Supprimer item ────────────────────────────────────────────
   const deleteItem = async (itemId: string, sectionId: string) => {
     if (!confirm('Supprimer cet item ?')) return;
-    await supabase.from('guide_items').delete().eq('id', itemId);
+    await guideApi('guide_items', 'DELETE', { query: { id: itemId } });
     loadItems(sectionId);
   };
 
@@ -195,9 +204,9 @@ export default function AdminGuidePage() {
     };
     let error;
     if (editingItem.id) {
-      ({ error } = await supabase.from('guide_items').update(payload).eq('id', editingItem.id));
+      ({ error } = await guideApi('guide_items', 'PATCH', { query: { id: editingItem.id }, body: payload }));
     } else {
-      ({ error } = await supabase.from('guide_items').insert(payload));
+      ({ error } = await guideApi('guide_items', 'POST', { body: payload }));
     }
     setSaving(false);
     if (error) { showMsg('error', error.message); return; }
@@ -217,9 +226,9 @@ export default function AdminGuidePage() {
     };
     let error;
     if (editingSection.id) {
-      ({ error } = await supabase.from('guide_sections').update(payload).eq('id', editingSection.id));
+      ({ error } = await guideApi('guide_sections', 'PATCH', { query: { id: editingSection.id }, body: payload }));
     } else {
-      ({ error } = await supabase.from('guide_sections').insert(payload));
+      ({ error } = await guideApi('guide_sections', 'POST', { body: payload }));
     }
     setSaving(false);
     if (error) { showMsg('error', error.message); return; }
@@ -230,7 +239,7 @@ export default function AdminGuidePage() {
 
   const deleteSection = async (sectionId: string) => {
     if (!confirm('Supprimer cette section et tous ses items ?')) return;
-    await supabase.from('guide_sections').delete().eq('id', sectionId);
+    await guideApi('guide_sections', 'DELETE', { query: { id: sectionId } });
     loadSections();
   };
 

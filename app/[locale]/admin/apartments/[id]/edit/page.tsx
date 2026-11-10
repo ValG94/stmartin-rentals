@@ -259,26 +259,20 @@ export default function EditApartmentPage() {
   const savePrices = async () => {
     setSaving(true);
     try {
-      for (const sp of seasonalPrices) {
-        if (sp._toDelete && sp.id) {
-          await supabase.from('seasonal_prices').delete().eq('id', sp.id);
-        } else if (sp._isNew && !sp._toDelete) {
-          await supabase.from('seasonal_prices').insert([{
-            apartment_id: apartmentId, name_fr: sp.name_fr, name_en: sp.name_en,
-            price_per_night: sp.price_per_night, date_from: sp.date_from,
-            date_to: sp.date_to, is_active: sp.is_active,
-          }]);
-        } else if (sp.id && !sp._toDelete) {
-          await supabase.from('seasonal_prices').update({
-            name_fr: sp.name_fr, name_en: sp.name_en,
-            price_per_night: sp.price_per_night, date_from: sp.date_from,
-            date_to: sp.date_to, is_active: sp.is_active,
-          }).eq('id', sp.id);
-        }
-      }
-      const { data } = await supabase.from('seasonal_prices').select('*')
-        .eq('apartment_id', apartmentId).order('date_from', { ascending: true });
-      setSeasonalPrices(data || []);
+      // Écriture côté serveur : la clé publique n'a plus que la lecture
+      const res = await fetch(`/api/admin/apartments/${apartmentId}/seasonal-prices`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          deleted: seasonalPrices.filter(sp => sp._toDelete && sp.id).map(sp => sp.id),
+          created: seasonalPrices.filter(sp => sp._isNew && !sp._toDelete),
+          updated: seasonalPrices.filter(sp => sp.id && !sp._isNew && !sp._toDelete),
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `Sauvegarde échouée (${res.status})`);
+      setSeasonalPrices(json.data || []);
       showMsg('success', 'Tarifs saisonniers sauvegardés !');
     } catch (e: unknown) {
       showMsg('error', `Erreur : ${e instanceof Error ? e.message : 'Erreur inconnue'}`);
@@ -497,24 +491,20 @@ export default function EditApartmentPage() {
   const saveGuide = async () => {
     setSaving(true);
     try {
-      for (const s of guideSections) {
-        if (s._toDelete && s.id) {
-          await supabase.from('apartment_sections').delete().eq('id', s.id);
-        } else if (s._isNew && !s._toDelete) {
-          await supabase.from('apartment_sections').insert([{
-            apartment_id: apartmentId, title_fr: s.title_fr, title_en: s.title_en,
-            content_fr: s.content_fr, content_en: s.content_en, icon: s.icon, position: s.position,
-          }]);
-        } else if (s.id && !s._toDelete) {
-          await supabase.from('apartment_sections').update({
-            title_fr: s.title_fr, title_en: s.title_en,
-            content_fr: s.content_fr, content_en: s.content_en, icon: s.icon, position: s.position,
-          }).eq('id', s.id);
-        }
-      }
-      const { data } = await supabase.from('apartment_sections').select('*')
-        .eq('apartment_id', apartmentId).order('position', { ascending: true });
-      setGuideSections(data || []);
+      // Écriture côté serveur : la clé publique n'a pas le droit d'écrire
+      const res = await fetch(`/api/admin/apartments/${apartmentId}/sections`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          deleted: guideSections.filter(s => s._toDelete && s.id).map(s => s.id),
+          created: guideSections.filter(s => s._isNew && !s._toDelete),
+          updated: guideSections.filter(s => s.id && !s._isNew && !s._toDelete),
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `Sauvegarde échouée (${res.status})`);
+      setGuideSections(json.data || []);
       showMsg('success', 'Guide digital sauvegardé !');
     } catch (e: unknown) {
       showMsg('error', `Erreur : ${e instanceof Error ? e.message : 'Erreur inconnue'}`);
