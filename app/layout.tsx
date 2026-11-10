@@ -72,9 +72,13 @@ export const metadata: Metadata = {
       'max-video-preview': -1,
     },
   },
+  // Icônes recadrées sur l'emblème et légères (le logo complet pèse 860 Ko)
   icons: {
-    icon: '/logo-island-living-sxm.png',
-    apple: '/logo-island-living-sxm.png',
+    icon: [
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
   },
 };
 

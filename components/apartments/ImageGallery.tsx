@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, Play, Grid, Maximize2, ImageOff } from 'lucide-react';
+import Image from 'next/image';
 import type { ApartmentImage } from '@/types';
 
 // ── Helpers vidéo ────────────────────────────────────────────────────────────
@@ -43,9 +44,13 @@ interface SafeImgProps {
   className?: string;
   priority?: boolean;
   style?: React.CSSProperties;
+  /** Largeur affichée, pour que next/image serve une version redimensionnée */
+  sizes: string;
 }
 
-function SafeImg({ src, alt, className, priority, style }: SafeImgProps) {
+// next/image : les photos Supabase (jusqu'à 3 Mo) sont servies redimensionnées
+// et en WebP/AVIF. Le parent doit être en position relative (mode fill).
+function SafeImg({ src, alt, className, priority, style, sizes }: SafeImgProps) {
   const [broken, setBroken] = useState(false);
 
   if (broken || !src) {
@@ -58,14 +63,15 @@ function SafeImg({ src, alt, className, priority, style }: SafeImgProps) {
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={src}
       alt={alt}
-      className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${className ?? ''}`}
+      fill
+      sizes={sizes}
+      priority={priority}
+      className={`object-cover transition-transform duration-500 group-hover:scale-105 ${className ?? ''}`}
       style={style}
       onError={() => setBroken(true)}
-      loading={priority ? 'eager' : 'lazy'}
     />
   );
 }
@@ -239,6 +245,7 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
                     src={thumbSrc}
                     alt={caption}
                     priority={isFirst}
+                    sizes={isFirst ? '(min-width: 1280px) 860px, (min-width: 768px) 66vw, 100vw' : '(min-width: 1280px) 430px, (min-width: 768px) 33vw, 50vw'}
                   />
                 )}
 
@@ -381,7 +388,8 @@ export default function ImageGallery({ mediaItems, alt, locale = 'en' }: ImageGa
                 <SafeImg
                   src={current.url}
                   alt={getAlt(current, lightboxIndex)}
-                  className="!object-contain max-h-full pointer-events-none"
+                  className="!object-contain pointer-events-none"
+                  sizes="100vw"
                   priority
                   style={{
                     transform: zoom.active
