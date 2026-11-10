@@ -5,8 +5,9 @@
  * contenant l'access_token JWT Supabase. Ce JWT est validé ici en demandant
  * à Supabase de le déchiffrer (signature + expiration + utilisateur existant).
  *
- * verifyAdminTokenAsync() : validation complète (recommandé, requiert async)
- * verifyAdminToken()      : validation rapide structurelle (JWT bien formé)
+ * verifyAdminTokenAsync() : validation complète, obligatoire pour toute route
+ *   admin. L'ancienne verifyAdminToken() ne vérifiait que la forme du JWT
+ *   (un faux jeton passait) : supprimée le 10/11/2026.
  *
  * Aucune voie d'authentification par "token statique" n'existe — toute
  * authentification doit passer par Supabase Auth.
@@ -50,25 +51,4 @@ export async function isAdminTokenValid(token: string | null | undefined): Promi
  */
 export async function verifyAdminTokenAsync(req: NextRequest): Promise<boolean> {
   return isAdminTokenValid(extractToken(req));
-}
-
-/**
- * Vérifie qu'une chaîne ressemble à un JWT bien formé (3 segments
- * séparés par des points, premier segment commençant par "eyJ").
- * Synchrone, n'effectue aucun appel réseau — à utiliser dans les
- * Server Components où on veut éviter la latence/faux négatifs
- * d'un round-trip Supabase, et où la sécurité réelle est assurée
- * par les routes API mutation qui font le check async strict.
- */
-export function isJWTFormat(token: string | null | undefined): boolean {
-  if (!token || !token.startsWith('eyJ')) return false;
-  const parts = token.split('.');
-  return parts.length === 3 && parts[0].length > 5 && parts[1].length > 10;
-}
-
-/**
- * Validation rapide structurelle pour les routes API read-only.
- */
-export function verifyAdminToken(req: NextRequest): boolean {
-  return isJWTFormat(extractToken(req));
 }

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { adminGetAllApartments, adminCreateApartment } from '@/lib/api-admin';
-import { verifyAdminToken } from '@/lib/auth-admin';
+import { verifyAdminTokenAsync } from '@/lib/auth-admin';
 
 export async function GET(req: NextRequest) {
-  const auth = verifyAdminToken(req);
+  const auth = await verifyAdminTokenAsync(req);
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   const result = await adminGetAllApartments();
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = verifyAdminToken(req);
+  const auth = await verifyAdminTokenAsync(req);
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   const body = await req.json();

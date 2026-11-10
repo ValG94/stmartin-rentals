@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { verifyAdminToken } from '@/lib/auth-admin';
+import { verifyAdminTokenAsync } from '@/lib/auth-admin';
 
 const ALLOWED_MIME = ['video/mp4', 'video/webm', 'video/quicktime'];
 const MAX_BYTES = 100 * 1024 * 1024; // 100 MB
@@ -12,7 +12,7 @@ const MAX_BYTES = 100 * 1024 * 1024; // 100 MB
 // Body : { fileName: string, fileSize: number, fileType: string }
 // Returns : { signedUrl, token, storage_path, public_url }
 export async function POST(req: NextRequest) {
-  const auth = verifyAdminToken(req);
+  const auth = await verifyAdminTokenAsync(req);
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   const { fileName, fileSize, fileType } = await req.json();

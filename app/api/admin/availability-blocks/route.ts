@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase';
-import { verifyAdminToken } from '@/lib/auth-admin';
+import { verifyAdminTokenAsync } from '@/lib/auth-admin';
 
 // Types de blocage manuels autorisés (source = 'manual')
 const ALLOWED_TYPES = ['booking', 'owner', 'maintenance'] as const;
@@ -14,7 +14,7 @@ type ManualBlockType = (typeof ALLOWED_TYPES)[number];
 // Bloque les dates côté formulaire public ET sera exporté vers Airbnb
 // via le flux iCal (/api/ical/[slug]).
 export async function POST(req: NextRequest) {
-  const auth = verifyAdminToken(req);
+  const auth = await verifyAdminTokenAsync(req);
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   const body = await req.json();

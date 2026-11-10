@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase';
-import { verifyAdminToken } from '@/lib/auth-admin';
+import { verifyAdminTokenAsync } from '@/lib/auth-admin';
 
 // PATCH /api/admin/homepage-destination-media/[id]
 // Met à jour n'importe quel champ éditable : titres, légendes, alt,
@@ -10,7 +10,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = verifyAdminToken(req);
+  const auth = await verifyAdminTokenAsync(req);
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   const { id } = await params;
@@ -53,7 +53,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = verifyAdminToken(req);
+  const auth = await verifyAdminTokenAsync(req);
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   const { id } = await params;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { verifyAdminToken } from '@/lib/auth-admin';
+import { verifyAdminTokenAsync } from '@/lib/auth-admin';
 
 const ALLOWED_MIME = ['video/mp4', 'video/webm', 'video/quicktime'];
 const MAX_BYTES = 100 * 1024 * 1024; // 100 MB
@@ -17,7 +17,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = verifyAdminToken(req);
+  const auth = await verifyAdminTokenAsync(req);
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   const { id: apartmentId } = await params;

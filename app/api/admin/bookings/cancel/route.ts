@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase';
-import { verifyAdminToken } from '@/lib/auth-admin';
+import { verifyAdminTokenAsync } from '@/lib/auth-admin';
 import { sendBookingCancellationEmail } from '@/lib/services/email';
 
 /**
@@ -18,7 +18,7 @@ import { sendBookingCancellationEmail } from '@/lib/services/email';
  * pour éviter de spammer une adresse valide.
  */
 export async function POST(req: NextRequest) {
-  const auth = verifyAdminToken(req);
+  const auth = await verifyAdminTokenAsync(req);
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   const body = await req.json();

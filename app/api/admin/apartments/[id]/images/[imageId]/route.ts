@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase';
-import { verifyAdminToken } from '@/lib/auth-admin';
+import { verifyAdminTokenAsync } from '@/lib/auth-admin';
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; imageId: string }> }
 ) {
-  const auth = verifyAdminToken(req);
+  const auth = await verifyAdminTokenAsync(req);
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   const { id: apartmentId, imageId } = await params;
@@ -37,7 +37,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; imageId: string }> }
 ) {
-  const auth = verifyAdminToken(req);
+  const auth = await verifyAdminTokenAsync(req);
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   const { imageId } = await params;

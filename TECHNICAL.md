@@ -5,8 +5,8 @@
 > **Ne pas éditer manuellement** ces blocs — édite le reste librement.
 
 <!-- AUTO:META -->
-> **Dernière mise à jour** : 2026-11-10 00:25 UTC
-> **Branche** : `main` — **HEAD** : `b39ebed`
+> **Dernière mise à jour** : 2026-11-10 00:40 UTC
+> **Branche** : `main` — **HEAD** : `ad25358`
 <!-- /AUTO:META -->
 
 ---
@@ -361,6 +361,7 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 <!-- AUTO:LAST_COMMITS -->
 | Hash | Date | Auteur | Sujet |
 |---|---|---|---|
+| `ad25358` | 2026-11-10 | Valery Garrec | perf(villa): gallery photos through next/image, lightweight favicons |
 | `b39ebed` | 2026-11-10 | Valery Garrec | fix(guide): Wi-Fi password and access codes no longer public, sent in the confirmation email |
 | `16bb43e` | 2026-11-10 | Valery Garrec | feat(seo): self canonical on www, html lang, AI search readiness (llms.txt, JSON-LD, robots) |
 | `62c6f35` | 2026-11-07 | Valery Garrec | feat(invoices): credit notes for refunds and monthly payments export for the accountant |
@@ -375,7 +376,6 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 | `0e8b51d` | 2026-10-28 | Valery Garrec | fix(email): cancellation under 14 days, amounts paid not refunded (validated by owner) |
 | `cee8e14` | 2026-10-27 | Valery Garrec | feat(invoices): room tax 5% + PDF invoice/receipt drafts for accountant review |
 | `7c8dfaa` | 2026-10-28 | Valery Garrec | chore: ignore livrables/ folder (generated client deliverables) |
-| `e257830` | 2026-10-22 | Valery Garrec | fix(email): show extra guests line in booking summary |
 <!-- /AUTO:LAST_COMMITS -->
 
 ---

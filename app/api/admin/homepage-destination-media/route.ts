@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase';
-import { verifyAdminToken } from '@/lib/auth-admin';
+import { verifyAdminTokenAsync } from '@/lib/auth-admin';
 
 // GET /api/admin/homepage-destination-media
 // Liste tous les médias (publiés ET masqués) pour l'admin.
 export async function GET(req: NextRequest) {
-  const auth = verifyAdminToken(req);
+  const auth = await verifyAdminTokenAsync(req);
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   const { data, error } = await supabaseAdmin
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 //
 // Champs additionnels : media_type, title_*, caption_*, alt_*, is_published, thumbnail_url
 export async function POST(req: NextRequest) {
-  const auth = verifyAdminToken(req);
+  const auth = await verifyAdminTokenAsync(req);
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
   const formData = await req.formData();
