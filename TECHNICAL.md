@@ -6,7 +6,7 @@
 
 <!-- AUTO:META -->
 > **Dernière mise à jour** : 2026-11-12 15:12 UTC
-> **Branche** : `main` — **HEAD** : `185858a`
+> **Branche** : `main` — **HEAD** : `232d9fe`
 <!-- /AUTO:META -->
 
 ---
@@ -361,6 +361,7 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 <!-- AUTO:LAST_COMMITS -->
 | Hash | Date | Auteur | Sujet |
 |---|---|---|---|
+| `232d9fe` | 2026-11-12 | Valery Garrec | feat(pricing): "excl. 5% room tax" mention under nightly prices |
 | `185858a` | 2026-11-10 | Valery Garrec | fix(security): admin guide, seasonal prices and villa sections written server-side |
 | `3848d99` | 2026-11-10 | Valery Garrec | fix(security): validate the admin JWT signature on every admin API route |
 | `ad25358` | 2026-11-10 | Valery Garrec | perf(villa): gallery photos through next/image, lightweight favicons |
@@ -375,7 +376,6 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 | `dde7119` | 2026-11-03 | Valery Garrec | feat(invoices): accountant wording for Chenille agent mention, track collecting company |
 | `3f4ae3d` | 2026-10-31 | Valery Garrec | feat(invoices): issue invoices and receipts on each payment (step 2) |
 | `35b55b3` | 2026-10-30 | Valery Garrec | feat(invoices): one issuing company per villa (accountant option A) |
-| `0e8b51d` | 2026-10-28 | Valery Garrec | fix(email): cancellation under 14 days, amounts paid not refunded (validated by owner) |
 <!-- /AUTO:LAST_COMMITS -->
 
 ---

@@ -43,3 +43,5 @@ livrables/
 
 # RIB et documents clients (ne pas versionner)
 docs/*.pdf
+# Devis et contrats signés du client : jamais commités
+docs/devis/
