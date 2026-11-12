@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { Users, ShieldCheck, Clock, ChevronDown, CheckCircle2 } from 'lucide-react';
-import { calculatePricing, formatUSD, type SeasonalPriceInput } from '@/lib/services/pricing';
+import { calculatePricing, formatUSD, roomTaxExclLabel, type SeasonalPriceInput } from '@/lib/services/pricing';
 import DateRangePicker from './DateRangePicker';
 
 interface BookingFormProps {
@@ -266,6 +266,7 @@ export default function BookingForm({
             </span>
             <span className="text-sm text-night-400 font-light">/ {isFr ? 'nuit' : 'night'}</span>
           </div>
+          <p className="text-xs text-night-400 mt-1">{roomTaxExclLabel(isFr)}</p>
           {isFr && eurRate && (
             <p className="text-[10px] text-night-300 mt-2 uppercase" style={{ letterSpacing: '0.15em' }}>
               1 USD = {eurRate.toFixed(4)} EUR

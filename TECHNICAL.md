@@ -5,8 +5,8 @@
 > **Ne pas éditer manuellement** ces blocs — édite le reste librement.
 
 <!-- AUTO:META -->
-> **Dernière mise à jour** : 2026-11-10 00:44 UTC
-> **Branche** : `main` — **HEAD** : `3848d99`
+> **Dernière mise à jour** : 2026-11-12 15:12 UTC
+> **Branche** : `main` — **HEAD** : `185858a`
 <!-- /AUTO:META -->
 
 ---
@@ -361,6 +361,7 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 <!-- AUTO:LAST_COMMITS -->
 | Hash | Date | Auteur | Sujet |
 |---|---|---|---|
+| `185858a` | 2026-11-10 | Valery Garrec | fix(security): admin guide, seasonal prices and villa sections written server-side |
 | `3848d99` | 2026-11-10 | Valery Garrec | fix(security): validate the admin JWT signature on every admin API route |
 | `ad25358` | 2026-11-10 | Valery Garrec | perf(villa): gallery photos through next/image, lightweight favicons |
 | `b39ebed` | 2026-11-10 | Valery Garrec | fix(guide): Wi-Fi password and access codes no longer public, sent in the confirmation email |
@@ -375,7 +376,6 @@ Ces items restent dans le doc tant qu'ils sont ouverts.
 | `3f4ae3d` | 2026-10-31 | Valery Garrec | feat(invoices): issue invoices and receipts on each payment (step 2) |
 | `35b55b3` | 2026-10-30 | Valery Garrec | feat(invoices): one issuing company per villa (accountant option A) |
 | `0e8b51d` | 2026-10-28 | Valery Garrec | fix(email): cancellation under 14 days, amounts paid not refunded (validated by owner) |
-| `cee8e14` | 2026-10-27 | Valery Garrec | feat(invoices): room tax 5% + PDF invoice/receipt drafts for accountant review |
 <!-- /AUTO:LAST_COMMITS -->
 
 ---

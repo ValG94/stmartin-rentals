@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Bed, Bath, Users, MapPin } from 'lucide-react';
 import type { Apartment } from '@/types';
 import { useCurrencyRate, formatPriceWithRate } from '@/hooks/useCurrencyRate';
+import { roomTaxExclLabel } from '@/lib/services/pricing';
 
 interface ApartmentCardProps {
   apartment: Apartment;
@@ -76,10 +77,13 @@ export default function ApartmentCard({ apartment }: ApartmentCardProps) {
 
           {/* CTA */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-xs text-gray-500">{locale === 'fr' ? 'à partir de' : 'from'}</span>
-              <span className="text-xl font-bold text-primary-600">{displayMinPrice}</span>
-              <span className="text-gray-500 text-sm">/ {t('night')}</span>
+            <div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xs text-gray-500">{locale === 'fr' ? 'à partir de' : 'from'}</span>
+                <span className="text-xl font-bold text-primary-600">{displayMinPrice}</span>
+                <span className="text-gray-500 text-sm">/ {t('night')}</span>
+              </div>
+              <p className="text-[11px] text-gray-500 mt-0.5">{roomTaxExclLabel(locale === 'fr')}</p>
             </div>
             <span className="text-sm font-medium text-primary-600 group-hover:underline">
               {t('view_details')} →

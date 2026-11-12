@@ -26,6 +26,13 @@ export const ROOM_TAX = {
   includeExtraGuests: true,
 };
 
+// Mention affichée sous les prix "à partir de" : la taxe s'ajoute au
+// moment de la réservation (devis, prestation C).
+export function roomTaxExclLabel(isFr: boolean): string {
+  const pct = Math.round(ROOM_TAX.rate * 100);
+  return isFr ? `Hors taxe de séjour (${pct} %)` : `Excl. ${pct}% room tax`;
+}
+
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 export interface SeasonalPriceInput {

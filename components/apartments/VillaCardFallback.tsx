@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { MapPin, ArrowRight } from 'lucide-react';
 import { useCurrencyRate, formatPriceWithRate } from '@/hooks/useCurrencyRate';
+import { roomTaxExclLabel } from '@/lib/services/pricing';
 
 interface VillaFallback {
   slug: string;
@@ -74,12 +75,15 @@ export default function VillaCardFallback({ villa, index }: VillaCardFallbackPro
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-sans text-xs text-white/50 uppercase" style={{ letterSpacing: '0.1em' }}>
-              {isFr ? 'à partir de' : 'from'}
-            </span>
-            <span className="font-serif text-2xl text-cream-100 font-light">{displayPrice}</span>
-            <span className="font-sans text-xs text-white/50">/ {isFr ? 'nuit' : 'night'}</span>
+          <div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-sans text-xs text-white/50 uppercase" style={{ letterSpacing: '0.1em' }}>
+                {isFr ? 'à partir de' : 'from'}
+              </span>
+              <span className="font-serif text-2xl text-cream-100 font-light">{displayPrice}</span>
+              <span className="font-sans text-xs text-white/50">/ {isFr ? 'nuit' : 'night'}</span>
+            </div>
+            <p className="font-sans text-[11px] text-white/60 mt-0.5">{roomTaxExclLabel(isFr)}</p>
           </div>
           <div className="flex items-center gap-2 font-sans text-xs text-bronze-300 uppercase group-hover:gap-4 transition-all duration-500" style={{ letterSpacing: '0.15em' }}>
             {isFr ? 'Découvrir' : 'Discover'}<ArrowRight size={14} />
